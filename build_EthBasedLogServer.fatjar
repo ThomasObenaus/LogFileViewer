@@ -1,0 +1,14 @@
+#Fat Jar Configuration File
+#Thu May 15 15:44:18 CEST 2014
+onejar.license.required=true
+manifest.classpath=
+manifest.removesigners=true
+onejar.checkbox=false
+jarname=EthTraceServer.jar
+manifest.mergeall=true
+manifest.mainclass=thobe.ethtrace.server.EthSource
+manifest.file=<createnew>
+jarname.isextern=false
+onejar.expand=
+excludes=
+includes=
