@@ -19,17 +19,17 @@ import thobe.tools.log.ILoggable;
  */
 public class DataSource extends ILoggable
 {
-	private TraceSource		traceSource;
-	private PublishThread	publishThread;
+	private LogStreamReader				traceSource;
+	private LogStreamContentPublisher	publishThread;
 
 	public DataSource( )
 	{
 		this.traceSource = null;
-		this.publishThread = new PublishThread( );
+		this.publishThread = new LogStreamContentPublisher( );
 		this.publishThread.start( );
 	}
 
-	public void open( TraceSource source ) throws TraceSourceException
+	public void open( LogStreamReader source ) throws TraceSourceException
 	{
 		if ( this.traceSource != null && this.traceSource.isOpen( ) )
 		{

@@ -19,10 +19,10 @@ import java.util.logging.Logger;
 /**
  * Abstract class representing a source that reads and offers contents of a log (file or over ip).
  * @author Thomas Obenaus
- * @source TraceSource.java
+ * @source LogStreamReader.java
  * @date May 15, 2014
  */
-public abstract class TraceSource extends Thread
+public abstract class LogStreamReader extends Thread
 {
 	/**
 	 * deque containing the contents of the log line by line.
@@ -57,21 +57,21 @@ public abstract class TraceSource extends Thread
 	/**
 	 * Ctor
 	 */
-	public TraceSource( )
+	public LogStreamReader( )
 	{
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
 		this.quitRequested = new AtomicBoolean( false );
 		this.opened = new AtomicBoolean( false );
 		this.EOFReached = new AtomicBoolean( false );
 		this.sleepTime = new AtomicInteger( 100 );
-		this.log = Logger.getLogger( "thobe.logfileviewer.source.TraceSource" );
+		this.log = Logger.getLogger( "thobe.logfileviewer.source.LogStreamReader" );
 	}
 
 	/**
 	 * Returns the next line that is available (was read from the log source). On accessing this method the line will be consumed, that
 	 * means further calls to this method will result in different results (the next line).
 	 * @return - the next line as {@link String}
-	 * @throws TraceSourceException - Thrown if no more lines are available. Please use {@link TraceSource#hasNextLine()} to check if more
+	 * @throws TraceSourceException - Thrown if no more lines are available. Please use {@link LogStreamReader#hasNextLine()} to check if more
 	 *             lines are available.
 	 */
 	public String nextLine( ) throws TraceSourceException
@@ -204,7 +204,7 @@ public abstract class TraceSource extends Thread
 	protected abstract void closeImpl( ) throws TraceSourceException;
 
 	/**
-	 * Open the {@link TraceSource}.
+	 * Open the {@link LogStreamReader}.
 	 * @throws TraceSourceException
 	 */
 	public void open( ) throws TraceSourceException
@@ -229,7 +229,7 @@ public abstract class TraceSource extends Thread
 	}
 
 	/**
-	 * Returns true if the {@link TraceSource} is open, false otherwise.
+	 * Returns true if the {@link LogStreamReader} is open, false otherwise.
 	 * @return
 	 */
 	public boolean isOpen( )

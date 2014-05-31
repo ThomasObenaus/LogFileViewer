@@ -16,12 +16,12 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 
 /**
- * {@link TraceSource} reading over ip (source is a socket).
+ * {@link LogStreamReader} reading over ip (source is a socket).
  * @author Thomas Obenaus
  * @source IpSource.java
  * @date May 15, 2014
  */
-public class IpSource extends TraceSource
+public class IpSource extends LogStreamReader
 {
 	private int				port;
 	private String			host;
