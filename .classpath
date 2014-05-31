@@ -2,5 +2,16 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="libs/widgets.jar" sourcepath="libs/widgets_src.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/widgets_doc.zip!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="libs/tools.jar" sourcepath="libs/tools_src.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/tools_doc.zip!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="libs/commons-cli-1.2/commons-cli-1.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
