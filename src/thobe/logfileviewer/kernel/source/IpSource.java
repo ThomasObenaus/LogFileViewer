@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 
 /**
+ * {@link TraceSource} reading over ip (source is a socket).
  * @author Thomas Obenaus
  * @source IpSource.java
  * @date May 15, 2014
@@ -36,6 +37,11 @@ public class IpSource extends TraceSource
 	@Override
 	protected String readLineImpl( ) throws TraceSourceException
 	{
+		if ( this.reader == null )
+		{
+			throw new TraceSourceException( "Reader not open, resource is null" );
+		}// if ( this.reader == null ) .
+
 		try
 		{
 			return this.reader.readLine( );
@@ -56,11 +62,22 @@ public class IpSource extends TraceSource
 
 		try
 		{
-			this.socket = new Socket( this.host, this.port );
+			this.socket = new Socket( this.host, this.port );			
 			this.reader = new BufferedReader( new InputStreamReader( this.socket.getInputStream( ) ) );
 		}
 		catch ( IOException e )
 		{
+			try
+			{
+				// close open resources
+				this.reader.close( );
+				this.socket.close( );
+			}
+			catch ( IOException e1 )
+			{
+				LOG( ).severe( "Error while closing the ressources: " + e1.getLocalizedMessage( ) );
+			}
+
 			throw new TraceSourceException( "Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
 		}
 	}
@@ -70,8 +87,11 @@ public class IpSource extends TraceSource
 	{
 		try
 		{
+			// close open resources
 			this.reader.close( );
 			this.socket.close( );
+			this.socket = null;
+			this.reader = null;
 		}
 		catch ( IOException e )
 		{

@@ -10,11 +10,16 @@
 
 package thobe.logfileviewer.kernel;
 
+import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.UnsupportedLookAndFeelException;
+
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.tools.log.Logging;
 import thobe.tools.log.LoggingException;
 
 /**
+ * The main-class with main-entry-point for the LogFileViewerApplication.
  * @author Thomas Obenaus
  * @source MainClass.java
  * @date May 15, 2014
@@ -33,39 +38,47 @@ public class MainClass
 			System.err.println( "Unable to initialize logging using file '" + loggingIni + "'" );
 		}
 
+		// set the look and feel
+		setLookAndFeel( );
+
+		// start the application
 		LogFileViewerApp app = new LogFileViewerApp( );
 		MainFrame mainFrame = new MainFrame( app );
 		mainFrame.setVisible( true );
+	}
 
-		/*try
+	public static void setLookAndFeel( )
+	{
+		String lookAndFeel = UIManager.getSystemLookAndFeelClassName( );
+
+		// try to set nimbus:
+		for ( LookAndFeelInfo info : UIManager.getInstalledLookAndFeels( ) )
 		{
-			IpSource source = new IpSource( "127.0.0.1", 15000 );
-			source.open( );
-			ReaderThread<IpSource> ipSourceReader = new ReaderThread<IpSource>( source );
-
-			ipSourceReader.start( );
-
-			while ( true )
+			if ( "Nimbus".equals( info.getName( ) ) )
 			{
+				// Nimbus found
+				lookAndFeel = info.getClassName( );
+				break;
+			}// if ( "Nimbus".equals( info.getName( ) ) ).
+		}// for ( LookAndFeelInfo info : UIManager.getInstalledLookAndFeels( ) ).
 
-				try
-				{
-					if ( source.hasNextLine( ) )
-						System.out.println( source.nextLine( ) );
-				}
-				catch ( TraceSourceException e )
-				{
-					// TODO Auto-generated catch block
-					e.printStackTrace( );
-				}
-			}
-
-		}
-		catch ( TraceSourceException e1 )
+		try
 		{
-			// TODO Auto-generated catch block
-			e1.printStackTrace( );
+			UIManager.setLookAndFeel( lookAndFeel );
 		}
-		*/
+		catch ( UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e )
+		{
+			System.err.println( "Unable to set look-and-feel [" + lookAndFeel + "] trying " + UIManager.getCrossPlatformLookAndFeelClassName( ) );
+			lookAndFeel = UIManager.getCrossPlatformLookAndFeelClassName( );
+			try
+			{
+				UIManager.setLookAndFeel( lookAndFeel );
+			}
+			catch ( ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e1 )
+			{
+				System.err.println( "Unable to set look-and-feel [" + lookAndFeel + "] exitig ..." );
+				System.exit( 1 );
+			}// catch ( ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e1 ).
+		}// catch ( UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e ).
 	}
 }

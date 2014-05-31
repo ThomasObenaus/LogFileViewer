@@ -27,7 +27,7 @@ public class PublishThread extends Thread
 	public PublishThread( )
 	{
 		this.quitRequested = new AtomicBoolean( false );
-		this.log = Logger.getLogger( "thobe.ethsource.source.PublishThread" );
+		this.log = Logger.getLogger( "thobe.logfileviewer.source.PublishThread" );
 	}
 
 	public void startPublishing( TraceSource traceSource )

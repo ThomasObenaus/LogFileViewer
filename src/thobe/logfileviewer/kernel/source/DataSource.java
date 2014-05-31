@@ -20,13 +20,11 @@ import thobe.tools.log.ILoggable;
 public class DataSource extends ILoggable
 {
 	private TraceSource		traceSource;
-	private ReaderThread	readerThread;
 	private PublishThread	publishThread;
 
 	public DataSource( )
 	{
-		this.readerThread = null;
-
+		this.traceSource = null;
 		this.publishThread = new PublishThread( );
 		this.publishThread.start( );
 	}
@@ -40,8 +38,7 @@ public class DataSource extends ILoggable
 
 		this.traceSource = source;
 		this.traceSource.open( );
-		this.readerThread = new ReaderThread( this.traceSource );
-		this.readerThread.start( );
+		this.traceSource.start( );
 
 		this.publishThread.startPublishing( traceSource );
 
@@ -54,6 +51,8 @@ public class DataSource extends ILoggable
 			return false;
 		if ( !this.traceSource.isOpen( ) )
 			return false;
+		if ( this.traceSource.isEOFReached( ) )
+			return false;
 		return true;
 	}
 
@@ -62,7 +61,6 @@ public class DataSource extends ILoggable
 		if ( this.traceSource != null )
 		{
 			this.traceSource.close( );
-			this.readerThread = null;
 			this.publishThread.stopPublishing( );
 			LOG( ).info( "DataSource closed [" + this.traceSource.getClass( ).getSimpleName( ) + "]" );
 			this.traceSource = null;

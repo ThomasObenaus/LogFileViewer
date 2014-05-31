@@ -10,6 +10,7 @@
 package thobe.logfileviewer;
 
 /**
+ * General information about the application.
  * @author Thomas Obenaus
  * @source LogFileViewerInfo.java
  * @date May 15, 2014

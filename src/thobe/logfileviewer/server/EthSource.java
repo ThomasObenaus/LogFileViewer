@@ -25,6 +25,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 /**
+ * Ehternet based logger, needed for testing.
  * @author Thomas Obenaus
  * @source EthSource.java
  * @date May 15, 2014
@@ -41,16 +42,25 @@ public class EthSource
 		try
 		{
 			ServerSocket serverSocket = new ServerSocket( parsedArgs.getPort( ) );
-			System.out.println("waiting...");
+			System.out.println( "waiting..." );
 			Socket clientSocket = serverSocket.accept( );
-			System.out.println("client connected");
+			System.out.println( "client connected" );
 			PrintWriter out = new PrintWriter( clientSocket.getOutputStream( ), true );
-			
-			
-			
-			while ( true)
-			{
-				out.println( "huhu" );
+
+			long line = 0;
+			while ( true )
+			{				
+				out.println( line + ": huhu" );
+				try
+				{
+					Thread.sleep( 500 );
+				}
+				catch ( InterruptedException e )
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				line++;
 			}
 		}
 		catch ( IOException e )

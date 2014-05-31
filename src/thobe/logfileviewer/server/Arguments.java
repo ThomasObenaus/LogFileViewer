@@ -11,6 +11,7 @@
 package thobe.logfileviewer.server;
 
 /**
+ * Structure keeping the arguments for the {@link EthSource}.
  * @author Thomas Obenaus
  * @source Arguments.java
  * @date May 15, 2014
