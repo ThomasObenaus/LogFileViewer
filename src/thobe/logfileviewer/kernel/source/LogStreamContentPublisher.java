@@ -103,17 +103,17 @@ public class LogStreamContentPublisher extends Thread
 					state = LogStreamState.OPEN;
 				}// if ( this.traceSource != null || this.traceSource.isOpen( ) ) .
 
-				// #### CLOSED #####
-				if ( this.traceSource == null || !this.traceSource.isOpen( ) )
-				{
-					state = LogStreamState.CLOSED;
-				}// if ( this.traceSource == null || !this.traceSource.isOpen( ) ).
-
 				// #### EOF REACHED #####
 				if ( this.traceSource != null && this.traceSource.isEOFReached( ) )
 				{
 					state = LogStreamState.EOF_REACHED;
 				}// if ( this.traceSource != null || this.traceSource.isEOFReached( ) ) .
+
+				// #### CLOSED #####
+				if ( this.traceSource == null || !this.traceSource.isOpen( ) )
+				{
+					state = LogStreamState.CLOSED;
+				}// if ( this.traceSource == null || !this.traceSource.isOpen( ) ).
 
 				// publish event if necessary
 				this.publishState( state );
@@ -127,7 +127,7 @@ public class LogStreamContentPublisher extends Thread
 						this.fireNewLine( nextLine );
 						System.out.println( nextLine );
 					}
-					catch ( TraceSourceException e )
+					catch ( LogStreamException e )
 					{
 						LOG( ).severe( "Unable to obtain next line from log: " + e.getLocalizedMessage( ) );
 					}
@@ -178,7 +178,7 @@ public class LogStreamContentPublisher extends Thread
 		this.sleepTime.set( sleepTime );
 	}
 
-	public void kill( ) throws TraceSourceException
+	public void kill( ) throws LogStreamException
 	{
 		this.quitRequested.set( true );
 	}

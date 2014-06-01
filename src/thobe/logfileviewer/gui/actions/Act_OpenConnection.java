@@ -16,9 +16,9 @@ import javax.swing.JOptionPane;
 
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
-import thobe.logfileviewer.kernel.source.DataSource;
+import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.IpLogStreamReader;
-import thobe.logfileviewer.kernel.source.TraceSourceException;
+import thobe.logfileviewer.kernel.source.LogStreamException;
 import thobe.widgets.action.AbstrAction;
 import thobe.widgets.action.ActionRegistry;
 
@@ -45,14 +45,14 @@ public class Act_OpenConnection extends AbstrAction
 		try
 		{
 			LogFileViewerApp app = this.mainframe.getApp( );
-			DataSource dataSource = app.getDataSource( );
-			dataSource.open( new IpLogStreamReader( "127.0.0.1", 15000 ) );
+			LogStream logStream = app.getLogStream( );
+			logStream.open( new IpLogStreamReader( "127.0.0.1", 15000 ) );
 
 			ActionRegistry.get( ).getAction( Act_Close.KEY ).setEnabled( true );
 			ActionRegistry.get( ).getAction( Act_OpenConnection.KEY ).setEnabled( false );
 			ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( false );
 		}
-		catch ( TraceSourceException e )
+		catch ( LogStreamException e )
 		{
 			JOptionPane.showMessageDialog( this.mainframe, "Unable to connect: " + e.getLocalizedMessage( ), "Connection failed", JOptionPane.ERROR_MESSAGE );
 		}

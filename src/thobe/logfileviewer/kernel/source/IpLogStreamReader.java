@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 /**
  * {@link LogStreamReader} reading over ip (source is a socket).
@@ -35,34 +36,39 @@ public class IpLogStreamReader extends LogStreamReader
 	}
 
 	@Override
-	protected String readLineImpl( ) throws TraceSourceException
+	protected String readLineImpl( int maxBlockTime ) throws LogStreamException,LogStreamTimeoutException
 	{
 		if ( this.reader == null )
 		{
-			throw new TraceSourceException( "Reader not open, resource is null" );
+			throw new LogStreamException( "Reader not open, resource is null" );
 		}// if ( this.reader == null ) .
 
 		try
 		{
+			this.socket.setSoTimeout( maxBlockTime );
 			return this.reader.readLine( );
+		}
+		catch ( SocketTimeoutException e )
+		{
+			throw new LogStreamTimeoutException( e.getLocalizedMessage( ) );
 		}
 		catch ( IOException e )
 		{
-			throw new TraceSourceException( e.getLocalizedMessage( ) );
+			throw new LogStreamException( e.getLocalizedMessage( ) );
 		}
 	}
 
 	@Override
-	protected void openImpl( ) throws TraceSourceException
+	protected void openImpl( ) throws LogStreamException
 	{
 		if ( this.host == null || this.host.trim( ).isEmpty( ) )
-			throw new TraceSourceException( "Hostname is missing" );
+			throw new LogStreamException( "Hostname is missing" );
 		if ( this.port == 0 )
-			throw new TraceSourceException( "Port '" + this.port + "' is invalid" );
+			throw new LogStreamException( "Port '" + this.port + "' is invalid" );
 
 		try
 		{
-			this.socket = new Socket( this.host, this.port );			
+			this.socket = new Socket( this.host, this.port );
 			this.reader = new BufferedReader( new InputStreamReader( this.socket.getInputStream( ) ) );
 		}
 		catch ( IOException e )
@@ -70,32 +76,36 @@ public class IpLogStreamReader extends LogStreamReader
 			try
 			{
 				// close open resources
-				this.reader.close( );
-				this.socket.close( );
+				if ( this.reader != null )
+					this.reader.close( );
+				if ( this.socket != null )
+					this.socket.close( );
 			}
 			catch ( IOException e1 )
 			{
 				LOG( ).severe( "Error while closing the ressources: " + e1.getLocalizedMessage( ) );
 			}
 
-			throw new TraceSourceException( "Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
+			throw new LogStreamException( "Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
 		}
 	}
 
 	@Override
-	protected void closeImpl( ) throws TraceSourceException
+	protected void closeImpl( ) throws LogStreamException
 	{
 		try
 		{
 			// close open resources
-			this.reader.close( );
-			this.socket.close( );
+			if ( this.reader != null )
+				this.reader.close( );
+			if ( this.socket != null )
+				this.socket.close( );
 			this.socket = null;
 			this.reader = null;
 		}
 		catch ( IOException e )
 		{
-			throw new TraceSourceException( "Failed to close connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
+			throw new LogStreamException( "Failed to close connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
 		}
 	}
 

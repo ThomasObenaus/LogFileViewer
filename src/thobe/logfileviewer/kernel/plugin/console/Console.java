@@ -51,25 +51,25 @@ public class Console extends IPlugin
 	}
 
 	@Override
-	public void onDataSourceOpened( )
+	public void onLogStreamOpened( )
 	{
-		System.out.println( "Console.onDataSourceOpened()" );
+		System.out.println( "Console.onLogStreamOpened()" );
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void onPrepareCloseDataSource( )
+	public void onPrepareCloseLogStream( )
 	{
-		System.out.println( "Console.onPrepareCloseDataSource()" );
+		System.out.println( "Console.onPrepareCloseLogStream()" );
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void onDataSourceClosed( )
+	public void onLogStreamClosed( )
 	{
-		System.out.println( "Console.onDataSourceClosed()" );
+		System.out.println( "Console.onLogStreamClosed()" );
 		// TODO Auto-generated method stub
 
 	}

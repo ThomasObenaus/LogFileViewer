@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 
-import thobe.logfileviewer.kernel.source.DataSource;
+import thobe.logfileviewer.kernel.source.LogStream;
 
 /**
  * @author Thomas Obenaus
@@ -72,22 +72,22 @@ public abstract class IPlugin extends Thread
 	public abstract boolean onRegistered( IPluginAccess pluginAccess );
 
 	/**
-	 * Life-cycle of {@link IPlugin}: <b>##### Step 2a <u>OPEN DS</u> #####</b><br>
-	 * A new {@link DataSource} was opened
+	 * Life-cycle of {@link IPlugin}: <b>##### Step 2a <u>OPEN LS</u> #####</b><br>
+	 * A new {@link LogStream} was opened
 	 */
-	public abstract void onDataSourceOpened( );
+	public abstract void onLogStreamOpened( );
 
 	/**
-	 * Life-cycle of {@link IPlugin}: <b>##### Step 2b <u>PREPARE CLOSE DS</u> #####</b><br>
-	 * The currently open {@link DataSource} will be closed
+	 * Life-cycle of {@link IPlugin}: <b>##### Step 2b <u>PREPARE CLOSE LS</u> #####</b><br>
+	 * The currently open {@link LogStream} will be closed
 	 */
-	public abstract void onPrepareCloseDataSource( );
+	public abstract void onPrepareCloseLogStream( );
 
 	/**
-	 * Life-cycle of {@link IPlugin}: <b>##### Step 2c <u>CLOSE DS</u> #####</b><br>
-	 * The {@link DataSource} was closed.
+	 * Life-cycle of {@link IPlugin}: <b>##### Step 2c <u>CLOSE LS</u> #####</b><br>
+	 * The {@link LogStream} was closed.
 	 */
-	public abstract void onDataSourceClosed( );
+	public abstract void onLogStreamClosed( );
 
 	/**
 	 * Life-cycle of {@link IPlugin}: <b>##### Step 3 <u>UNREGISTER</u> #####</b><br>

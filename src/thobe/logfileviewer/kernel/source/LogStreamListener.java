@@ -12,11 +12,10 @@ package thobe.logfileviewer.kernel.source;
 
 /**
  * @author Thomas Obenaus
- * @source LogStreamContentPublisherListener.java
- * @date May 31, 2014
+ * @source LogStreamListener.java
+ * @date Jun 1, 2014
  */
-public interface LogStreamContentPublisherListener extends LogStreamStateListener
+public interface LogStreamListener
 {
-	public void onNewLine( String newLine );
-	
+	public String getName( );
 }

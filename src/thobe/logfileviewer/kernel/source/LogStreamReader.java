@@ -77,14 +77,14 @@ public abstract class LogStreamReader extends Thread
 	 * Returns the next line that is available (was read from the log source). On accessing this method the line will be consumed, that
 	 * means further calls to this method will result in different results (the next line).
 	 * @return - the next line as {@link String}
-	 * @throws TraceSourceException - Thrown if no more lines are available. Please use {@link LogStreamReader#hasNextLine()} to check if
+	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link LogStreamReader#hasNextLine()} to check if
 	 *             more
 	 *             lines are available.
 	 */
-	public String nextLine( ) throws TraceSourceException
+	public String nextLine( ) throws LogStreamException
 	{
 		if ( !this.hasNextLine( ) )
-			throw new TraceSourceException( "The queue is empty" );
+			throw new LogStreamException( "The queue is empty" );
 		return this.lineBuffer.pop( );
 	}
 
@@ -126,7 +126,7 @@ public abstract class LogStreamReader extends Thread
 			try
 			{
 				// delegate the reading to the specific source-implementation
-				String newLine = readLineImpl( );
+				String newLine = readLineImpl( 2000 );
 
 				if ( newLine != null )
 				{
@@ -140,10 +140,25 @@ public abstract class LogStreamReader extends Thread
 					LOG( ).info( "End of file reached" );
 				}// if ( newLine != null ) ... else ...
 			}
-			catch ( TraceSourceException e1 )
+			catch ( LogStreamTimeoutException e )
 			{
-				LOG( ).warning( this.getClass( ).getSimpleName( ) + " error reading next line: " + e1.getLocalizedMessage( ) );
-			}// catch ( TraceSourceException e1 ) .
+				// The call to readLineImpl() timed out --> EOF
+				LOG( ).warning( this.getClass( ).getSimpleName( ) + " error reading next line: '" + e.getLocalizedMessage( ) + ( this.stopOnReachingEOF ? "'. stop reading." : "'. continue reading" ) );
+				this.EOFReached.set( true );
+
+				// close the LogStreamReader in case of EOF reading should be stopped  
+				if ( this.stopOnReachingEOF )
+				{
+					this.opened.set( false );
+					break;
+				}
+			}//catch ( LogStreamTimeoutException e ) .
+			catch ( LogStreamException e )
+			{
+				LOG( ).warning( this.getClass( ).getSimpleName( ) + " error reading next line: '" + e.getLocalizedMessage( ) + "'. stop reading." );
+				this.opened.set( false );
+				break;
+			}// catch ( LogStreamException e ) .
 
 			// sleep only if we don't have already reached the EOF or if we don't want to stop at the end of file
 			if ( !this.EOFReached.get( ) || !this.stopOnReachingEOF )
@@ -178,7 +193,7 @@ public abstract class LogStreamReader extends Thread
 		return EOFReached.get( );
 	}
 
-	public void close( ) throws TraceSourceException
+	public void close( ) throws LogStreamException
 	{
 		// set request to terminate the main-loop
 		this.quitRequested.set( true );
@@ -191,7 +206,7 @@ public abstract class LogStreamReader extends Thread
 				this.closeImpl( );
 				this.opened.set( false );
 			}
-			catch ( TraceSourceException e )
+			catch ( LogStreamException e )
 			{
 				LOG( ).severe( "Failed to close: " + e.getLocalizedMessage( ) );
 				throw e;
@@ -202,35 +217,37 @@ public abstract class LogStreamReader extends Thread
 
 	/**
 	 * Implement this method in the specific trace-source. This method will called each time a new line should be read from the source.
+	 * @param maxBlockTime - max time in ms the method should block (need to return)
 	 * @return - the line that was read from the source
-	 * @throws TraceSourceException
+	 * @throws LogStreamException
+	 * @throws LogStreamTimeoutException
 	 */
-	protected abstract String readLineImpl( ) throws TraceSourceException;
+	protected abstract String readLineImpl( int maxBlockTime ) throws LogStreamException, LogStreamTimeoutException;
 
 	/**
 	 * Implement this method in the specific trace-source. This method will called each time a new source should be opened.
 	 * @return - the line that was read from the source
-	 * @throws TraceSourceException
+	 * @throws LogStreamException
 	 */
-	protected abstract void openImpl( ) throws TraceSourceException;
+	protected abstract void openImpl( ) throws LogStreamException;
 
 	/**
 	 * Implement this method in the specific trace-source. This method will called each time the source should be closed.
 	 * @return - the line that was read from the source
-	 * @throws TraceSourceException
+	 * @throws LogStreamException
 	 */
-	protected abstract void closeImpl( ) throws TraceSourceException;
+	protected abstract void closeImpl( ) throws LogStreamException;
 
 	/**
 	 * Open the {@link LogStreamReader}.
-	 * @throws TraceSourceException
+	 * @throws LogStreamException
 	 */
-	public void open( ) throws TraceSourceException
+	public void open( ) throws LogStreamException
 	{
 		// already open
 		if ( this.opened.get( ) )
 		{
-			throw new TraceSourceException( "Already open" );
+			throw new LogStreamException( "Already open" );
 		}// if ( this.opened.get( ) ) .
 
 		try
@@ -239,7 +256,7 @@ public abstract class LogStreamReader extends Thread
 			this.openImpl( );
 			this.opened.set( true );
 		}
-		catch ( TraceSourceException e )
+		catch ( LogStreamException e )
 		{
 			LOG( ).severe( "Unable to open: " + e.getLocalizedMessage( ) );
 			throw e;

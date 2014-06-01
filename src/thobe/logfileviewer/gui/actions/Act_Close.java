@@ -16,8 +16,8 @@ import javax.swing.JOptionPane;
 
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
-import thobe.logfileviewer.kernel.source.DataSource;
-import thobe.logfileviewer.kernel.source.TraceSourceException;
+import thobe.logfileviewer.kernel.source.LogStream;
+import thobe.logfileviewer.kernel.source.LogStreamException;
 import thobe.widgets.action.AbstrAction;
 import thobe.widgets.action.ActionRegistry;
 
@@ -45,14 +45,14 @@ public class Act_Close extends AbstrAction
 		try
 		{
 			LogFileViewerApp app = this.mainframe.getApp( );
-			DataSource dataSource = app.getDataSource( );
-			dataSource.close( );
+			LogStream logStream = app.getLogStream( );
+			logStream.close( );
 
 			ActionRegistry.get( ).getAction( Act_Close.KEY ).setEnabled( false );
 			ActionRegistry.get( ).getAction( Act_OpenConnection.KEY ).setEnabled( true );
 			ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( true );
 		}
-		catch ( TraceSourceException e )
+		catch ( LogStreamException e )
 		{
 			JOptionPane.showMessageDialog( this.mainframe, "Failed to close: " + e.getLocalizedMessage( ), "Close failed", JOptionPane.ERROR_MESSAGE );
 		}

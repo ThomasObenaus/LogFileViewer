@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
-import thobe.logfileviewer.kernel.source.DataSource;
+import thobe.logfileviewer.kernel.source.LogStream;
 
 /**
  * @author Thomas Obenaus
@@ -42,9 +42,9 @@ public class LogFileViewerApp extends Thread
 	private Logger							log;
 
 	/**
-	 * The {@link DataSource} providing the contents of the logfile that should be displayed
+	 * The {@link LogStream} providing the contents of the logfile that should be displayed
 	 */
-	private DataSource						dataSource;
+	private LogStream						logStream;
 	private PluginManager					pluginManager;
 	private Semaphore						eventSem;
 
@@ -53,15 +53,15 @@ public class LogFileViewerApp extends Thread
 		super( "LogFileViewerApp" );
 		this.log = Logger.getLogger( "thobe.logfileviewer.kernel.LogFileViewerApp" );
 		this.events = new ConcurrentLinkedDeque<>( );
-		this.dataSource = new DataSource( );
+		this.logStream = new LogStream( );
 		this.pluginManager = new PluginManager( );
 		this.eventSem = new Semaphore( 0, true );
 
 	}
 
-	public DataSource getDataSource( )
+	public LogStream getLogStream( )
 	{
-		return dataSource;
+		return logStream;
 	}
 
 	public PluginManager getPluginManager( )
@@ -103,10 +103,10 @@ public class LogFileViewerApp extends Thread
 					quitRequested = true;
 					continue;
 				case DS_OPENED:
-					onDataSourceOpened( );
+					onLogStreamOpened( );
 					break;
 				case DS_CLOSED:
-					onDataSourceClosed( );
+					onLogStreamClosed( );
 					break;
 				}
 			}// if(!this.events.isEmpty( )) .
@@ -162,8 +162,8 @@ public class LogFileViewerApp extends Thread
 
 	private void onQuit( )
 	{
-		// detach all plugins from the datasource
-		this.onDataSourceClosed( );
+		// detach all plugins from the LogStream
+		this.onLogStreamClosed( );
 
 		// 3. unregister all plugins
 		long elapsedTime = System.currentTimeMillis( );
@@ -210,43 +210,43 @@ public class LogFileViewerApp extends Thread
 
 	}
 
-	private void onDataSourceClosed( )
+	private void onLogStreamClosed( )
 	{
-		// 2b. prepare closing the datasource
+		// 2b. prepare closing the LogStream
 		long elapsedTime = System.currentTimeMillis( );
-		LOG( ).info( "2b. PrepareDataSource closed --> notify all plugins ... " );
+		LOG( ).info( "2b. Prepare LogStream closed --> notify all plugins ... " );
 		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
 			IPlugin plugin = entry.getValue( );
-			plugin.onPrepareCloseDataSource( );
+			plugin.onPrepareCloseLogStream( );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-		LOG( ).info( "2b. PrepareDataSource closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+		LOG( ).info( "2b. Prepare LogStream closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 
-		// 2c. closing the datasource
+		// 2c. closing the LogStream
 		elapsedTime = System.currentTimeMillis( );
-		LOG( ).info( "2c. DataSource closed --> notify all plugins ... " );
+		LOG( ).info( "2c. LogStream closed --> notify all plugins ... " );
 		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
 			IPlugin plugin = entry.getValue( );
-			plugin.onDataSourceClosed( );
+			plugin.onLogStreamClosed( );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-		LOG( ).info( "2c. DataSource closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+		LOG( ).info( "2c. LogStream closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 	}
 
-	private void onDataSourceOpened( )
+	private void onLogStreamOpened( )
 	{
-		// 2a. opening the datasource
+		// 2a. opening the LogStream
 		long elapsedTime = System.currentTimeMillis( );
-		LOG( ).info( "2a. DataSource opened --> notify all plugins ... " );
+		LOG( ).info( "2a. LogStream opened --> notify all plugins ... " );
 		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
 			IPlugin plugin = entry.getValue( );
-			plugin.onDataSourceOpened( );
+			plugin.onLogStreamOpened( );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-		LOG( ).info( "2a. DataSource opened --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+		LOG( ).info( "2a. LogStream opened --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 	}
 
 	private Logger LOG( )
