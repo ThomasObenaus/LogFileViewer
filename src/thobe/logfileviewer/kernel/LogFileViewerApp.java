@@ -23,13 +23,14 @@ import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.logfileviewer.kernel.source.LogStream;
+import thobe.logfileviewer.kernel.source.LogStreamStateListener;
 
 /**
  * @author Thomas Obenaus
  * @source LogFileViewerApp.java
  * @date May 15, 2014
  */
-public class LogFileViewerApp extends Thread
+public class LogFileViewerApp extends Thread implements LogStreamStateListener
 {
 	/**
 	 * {@link Deque} holding all events for the app
@@ -54,9 +55,9 @@ public class LogFileViewerApp extends Thread
 		this.log = Logger.getLogger( "thobe.logfileviewer.kernel.LogFileViewerApp" );
 		this.events = new ConcurrentLinkedDeque<>( );
 		this.logStream = new LogStream( );
+		this.logStream.addLogStreamStateListener( this );
 		this.pluginManager = new PluginManager( );
 		this.eventSem = new Semaphore( 0, true );
-
 	}
 
 	public LogStream getLogStream( )
@@ -78,7 +79,7 @@ public class LogFileViewerApp extends Thread
 	@Override
 	public void run( )
 	{
-		LOG( ).info( "Thread " + this.getName( ) + " started" );
+		LOG( ).info( "Thread " + this.getLogStreamListenerName( ) + " started" );
 
 		// register console-plugin
 		pluginManager.registerPlugin( new Console( ) );
@@ -95,17 +96,17 @@ public class LogFileViewerApp extends Thread
 			// process events 
 			if ( !this.events.isEmpty( ) )
 			{
-				LogFileViewerAppEvent event = this.events.peekFirst( );
+				LogFileViewerAppEvent event = this.events.pollFirst( );
 
 				switch ( event )
 				{
 				case QUIT:
 					quitRequested = true;
 					continue;
-				case DS_OPENED:
+				case LS_OPENED:
 					onLogStreamOpened( );
 					break;
-				case DS_CLOSED:
+				case LS_CLOSED:
 					onLogStreamClosed( );
 					break;
 				}
@@ -124,7 +125,7 @@ public class LogFileViewerApp extends Thread
 		// quit the application
 		onQuit( );
 
-		LOG( ).info( "Thread " + this.getName( ) + " stopped" );
+		LOG( ).info( "Thread " + this.getLogStreamListenerName( ) + " stopped" );
 	}
 
 	private void onStart( )
@@ -252,5 +253,32 @@ public class LogFileViewerApp extends Thread
 	private Logger LOG( )
 	{
 		return this.log;
+	}
+
+	@Override
+	public void onEOFReached( )
+	{
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onOpened( )
+	{
+		this.events.push( LogFileViewerAppEvent.LS_OPENED );
+		this.eventSem.release( );
+	}
+
+	@Override
+	public void onClosed( )
+	{
+		this.events.push( LogFileViewerAppEvent.LS_CLOSED );
+		this.eventSem.release( );
+	}
+	
+	@Override
+	public String getLogStreamListenerName( )
+	{
+		return "LogFileViewerApp";
 	}
 }

@@ -146,12 +146,6 @@ public abstract class LogStreamReader extends Thread
 				LOG( ).warning( this.getClass( ).getSimpleName( ) + " error reading next line: '" + e.getLocalizedMessage( ) + ( this.stopOnReachingEOF ? "'. stop reading." : "'. continue reading" ) );
 				this.EOFReached.set( true );
 
-				// close the LogStreamReader in case of EOF reading should be stopped  
-				if ( this.stopOnReachingEOF )
-				{
-					this.opened.set( false );
-					break;
-				}
 			}//catch ( LogStreamTimeoutException e ) .
 			catch ( LogStreamException e )
 			{
@@ -176,6 +170,11 @@ public abstract class LogStreamReader extends Thread
 
 		}// while ( !this.quitRequested.get( ) && ( !this.EOFReached.get( ) || !this.stopOnReachingEOF ) ).
 
+		// close the LogStreamReader in case of EOF reading should be stopped  
+		if ( this.EOFReached.get( ) && this.stopOnReachingEOF )
+		{
+			this.opened.set( false );
+		}
 		LOG( ).info( "Thread: " + this.getClass( ).getSimpleName( ) + " stopped." );
 	}
 

@@ -17,7 +17,7 @@ package thobe.logfileviewer.kernel;
  */
 public enum LogFileViewerAppEvent
 {
-	QUIT,DS_OPENED,DS_CLOSED;
+	QUIT,LS_OPENED,LS_CLOSED;
 }
 
 

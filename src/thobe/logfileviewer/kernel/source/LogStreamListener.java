@@ -17,5 +17,5 @@ package thobe.logfileviewer.kernel.source;
  */
 public interface LogStreamListener
 {
-	public String getName( );
+	public String getLogStreamListenerName( );
 }

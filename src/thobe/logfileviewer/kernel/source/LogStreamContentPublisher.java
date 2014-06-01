@@ -200,7 +200,7 @@ public class LogStreamContentPublisher extends Thread
 
 				if ( elapsedTime > 100 )
 				{
-					LOG( ).warning( "Listener '" + l.getName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the new-line event." );
+					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the new-line event." );
 				}// if ( elapsedTime > 100 ).
 			}// for ( LogStreamContentPublisherListener l : this.listeners ).
 		}// synchronized ( listeners ).
@@ -219,7 +219,7 @@ public class LogStreamContentPublisher extends Thread
 
 				if ( elapsedTime > 100 )
 				{
-					LOG( ).warning( "Listener '" + l.getName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the EOF-reached event." );
+					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the EOF-reached event." );
 				}// if ( elapsedTime > 100 ).
 			}// for ( LogStreamContentPublisherListener l : this.listeners ).
 		}// synchronized ( listeners ).
@@ -238,7 +238,7 @@ public class LogStreamContentPublisher extends Thread
 
 				if ( elapsedTime > 100 )
 				{
-					LOG( ).warning( "Listener '" + l.getName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the opened event." );
+					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the opened event." );
 				}// if ( elapsedTime > 100 ).
 			}// for ( LogStreamContentPublisherListener l : this.listeners ).
 		}// synchronized ( listeners ).
@@ -257,7 +257,7 @@ public class LogStreamContentPublisher extends Thread
 
 				if ( elapsedTime > 100 )
 				{
-					LOG( ).warning( "Listener '" + l.getName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the closed event." );
+					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the closed event." );
 				}// if ( elapsedTime > 100 ).
 			}// for ( LogStreamContentPublisherListener l : this.listeners ).
 		}// synchronized ( listeners ).

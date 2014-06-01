@@ -120,7 +120,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	}
 
 	@Override
-	public String getName( )
+	public String getLogStreamListenerName( )
 	{
 		return this.getLogChannelName( );
 	}
@@ -137,7 +137,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 
 				if ( elapsedTime > 100 )
 				{
-					LOG( ).warning( "Listener '" + l.getName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the closed event." );
+					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the closed event." );
 				}// if ( elapsedTime > 100 ).
 			}// for ( LogStreamStateListener l : this.logStreamStateListeners ) .
 		}// synchronized ( this.logStreamStateListeners ) .
@@ -155,7 +155,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 
 				if ( elapsedTime > 100 )
 				{
-					LOG( ).warning( "Listener '" + l.getName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the opened event." );
+					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the opened event." );
 				}// if ( elapsedTime > 100 ).
 			}// for ( LogStreamStateListener l : this.logStreamStateListeners ) .
 		}// synchronized ( this.logStreamStateListeners ) .
@@ -173,7 +173,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 
 				if ( elapsedTime > 100 )
 				{
-					LOG( ).warning( "Listener '" + l.getName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the eof event." );
+					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the eof event." );
 				}// if ( elapsedTime > 100 ).
 			}// for ( LogStreamStateListener l : this.logStreamStateListeners ) .
 		}// synchronized ( this.logStreamStateListeners ) .
