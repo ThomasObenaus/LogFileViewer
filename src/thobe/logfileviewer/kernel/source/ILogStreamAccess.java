@@ -11,6 +11,7 @@
 package thobe.logfileviewer.kernel.source;
 
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 
 /**
  * @author Thomas Obenaus
@@ -30,4 +31,16 @@ public interface ILogStreamAccess
 	 * @param l
 	 */
 	public void removeLogStreamDataListener( LogStreamDataListener l );
+
+	/**
+	 * Add a new {@link LogStreamStateListener}.
+	 * @param l
+	 */
+	public void addLogStreamStateListener( LogStreamStateListener l );
+
+	/**
+	 * Remove a {@link LogStreamStateListener}.
+	 * @param l
+	 */
+	public void removeLogStreamStateListener( LogStreamStateListener l );
 }

@@ -18,6 +18,7 @@ import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 import thobe.widgets.action.AbstrAction;
 import thobe.widgets.action.ActionRegistry;
 
@@ -27,7 +28,7 @@ import thobe.widgets.action.ActionRegistry;
  * @date May 15, 2014
  */
 @SuppressWarnings ( "serial")
-public class Act_Close extends AbstrAction
+public class Act_Close extends AbstrAction implements LogStreamStateListener
 {
 	public static final String	KEY	= "CLOSE";
 	private MainFrame			mainframe;
@@ -36,6 +37,9 @@ public class Act_Close extends AbstrAction
 	{
 		super( "Close", "Close", "Closes the open resource (file/connection)", "Closes the open resource (file/connection)", null, null );
 		this.mainframe = mainframe;
+		LogFileViewerApp app = this.mainframe.getApp( );
+		LogStream logStream = app.getLogStream( );
+		logStream.addLogStreamStateListener( this );
 		this.setEnabled( false );
 	}
 
@@ -47,10 +51,6 @@ public class Act_Close extends AbstrAction
 			LogFileViewerApp app = this.mainframe.getApp( );
 			LogStream logStream = app.getLogStream( );
 			logStream.close( );
-
-			ActionRegistry.get( ).getAction( Act_Close.KEY ).setEnabled( false );
-			ActionRegistry.get( ).getAction( Act_OpenConnection.KEY ).setEnabled( true );
-			ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( true );
 		}
 		catch ( LogStreamException e )
 		{
@@ -62,6 +62,28 @@ public class Act_Close extends AbstrAction
 	public String getActionKey( )
 	{
 		return KEY;
+	}
+
+	@Override
+	public String getLogStreamListenerName( )
+	{
+		return "Act_Close";
+	}
+
+	@Override
+	public void onEOFReached( )
+	{}
+
+	@Override
+	public void onOpened( )
+	{
+		ActionRegistry.get( ).getAction( Act_Close.KEY ).setEnabled( true );
+	}
+
+	@Override
+	public void onClosed( )
+	{
+		ActionRegistry.get( ).getAction( Act_Close.KEY ).setEnabled( false );
 	}
 
 }

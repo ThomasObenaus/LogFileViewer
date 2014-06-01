@@ -19,11 +19,18 @@ public class LogLine
 {
 	private String	data;
 	private long	id;
+	private long	timeStamp;
 
-	public LogLine( long id, String data )
+	public LogLine( long id, long timeStamp, String data )
 	{
 		this.id = id;
+		this.timeStamp = timeStamp;
 		this.data = data;
+	}
+
+	public long getTimeStamp( )
+	{
+		return timeStamp;
 	}
 
 	public long getId( )
@@ -39,6 +46,6 @@ public class LogLine
 	@Override
 	public String toString( )
 	{
-		return "{" + this.id + "}" + this.data;
+		return String.format( "{%5d|%tH:%tM:%tS.%tL} - %s", this.id, this.timeStamp,this.timeStamp,this.timeStamp,this.timeStamp, this.data );
 	}
 }

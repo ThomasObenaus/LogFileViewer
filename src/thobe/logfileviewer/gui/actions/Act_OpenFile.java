@@ -13,7 +13,11 @@ package thobe.logfileviewer.gui.actions;
 import java.awt.event.ActionEvent;
 
 import thobe.logfileviewer.gui.MainFrame;
+import thobe.logfileviewer.kernel.LogFileViewerApp;
+import thobe.logfileviewer.kernel.source.LogStream;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 import thobe.widgets.action.AbstrAction;
+import thobe.widgets.action.ActionRegistry;
 
 /**
  * @author Thomas Obenaus
@@ -21,7 +25,7 @@ import thobe.widgets.action.AbstrAction;
  * @date May 15, 2014
  */
 @SuppressWarnings ( "serial")
-public class Act_OpenFile extends AbstrAction
+public class Act_OpenFile extends AbstrAction implements LogStreamStateListener
 {
 	public static final String	KEY	= "OPEN_FILE";
 	private MainFrame			mainframe;
@@ -30,6 +34,9 @@ public class Act_OpenFile extends AbstrAction
 	{
 		super( "Open File", "Open File", "Open a log-file", "Open a log-file", null, null );
 		this.mainframe = mainframe;
+		LogFileViewerApp app = this.mainframe.getApp( );
+		LogStream logStream = app.getLogStream( );
+		logStream.addLogStreamStateListener( this );
 	}
 
 	@Override
@@ -40,6 +47,28 @@ public class Act_OpenFile extends AbstrAction
 	public String getActionKey( )
 	{
 		return KEY;
+	}
+
+	@Override
+	public String getLogStreamListenerName( )
+	{
+		return "Act_OpenFile";
+	}
+
+	@Override
+	public void onEOFReached( )
+	{}
+
+	@Override
+	public void onOpened( )
+	{
+		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( false );
+	}
+
+	@Override
+	public void onClosed( )
+	{
+		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( true );
 	}
 
 }

@@ -15,8 +15,6 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import thobe.logfileviewer.gui.MainFrame;
-import thobe.logfileviewer.kernel.plugin.PluginManager;
-import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.tools.log.Logging;
 import thobe.tools.log.LoggingException;
 

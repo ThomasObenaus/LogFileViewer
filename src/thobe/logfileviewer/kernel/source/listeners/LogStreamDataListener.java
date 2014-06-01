@@ -25,7 +25,7 @@ public interface LogStreamDataListener
 	/**
 	 * This method should return a regular expression. This regular expression is used to filter the lines of the {@link LogStream}
 	 * /log-file. Only for lines matching this expression the method {@link LogStreamDataListener#onNewLine(LogLine)} is called providing
-	 * the matching line of the log-file. 
+	 * the matching line of the log-file.
 	 * @return
 	 */
 	public String getLineFilter( );

@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.Date;
+import java.util.Calendar;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -50,7 +52,10 @@ public class EthSource
 			long line = 0;
 			while ( true )
 			{				
-				out.println( line + ": huhu" );
+				
+				Date d = new Date( System.currentTimeMillis( ) );
+				out.println( "<em>" + String.format( "%tT",d.getTime( )) + "</em> huhu" );
+				
 				try
 				{
 					Thread.sleep( 500 );

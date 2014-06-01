@@ -24,6 +24,8 @@ import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamContentPublisherListener;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
+import thobe.logfileviewer.kernel.source.timestamp.LineAndTime;
+import thobe.logfileviewer.kernel.source.timestamp.TimeStampExtractor;
 import thobe.tools.log.ILoggable;
 
 /**
@@ -56,10 +58,18 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	private Map<String, Set<LogStreamDataListener>>	logStreamDataListeners;
 
 	/**
+	 * Id of the {@link LogLine}s;
+	 */
+	private int										logLineId;
+
+	private TimeStampExtractor						timeStampExtractor;
+
+	/**
 	 * Ctor
 	 */
 	public LogStream( )
 	{
+		this.timeStampExtractor = new TimeStampExtractor( );
 		this.logStreamStateListeners = new ArrayList<>( );
 		this.logStreamDataListeners = new HashMap<>( );
 		this.logStreamReader = null;
@@ -139,6 +149,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 			this.close( );
 		}
 
+		this.logLineId = 0;
 		this.logStreamReader = source;
 		this.logStreamReader.open( );
 		this.logStreamReader.start( );
@@ -193,7 +204,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		}
 
 		// build the log-line
-		LogLine line = this.buildLogLine( newLine );
+		LogLine line = null;
 
 		synchronized ( this.logStreamDataListeners )
 		{
@@ -203,26 +214,38 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 
 				try
 				{
+					// look if the filter matches the line
 					if ( newLine != null && newLine.matches( lineFilter ) )
 					{
+						// only build the line if at least one filter matches
+						if ( line == null )
+						{
+							line = this.buildLogLine( newLine );
+						}// if ( line == null ).
+
+						// send the line to all registered listeners
 						for ( LogStreamDataListener l : entry.getValue( ) )
 						{
 							l.onNewLine( line );
-						}
-					}
-				}
+						}// for ( LogStreamDataListener l : entry.getValue( ) ).
+
+					}// if ( newLine != null && newLine.matches( lineFilter ) ).
+				}// try
 				catch ( PatternSyntaxException e )
 				{
 					LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + lineFilter + "': " + e.getLocalizedMessage( ) );
-				}
-			}
-		}
+				}// catch ( PatternSyntaxException e ).
+			}// for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) ) .
+		}// synchronized ( this.logStreamDataListeners ) .
 
 	}
 
 	private LogLine buildLogLine( String newLine )
 	{
-		return new LogLine( 0, newLine );
+		LineAndTime lineAndTime = this.timeStampExtractor.splitLineAndTimeStamp( newLine );
+		LogLine logLine = new LogLine( this.logLineId, lineAndTime.getTimeStamp( ), lineAndTime.getLineWithoutTimeStamp( ) );
+		this.logLineId++;
+		return logLine;
 	}
 
 	@Override
