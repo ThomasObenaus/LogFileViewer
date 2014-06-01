@@ -12,6 +12,8 @@ package thobe.logfileviewer.gui;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.swing.JFrame;
@@ -26,6 +28,8 @@ import thobe.logfileviewer.gui.actions.Act_Exit;
 import thobe.logfileviewer.gui.actions.Act_OpenConnection;
 import thobe.logfileviewer.gui.actions.Act_OpenFile;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
+import thobe.logfileviewer.kernel.plugin.IPlugin;
+import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.widgets.action.ActionRegistry;
 
 /**
@@ -36,14 +40,17 @@ import thobe.widgets.action.ActionRegistry;
 @SuppressWarnings ( "serial")
 public class MainFrame extends JFrame
 {
-	private Logger		log;
+	private Logger				log;
 	private LogFileViewerApp	app;
+
+	private Set<IPlugin>		plugins;
 
 	public MainFrame( LogFileViewerApp app )
 	{
 		this.setTitle( LogFileViewerInfo.getAppName( ) + " [" + LogFileViewerInfo.getVersion( ) + "]" );
-		this.log = Logger.getLogger( "thobe.ethsource.gui.MainFrame" );
+		this.log = Logger.getLogger( "thobe.logfileviewer.gui.MainFrame" );
 		this.app = app;
+		this.plugins = new HashSet<>( );
 
 		this.registerActions( );
 
@@ -92,13 +99,27 @@ public class MainFrame extends JFrame
 
 	}
 
-	private void buildGUI( )
+	public void addPlugin( IPlugin plugin )
 	{
-
+		this.plugins.add( plugin );
+		// TODO: add its visual component
 	}
+
+	private void buildGUI( )
+	{}
 
 	public void exit( )
 	{
+		this.app.quit( );
+		try
+		{
+			this.app.join( );
+		}
+		catch ( InterruptedException e )
+		{
+			e.printStackTrace();
+		}
+		
 		this.log.info( "Exit the application" );
 		System.exit( 0 );
 	}

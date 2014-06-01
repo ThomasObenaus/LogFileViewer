@@ -18,17 +18,17 @@ import java.net.Socket;
 /**
  * {@link LogStreamReader} reading over ip (source is a socket).
  * @author Thomas Obenaus
- * @source IpSource.java
+ * @source IpLogStreamReader.java
  * @date May 15, 2014
  */
-public class IpSource extends LogStreamReader
+public class IpLogStreamReader extends LogStreamReader
 {
 	private int				port;
 	private String			host;
 	private BufferedReader	reader;
 	private Socket			socket;
 
-	public IpSource( String host, int port )
+	public IpLogStreamReader( String host, int port )
 	{
 		this.host = host;
 		this.port = port;

@@ -10,7 +10,11 @@
 
 package thobe.logfileviewer.kernel.plugin.console;
 
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+
 import thobe.logfileviewer.kernel.plugin.IPlugin;
+import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 
 /**
  * @author Thomas Obenaus
@@ -19,22 +23,29 @@ import thobe.logfileviewer.kernel.plugin.IPlugin;
  */
 public class Console extends IPlugin
 {
-
 	public Console( )
 	{
 		super( "thobe.ethsource.plugin.Console" );
 	}
 
 	@Override
-	public boolean onRegister( )
+	public JComponent getVisualComponent( )
 	{
+		return new JLabel( "sldslksldk" );
+	}
+
+	@Override
+	public boolean onRegistered( IPluginAccess pluginAccess )
+	{
+		System.out.println( "Console.onRegistered()" );
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public boolean onStart( )
+	public boolean onStarted( )
 	{
+		System.out.println( "Console.onStarted()" );
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -42,27 +53,31 @@ public class Console extends IPlugin
 	@Override
 	public void onDataSourceOpened( )
 	{
+		System.out.println( "Console.onDataSourceOpened()" );
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onPrepareCloseDataSource( )
 	{
+		System.out.println( "Console.onPrepareCloseDataSource()" );
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onDataSourceClosed( )
 	{
+		System.out.println( "Console.onDataSourceClosed()" );
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public boolean onStopped( )
 	{
+		System.out.println( "Console.onStopped()" );
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -70,8 +85,9 @@ public class Console extends IPlugin
 	@Override
 	public void onUnRegistered( )
 	{
+		System.out.println( "Console.onUnRegistered()" );
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -80,5 +96,34 @@ public class Console extends IPlugin
 		return "iMX6.Nav";
 	}
 
+	@Override
+	public String getPluginName( )
+	{
+		return "Console";
+	}
 
+	@Override
+	public String getPluginDescription( )
+	{
+		return "A simple console displaying the whole logfile";
+	}
+
+	@Override
+	public void run( )
+	{
+		while ( !this.isQuitRequested( ) )
+		{
+
+			try
+			{
+				Thread.sleep( 100 );
+			}
+			catch ( InterruptedException e )
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace( );
+			}
+
+		}
+	}
 }

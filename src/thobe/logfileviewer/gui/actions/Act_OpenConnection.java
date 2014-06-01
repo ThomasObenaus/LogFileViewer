@@ -17,7 +17,7 @@ import javax.swing.JOptionPane;
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.source.DataSource;
-import thobe.logfileviewer.kernel.source.IpSource;
+import thobe.logfileviewer.kernel.source.IpLogStreamReader;
 import thobe.logfileviewer.kernel.source.TraceSourceException;
 import thobe.widgets.action.AbstrAction;
 import thobe.widgets.action.ActionRegistry;
@@ -46,7 +46,7 @@ public class Act_OpenConnection extends AbstrAction
 		{
 			LogFileViewerApp app = this.mainframe.getApp( );
 			DataSource dataSource = app.getDataSource( );
-			dataSource.open( new IpSource( "127.0.0.1", 15000 ) );
+			dataSource.open( new IpLogStreamReader( "127.0.0.1", 15000 ) );
 
 			ActionRegistry.get( ).getAction( Act_Close.KEY ).setEnabled( true );
 			ActionRegistry.get( ).getAction( Act_OpenConnection.KEY ).setEnabled( false );

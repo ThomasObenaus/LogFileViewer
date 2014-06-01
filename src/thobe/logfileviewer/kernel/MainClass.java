@@ -15,6 +15,8 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import thobe.logfileviewer.gui.MainFrame;
+import thobe.logfileviewer.kernel.plugin.PluginManager;
+import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.tools.log.Logging;
 import thobe.tools.log.LoggingException;
 
@@ -43,6 +45,9 @@ public class MainClass
 
 		// start the application
 		LogFileViewerApp app = new LogFileViewerApp( );
+		app.start( );
+
+		// add the running application to its visual representation
 		MainFrame mainFrame = new MainFrame( app );
 		mainFrame.setVisible( true );
 	}
