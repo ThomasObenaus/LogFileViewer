@@ -16,6 +16,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import thobe.logfileviewer.kernel.source.err.LogStreamException;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamContentPublisherListener;
+
 /**
  * Class that is responsible to publish the contents that where read from the log via {@link LogStreamReader}.
  * @author Thomas Obenaus

@@ -13,6 +13,9 @@ package thobe.logfileviewer.kernel.source;
 import java.util.ArrayList;
 import java.util.List;
 
+import thobe.logfileviewer.kernel.source.err.LogStreamException;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamContentPublisherListener;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 import thobe.tools.log.ILoggable;
 
 /**

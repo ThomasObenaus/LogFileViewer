@@ -23,7 +23,7 @@ import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.logfileviewer.kernel.source.LogStream;
-import thobe.logfileviewer.kernel.source.LogStreamStateListener;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 
 /**
  * @author Thomas Obenaus

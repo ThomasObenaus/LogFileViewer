@@ -8,7 +8,9 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source;
+package thobe.logfileviewer.kernel.source.listeners;
+
+import thobe.logfileviewer.kernel.source.LogStreamContentPublisher;
 
 /**
  * Raw listener that is used to monitor the {@link LogStreamContentPublisher}.

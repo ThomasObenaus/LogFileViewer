@@ -16,6 +16,9 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
+import thobe.logfileviewer.kernel.source.err.LogStreamException;
+import thobe.logfileviewer.kernel.source.err.LogStreamTimeoutException;
+
 /**
  * {@link LogStreamReader} reading over ip (source is a socket).
  * @author Thomas Obenaus

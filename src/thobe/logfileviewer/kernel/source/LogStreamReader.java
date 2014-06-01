@@ -16,6 +16,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import thobe.logfileviewer.kernel.source.err.LogStreamException;
+import thobe.logfileviewer.kernel.source.err.LogStreamTimeoutException;
+
 /**
  * Abstract class representing a source that reads and offers contents of a log (file or over ip).
  * @author Thomas Obenaus
