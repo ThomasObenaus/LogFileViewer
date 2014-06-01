@@ -11,10 +11,18 @@
 package thobe.logfileviewer.kernel.source;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.regex.PatternSyntaxException;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamContentPublisherListener;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 import thobe.tools.log.ILoggable;
 
@@ -24,22 +32,28 @@ import thobe.tools.log.ILoggable;
  * @source LogStream.java
  * @date May 29, 2014
  */
-public class LogStream extends ILoggable implements LogStreamContentPublisherListener
+public class LogStream extends ILoggable implements LogStreamContentPublisherListener, ILogStreamAccess
 {
 	/**
 	 * {@link Thread} that reads the log-file asynchronously.
 	 */
-	private LogStreamReader					logStreamReader;
+	private LogStreamReader							logStreamReader;
 
 	/**
 	 * {@link Thread} that publishes events fired by the {@link LogStreamReader} (e.g. new line, opened, closed,...)
 	 */
-	private LogStreamContentPublisher		publishThread;
+	private LogStreamContentPublisher				publishThread;
 
 	/**
 	 * List of listeners that are interested in state-changes of the log-file ({@link LogStream}) e.g. open, closed, eofReached.
 	 */
-	private List<LogStreamStateListener>	logStreamStateListeners;
+	private List<LogStreamStateListener>			logStreamStateListeners;
+
+	/**
+	 * Map of listeners that are interested in data of the log-file ({@link LogStream}). Within this map the listeners are ordered by their
+	 * line-filter. Map<line-filter,set of listeners>
+	 */
+	private Map<String, Set<LogStreamDataListener>>	logStreamDataListeners;
 
 	/**
 	 * Ctor
@@ -47,6 +61,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	public LogStream( )
 	{
 		this.logStreamStateListeners = new ArrayList<>( );
+		this.logStreamDataListeners = new HashMap<>( );
 		this.logStreamReader = null;
 		this.publishThread = new LogStreamContentPublisher( );
 		this.publishThread.start( );
@@ -74,6 +89,41 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		synchronized ( this.logStreamStateListeners )
 		{
 			this.logStreamStateListeners.remove( l );
+		}
+	}
+
+	/**
+	 * Add a new {@link LogStreamDataListener}.
+	 * @param l
+	 */
+	public void addLogStreamDataListener( LogStreamDataListener l )
+	{
+		synchronized ( this.logStreamDataListeners )
+		{
+			Set<LogStreamDataListener> listeners = this.logStreamDataListeners.get( l.getLineFilter( ) );
+			if ( listeners == null )
+			{
+				// create an empty set if no listeners with the given filter are available
+				listeners = new HashSet<>( );
+				this.logStreamDataListeners.put( l.getLineFilter( ), listeners );
+			}
+			listeners.add( l );
+		}
+	}
+
+	/**
+	 * Remove a {@link LogStreamDataListener}.
+	 * @param l
+	 */
+	public void removeLogStreamDataListener( LogStreamDataListener l )
+	{
+		synchronized ( this.logStreamDataListeners )
+		{
+			Set<LogStreamDataListener> listeners = this.logStreamDataListeners.get( l.getLineFilter( ) );
+			if ( listeners != null )
+			{
+				listeners.remove( l );
+			}
 		}
 	}
 
@@ -135,7 +185,44 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	@Override
 	public void onNewLine( String newLine )
 	{
-		// nod needed
+		final boolean logFine = LOG( ).isLoggable( Level.FINE );
+
+		if ( logFine )
+		{
+			LOG( ).fine( "New line '" + newLine + "' will be send to listeners." );
+		}
+
+		// build the log-line
+		LogLine line = this.buildLogLine( newLine );
+
+		synchronized ( this.logStreamDataListeners )
+		{
+			for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) )
+			{
+				String lineFilter = entry.getKey( );
+
+				try
+				{
+					if ( newLine != null && newLine.matches( lineFilter ) )
+					{
+						for ( LogStreamDataListener l : entry.getValue( ) )
+						{
+							l.onNewLine( line );
+						}
+					}
+				}
+				catch ( PatternSyntaxException e )
+				{
+					LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + lineFilter + "': " + e.getLocalizedMessage( ) );
+				}
+			}
+		}
+
+	}
+
+	private LogLine buildLogLine( String newLine )
+	{
+		return new LogLine( 0, newLine );
 	}
 
 	@Override

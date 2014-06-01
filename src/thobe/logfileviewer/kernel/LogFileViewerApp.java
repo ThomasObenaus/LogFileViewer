@@ -219,7 +219,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
 			IPlugin plugin = entry.getValue( );
-			plugin.onPrepareCloseLogStream( );
+			plugin.onPrepareCloseLogStream( this.logStream );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
 		LOG( ).info( "2b. Prepare LogStream closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
@@ -244,7 +244,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
 			IPlugin plugin = entry.getValue( );
-			plugin.onLogStreamOpened( );
+			plugin.onLogStreamOpened( this.logStream );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
 		LOG( ).info( "2a. LogStream opened --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
@@ -275,7 +275,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		this.events.push( LogFileViewerAppEvent.LS_CLOSED );
 		this.eventSem.release( );
 	}
-	
+
 	@Override
 	public String getLogStreamListenerName( )
 	{

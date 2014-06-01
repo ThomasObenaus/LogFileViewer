@@ -128,7 +128,6 @@ public class LogStreamContentPublisher extends Thread
 					{
 						String nextLine = this.traceSource.nextLine( );
 						this.fireNewLine( nextLine );
-						System.out.println( nextLine );
 					}
 					catch ( LogStreamException e )
 					{

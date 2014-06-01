@@ -15,7 +15,9 @@ import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 
+import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogStream;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 
 /**
  * @author Thomas Obenaus
@@ -74,14 +76,18 @@ public abstract class IPlugin extends Thread
 	/**
 	 * Life-cycle of {@link IPlugin}: <b>##### Step 2a <u>OPEN LS</u> #####</b><br>
 	 * A new {@link LogStream} was opened
+	 * @param logStreamAccess - the object that can be used to access the {@link LogStream} by registering a {@link LogStreamDataListener}
+	 *            via {@link ILogStreamAccess#addLogStreamDataListener(LogStreamDataListener)}.
 	 */
-	public abstract void onLogStreamOpened( );
+	public abstract void onLogStreamOpened( ILogStreamAccess logStreamAccess );
 
 	/**
 	 * Life-cycle of {@link IPlugin}: <b>##### Step 2b <u>PREPARE CLOSE LS</u> #####</b><br>
-	 * The currently open {@link LogStream} will be closed
+	 * The currently open {@link LogStream} will be closed --> eac {@link IPlugin} has to unregister from the {@link LogStream}
+	 * @param logStreamAccess - the object that can be used unregister from the {@link LogStream} via
+	 *            {@link ILogStreamAccess#removeLogStreamStateListener(LogStreamStateListener)}
 	 */
-	public abstract void onPrepareCloseLogStream( );
+	public abstract void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess );
 
 	/**
 	 * Life-cycle of {@link IPlugin}: <b>##### Step 2c <u>CLOSE LS</u> #####</b><br>
@@ -105,8 +111,6 @@ public abstract class IPlugin extends Thread
 	 * @return
 	 */
 	public abstract boolean onStopped( );
-
-	public abstract String getPrepareFilter( );
 
 	public abstract String getPluginName( );
 
@@ -132,12 +136,6 @@ public abstract class IPlugin extends Thread
 			return false;
 		if ( !this.getPluginDescription( ).equals( other.getPluginDescription( ) ) )
 			return false;
-
-		if ( ( this.getPrepareFilter( ) == null && other.getPrepareFilter( ) != null ) || ( this.getPrepareFilter( ) != null && other.getPrepareFilter( ) == null ) )
-			return false;
-		if ( !this.getPrepareFilter( ).equals( other.getPrepareFilter( ) ) )
-			return false;
-
 		return true;
 	}
 
@@ -146,9 +144,7 @@ public abstract class IPlugin extends Thread
 	{
 		int hCPluginName = ( this.getPluginName( ) == null ) ? 0 : this.getPluginName( ).hashCode( );
 		int hCPluginDesc = ( this.getPluginDescription( ) == null ) ? 0 : this.getPluginDescription( ).hashCode( );
-		int hCPrepFilter = ( this.getPrepareFilter( ) == null ) ? 0 : this.getPrepareFilter( ).hashCode( );
-
-		return hCPluginName * hCPluginDesc * hCPrepFilter;
+		return hCPluginName * hCPluginDesc;
 	}
 
 }

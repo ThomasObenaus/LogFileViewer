@@ -15,13 +15,16 @@ import javax.swing.JLabel;
 
 import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+import thobe.logfileviewer.kernel.source.ILogStreamAccess;
+import thobe.logfileviewer.kernel.source.LogLine;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 
 /**
  * @author Thomas Obenaus
  * @source Console.java
  * @date May 29, 2014
  */
-public class Console extends IPlugin
+public class Console extends IPlugin implements LogStreamDataListener
 {
 	public Console( )
 	{
@@ -37,63 +40,48 @@ public class Console extends IPlugin
 	@Override
 	public boolean onRegistered( IPluginAccess pluginAccess )
 	{
-		System.out.println( "Console.onRegistered()" );
-		// TODO Auto-generated method stub
-		return false;
+		LOG( ).info( this.getPluginName( ) + " registered." );
+		return true;
 	}
 
 	@Override
 	public boolean onStarted( )
 	{
-		System.out.println( "Console.onStarted()" );
-		// TODO Auto-generated method stub
+		LOG( ).info( this.getPluginName( ) + " started." );
 		return false;
 	}
 
 	@Override
-	public void onLogStreamOpened( )
+	public void onLogStreamOpened( ILogStreamAccess logStreamAccess )
 	{
-		System.out.println( "Console.onLogStreamOpened()" );
-		// TODO Auto-generated method stub
-
+		LOG( ).info( this.getPluginName( ) + " LogStream opened." );
+		logStreamAccess.addLogStreamDataListener( this );
 	}
 
 	@Override
-	public void onPrepareCloseLogStream( )
+	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess )
 	{
-		System.out.println( "Console.onPrepareCloseLogStream()" );
-		// TODO Auto-generated method stub
-
+		LOG( ).info( this.getPluginName( ) + " prepare to close LogStream." );
+		logStreamAccess.removeLogStreamDataListener( this );
 	}
 
 	@Override
 	public void onLogStreamClosed( )
 	{
-		System.out.println( "Console.onLogStreamClosed()" );
-		// TODO Auto-generated method stub
-
+		LOG( ).info( this.getPluginName( ) + " LogStream closed." );
 	}
 
 	@Override
 	public boolean onStopped( )
 	{
-		System.out.println( "Console.onStopped()" );
-		// TODO Auto-generated method stub
-		return false;
+		LOG( ).info( this.getPluginName( ) + " stopped." );
+		return true;
 	}
 
 	@Override
 	public void onUnRegistered( )
 	{
-		System.out.println( "Console.onUnRegistered()" );
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public String getPrepareFilter( )
-	{
-		return "iMX6.Nav";
+		LOG( ).info( this.getPluginName( ) + " unregistered." );
 	}
 
 	@Override
@@ -123,7 +111,19 @@ public class Console extends IPlugin
 				// TODO Auto-generated catch block
 				e.printStackTrace( );
 			}
-
 		}
+	}
+
+	@Override
+	public void onNewLine( LogLine line )
+	{
+		// TODO Auto-generated method stub
+		System.out.println( "##################### " + line );
+	}
+
+	@Override
+	public String getLineFilter( )
+	{
+		return ".*";
 	}
 }
