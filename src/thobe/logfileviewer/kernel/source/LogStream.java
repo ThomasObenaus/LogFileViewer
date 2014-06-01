@@ -16,17 +16,31 @@ import java.util.List;
 import thobe.tools.log.ILoggable;
 
 /**
+ * The resource representing the log-file (access to the log-file).
  * @author Thomas Obenaus
  * @source LogStream.java
  * @date May 29, 2014
  */
 public class LogStream extends ILoggable implements LogStreamContentPublisherListener
 {
+	/**
+	 * {@link Thread} that reads the log-file asynchronously.
+	 */
 	private LogStreamReader					logStreamReader;
+
+	/**
+	 * {@link Thread} that publishes events fired by the {@link LogStreamReader} (e.g. new line, opened, closed,...)
+	 */
 	private LogStreamContentPublisher		publishThread;
 
+	/**
+	 * List of listeners that are interested in state-changes of the log-file ({@link LogStream}) e.g. open, closed, eofReached.
+	 */
 	private List<LogStreamStateListener>	logStreamStateListeners;
 
+	/**
+	 * Ctor
+	 */
 	public LogStream( )
 	{
 		this.logStreamStateListeners = new ArrayList<>( );
@@ -36,6 +50,10 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		this.publishThread.addListener( this );
 	}
 
+	/**
+	 * Add a new {@link LogStreamStateListener}.
+	 * @param l
+	 */
 	public void addLogStreamStateListener( LogStreamStateListener l )
 	{
 		synchronized ( this.logStreamStateListeners )
@@ -44,6 +62,10 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		}
 	}
 
+	/**
+	 * Remove a {@link LogStreamStateListener}.
+	 * @param l
+	 */
 	public void removeLogStreamStateListener( LogStreamStateListener l )
 	{
 		synchronized ( this.logStreamStateListeners )
@@ -52,6 +74,11 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		}
 	}
 
+	/**
+	 * Open/ start reading from a log-file represented by the given {@link LogStreamReader}.
+	 * @param source
+	 * @throws LogStreamException
+	 */
 	public void open( LogStreamReader source ) throws LogStreamException
 	{
 		if ( this.logStreamReader != null && this.logStreamReader.isOpen( ) )
@@ -68,6 +95,10 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		LOG( ).info( "LogStream opened [" + this.logStreamReader.getClass( ).getSimpleName( ) + "]" );
 	}
 
+	/**
+	 * Returns true if the {@link LogStream} is open, false otherwise.
+	 * @return
+	 */
 	public boolean isOpen( )
 	{
 		if ( this.logStreamReader == null )
@@ -77,6 +108,10 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		return true;
 	}
 
+	/**
+	 * Closes this {@link LogStream}.
+	 * @throws LogStreamException
+	 */
 	public void close( ) throws LogStreamException
 	{
 		if ( this.logStreamReader != null )
@@ -97,8 +132,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	@Override
 	public void onNewLine( String newLine )
 	{
-		// TODO Auto-generated method stub
-
+		// nod needed
 	}
 
 	@Override

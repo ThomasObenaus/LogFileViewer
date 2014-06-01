@@ -145,7 +145,6 @@ public abstract class LogStreamReader extends Thread
 				// The call to readLineImpl() timed out --> EOF
 				LOG( ).warning( this.getClass( ).getSimpleName( ) + " error reading next line: '" + e.getLocalizedMessage( ) + ( this.stopOnReachingEOF ? "'. stop reading." : "'. continue reading" ) );
 				this.EOFReached.set( true );
-
 			}//catch ( LogStreamTimeoutException e ) .
 			catch ( LogStreamException e )
 			{

@@ -11,6 +11,7 @@
 package thobe.logfileviewer.kernel.source;
 
 /**
+ * Raw listener that is used to monitor the {@link LogStreamContentPublisher}.
  * @author Thomas Obenaus
  * @source LogStreamContentPublisherListener.java
  * @date May 31, 2014
@@ -18,5 +19,4 @@ package thobe.logfileviewer.kernel.source;
 public interface LogStreamContentPublisherListener extends LogStreamStateListener
 {
 	public void onNewLine( String newLine );
-	
 }

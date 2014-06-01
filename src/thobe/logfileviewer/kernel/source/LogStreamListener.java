@@ -17,5 +17,9 @@ package thobe.logfileviewer.kernel.source;
  */
 public interface LogStreamListener
 {
+	/**
+	 * Implement this method to identify the name of the {@link LogStreamListener}.
+	 * @return
+	 */
 	public String getLogStreamListenerName( );
 }
