@@ -51,8 +51,6 @@ public class DataSource extends ILoggable
 			return false;
 		if ( !this.traceSource.isOpen( ) )
 			return false;
-		if ( this.traceSource.isEOFReached( ) )
-			return false;
 		return true;
 	}
 

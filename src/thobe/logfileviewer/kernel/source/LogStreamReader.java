@@ -50,6 +50,11 @@ public abstract class LogStreamReader extends Thread
 	private AtomicBoolean	EOFReached;
 
 	/**
+	 * If true the Thread terminates on reaching eof, otherwise the thread goes on reading.
+	 */
+	private boolean			stopOnReachingEOF;
+
+	/**
 	 * The internal logger
 	 */
 	private Logger			log;
@@ -64,6 +69,7 @@ public abstract class LogStreamReader extends Thread
 		this.opened = new AtomicBoolean( false );
 		this.EOFReached = new AtomicBoolean( false );
 		this.sleepTime = new AtomicInteger( 100 );
+		this.stopOnReachingEOF = true;
 		this.log = Logger.getLogger( "thobe.logfileviewer.source.LogStreamReader" );
 	}
 
@@ -71,7 +77,8 @@ public abstract class LogStreamReader extends Thread
 	 * Returns the next line that is available (was read from the log source). On accessing this method the line will be consumed, that
 	 * means further calls to this method will result in different results (the next line).
 	 * @return - the next line as {@link String}
-	 * @throws TraceSourceException - Thrown if no more lines are available. Please use {@link LogStreamReader#hasNextLine()} to check if more
+	 * @throws TraceSourceException - Thrown if no more lines are available. Please use {@link LogStreamReader#hasNextLine()} to check if
+	 *             more
 	 *             lines are available.
 	 */
 	public String nextLine( ) throws TraceSourceException
@@ -90,13 +97,24 @@ public abstract class LogStreamReader extends Thread
 		return !this.lineBuffer.isEmpty( );
 	}
 
+	/**
+	 * Setting this flag to false the {@link LogStreamReader} continues reading even if the end of file was reached, assuming more lines
+	 * will be added to the file soon (like tail -f <file>). Setting this flag to true the {@link LogStreamReader} will terminate
+	 * immediately if the end of the file is reached.
+	 * @param stopOnReachingEOF
+	 */
+	public void setStopOnReachingEOF( boolean stopOnReachingEOF )
+	{
+		this.stopOnReachingEOF = stopOnReachingEOF;
+	}
+
 	@Override
 	public void run( )
 	{
 		LOG( ).info( "Thread: " + this.getClass( ).getSimpleName( ) + " started." );
 
-		// Main-loop, will only terminate if close was called
-		while ( !this.quitRequested.get( ) && !this.EOFReached.get( ) )
+		// Main-loop, will only terminate if close was called or if eof-was reached
+		while ( !this.quitRequested.get( ) && ( !this.EOFReached.get( ) || !this.stopOnReachingEOF ) )
 		{
 			// directly interrupt reading from the source if the source is not open
 			if ( !isOpen( ) )
@@ -127,8 +145,8 @@ public abstract class LogStreamReader extends Thread
 				LOG( ).warning( this.getClass( ).getSimpleName( ) + " error reading next line: " + e1.getLocalizedMessage( ) );
 			}// catch ( TraceSourceException e1 ) .
 
-			// sleep only if we don't have already reached the EOF
-			if ( !this.EOFReached.get( ) )
+			// sleep only if we don't have already reached the EOF or if we don't want to stop at the end of file
+			if ( !this.EOFReached.get( ) || !this.stopOnReachingEOF )
 			{
 				try
 				{
@@ -139,9 +157,9 @@ public abstract class LogStreamReader extends Thread
 					LOG( ).info( "" + this.getClass( ).getSimpleName( ) + " interrupted: " + e.getLocalizedMessage( ) );
 					break;
 				}// catch ( InterruptedException e ) .
-			}// if ( !bEOFReached ) .
+			}// if ( !this.EOFReached.get( ) || !this.stopOnReachingEOF ) .
 
-		}// while ( !this.quitRequested.get( ) ) .
+		}// while ( !this.quitRequested.get( ) && ( !this.EOFReached.get( ) || !this.stopOnReachingEOF ) ).
 
 		LOG( ).info( "Thread: " + this.getClass( ).getSimpleName( ) + " stopped." );
 	}
