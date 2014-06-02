@@ -12,8 +12,6 @@ package thobe.logfileviewer.gui;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.swing.JFrame;
@@ -28,8 +26,9 @@ import thobe.logfileviewer.gui.actions.Act_Exit;
 import thobe.logfileviewer.gui.actions.Act_OpenConnection;
 import thobe.logfileviewer.gui.actions.Act_OpenFile;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
-import thobe.logfileviewer.kernel.plugin.IPlugin;
-import thobe.logfileviewer.kernel.plugin.PluginManager;
+import thobe.logfileviewer.kernel.LogFileViewerAppListener;
+import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.widgets.action.ActionRegistry;
 
 /**
@@ -38,19 +37,20 @@ import thobe.widgets.action.ActionRegistry;
  * @date May 15, 2014
  */
 @SuppressWarnings ( "serial")
-public class MainFrame extends JFrame
+public class MainFrame extends JFrame implements LogFileViewerAppListener
 {
 	private Logger				log;
 	private LogFileViewerApp	app;
 
-	private Set<IPlugin>		plugins;
+	private Console				console;
 
 	public MainFrame( LogFileViewerApp app )
 	{
 		this.setTitle( LogFileViewerInfo.getAppName( ) + " [" + LogFileViewerInfo.getVersion( ) + "]" );
 		this.log = Logger.getLogger( "thobe.logfileviewer.gui.MainFrame" );
+
 		this.app = app;
-		this.plugins = new HashSet<>( );
+		this.app.addListener( this );
 
 		this.registerActions( );
 
@@ -86,7 +86,6 @@ public class MainFrame extends JFrame
 		mu_file.add( new JSeparator( JSeparator.HORIZONTAL ) );
 		JMenuItem mi_exit = new JMenuItem( ActionRegistry.get( ).getAction( Act_Exit.KEY ) );
 		mu_file.add( mi_exit );
-
 	}
 
 	private void registerActions( )
@@ -99,14 +98,10 @@ public class MainFrame extends JFrame
 
 	}
 
-	public void addPlugin( IPlugin plugin )
-	{
-		this.plugins.add( plugin );
-		// TODO: add its visual component
-	}
-
 	private void buildGUI( )
-	{}
+	{
+
+	}
 
 	public void exit( )
 	{
@@ -117,9 +112,9 @@ public class MainFrame extends JFrame
 		}
 		catch ( InterruptedException e )
 		{
-			e.printStackTrace();
+			e.printStackTrace( );
 		}
-		
+
 		this.log.info( "Exit the application" );
 		System.exit( 0 );
 	}
@@ -127,5 +122,43 @@ public class MainFrame extends JFrame
 	public LogFileViewerApp getApp( )
 	{
 		return app;
+	}
+
+	@Override
+	public void newPluginsAvailable( IPluginAccess pluginAccess )
+	{
+		LOG( ).info( "New plugins available" );
+		boolean rebuildNeeded = false;
+
+		// we dont have the console --> look for it
+		if ( this.console == null )
+		{
+			this.console = pluginAccess.getConsole( );
+			if ( this.console != null )
+			{
+				LOG( ).info( "IPlugin '" + this.console + "' found and added." );
+				rebuildNeeded = true;
+			}// if ( this.console != null ) .
+		}// if ( this.console == null ).
+
+		// rebuild GUI if needed (if a new plugin is available)
+		if ( rebuildNeeded )
+			this.rebuildGUI( );
+	}
+
+	private void rebuildGUI( )
+	{
+		// add console in case we have one
+		if ( this.console != null && !this.console.isAttachedToGUI( ) )
+		{
+			this.add( this.console.getVisualComponent( ) );
+			this.console.setAttachedToGUI( );
+			this.console.setVisible( true );
+		}// if ( this.console != null && !this.console.isAttachedToGUI( ) ) .
+	}
+
+	private Logger LOG( )
+	{
+		return this.log;
 	}
 }

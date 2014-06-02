@@ -13,7 +13,7 @@ package thobe.logfileviewer.kernel.plugin.console;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import thobe.logfileviewer.kernel.plugin.IPlugin;
+import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
@@ -24,11 +24,13 @@ import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
  * @source Console.java
  * @date May 29, 2014
  */
-public class Console extends IPlugin implements LogStreamDataListener
+public class Console extends Plugin implements LogStreamDataListener
 {
+	public static final String	FULL_PLUGIN_NAME	= "thobe.logfileviewer.plugin.Console";
+
 	public Console( )
 	{
-		super( "thobe.ethsource.plugin.Console" );
+		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
 	}
 
 	@Override
@@ -87,7 +89,7 @@ public class Console extends IPlugin implements LogStreamDataListener
 	@Override
 	public String getPluginName( )
 	{
-		return "Console";
+		return FULL_PLUGIN_NAME;
 	}
 
 	@Override

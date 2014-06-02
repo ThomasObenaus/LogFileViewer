@@ -41,12 +41,13 @@ public class MainClass
 		// set the look and feel
 		setLookAndFeel( );
 
-		// start the application
+		
 		LogFileViewerApp app = new LogFileViewerApp( );
-		app.start( );
-
 		// add the running application to its visual representation
 		MainFrame mainFrame = new MainFrame( app );
+
+		// start the application
+		app.start( );
 		mainFrame.setVisible( true );
 	}
 

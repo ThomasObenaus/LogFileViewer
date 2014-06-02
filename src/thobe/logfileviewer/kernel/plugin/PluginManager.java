@@ -13,6 +13,8 @@ package thobe.logfileviewer.kernel.plugin;
 import java.util.HashMap;
 import java.util.Map;
 
+import thobe.logfileviewer.kernel.plugin.console.Console;
+
 /**
  * @author Thomas Obenaus
  * @source PluginManager.java
@@ -20,7 +22,7 @@ import java.util.Map;
  */
 public class PluginManager implements IPluginAccess
 {
-	private Map<String, IPlugin>	plugins;
+	private Map<String, Plugin>	plugins;
 
 	public PluginManager( )
 	{
@@ -32,12 +34,12 @@ public class PluginManager implements IPluginAccess
 		// TODO: implement
 	}
 
-	public void registerPlugin( IPlugin plugin )
+	public void registerPlugin( Plugin plugin )
 	{
 		this.plugins.put( plugin.getPluginName( ), plugin );
 	}
 
-	public void unregisterPlugin( IPlugin plugin )
+	public void unregisterPlugin( Plugin plugin )
 	{
 		this.plugins.remove( plugin );
 	}
@@ -47,13 +49,13 @@ public class PluginManager implements IPluginAccess
 		this.plugins.clear( );
 	}
 
-	public Map<String, IPlugin> getPlugins( )
+	public Map<String, Plugin> getPlugins( )
 	{
 		return plugins;
 	}
 
 	@Override
-	public IPlugin getPlugin( String pluginName )
+	public Plugin getPlugin( String pluginName )
 	{
 		return this.plugins.get( pluginName );
 	}
@@ -62,5 +64,17 @@ public class PluginManager implements IPluginAccess
 	public boolean hasPlugin( String pluginName )
 	{
 		return this.plugins.containsKey( pluginName );
+	}
+
+	@Override
+	public Console getConsole( )
+	{
+		Plugin plugin = this.plugins.get( Console.FULL_PLUGIN_NAME );
+		Console console = null;
+		if ( plugin instanceof Console )
+		{
+			console = ( Console ) plugin;
+		}
+		return console;
 	}
 }

@@ -12,6 +12,8 @@ package thobe.logfileviewer.kernel.plugin;
 
 import java.util.Map;
 
+import thobe.logfileviewer.kernel.plugin.console.Console;
+
 /**
  * @author Thomas Obenaus
  * @source IPluginAccess.java
@@ -20,22 +22,29 @@ import java.util.Map;
 public interface IPluginAccess
 {
 	/**
-	 * Returns true if the {@link IPlugin} with the given name is available, false otherwise.
+	 * Returns true if the {@link Plugin} with the given name is available, false otherwise.
 	 * @param pluginName
 	 * @return
 	 */
 	public boolean hasPlugin( String pluginName );
 
 	/**
-	 * Returns the {@link IPlugin} with the given name or null if no such {@link IPlugin} is available.
+	 * Returns the {@link Plugin} with the given name or null if no such {@link Plugin} is available.
 	 * @param pluginName
 	 * @return
 	 */
-	public IPlugin getPlugin( String pluginName );
+	public Plugin getPlugin( String pluginName );
 
 	/**
-	 * Returns all {@link IPlugin} currently registered (Map<plugin-name,IPlugin>).
+	 * Returns all {@link Plugin} currently registered (Map<plugin-name,IPlugin>).
 	 * @return
 	 */
-	public Map<String, IPlugin> getPlugins( );
+	public Map<String, Plugin> getPlugins( );
+
+	/**
+	 * Returns the {@link Console}-plugin.
+	 * Might return null if the {@link Console}-plugin is not yet available.
+	 * @return
+	 */
+	public Console getConsole( );
 }

@@ -10,14 +10,14 @@
 
 package thobe.logfileviewer.kernel;
 
+import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+
 /**
  * @author Thomas Obenaus
- * @source LogFileViewerAppEvent.java
- * @date May 31, 2014
+ * @source LogFileViewerAppListener.java
+ * @date Jun 1, 2014
  */
-public enum LogFileViewerAppEvent
+public interface LogFileViewerAppListener
 {
-	QUIT,LS_OPENED,LS_CLOSED;
+	public void newPluginsAvailable( IPluginAccess pluginAccess );
 }
-
-

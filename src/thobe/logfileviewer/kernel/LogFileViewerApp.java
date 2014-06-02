@@ -10,8 +10,10 @@
 
 package thobe.logfileviewer.kernel;
 
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -19,7 +21,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import thobe.logfileviewer.kernel.plugin.IPlugin;
+import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.logfileviewer.kernel.source.LogStream;
@@ -46,13 +48,27 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 	 * The {@link LogStream} providing the contents of the logfile that should be displayed
 	 */
 	private LogStream						logStream;
+
+	/**
+	 * List of listeners that want to monitor the {@link LogFileViewerApp}.
+	 */
+	private List<LogFileViewerAppListener>	listeners;
+
+	/**
+	 * Manager responsible to find an manage {@link Plugin}s.
+	 */
 	private PluginManager					pluginManager;
+
+	/**
+	 * Semaphore for the internal event-queue.
+	 */
 	private Semaphore						eventSem;
 
 	public LogFileViewerApp( )
 	{
 		super( "LogFileViewerApp" );
 		this.log = Logger.getLogger( "thobe.logfileviewer.kernel.LogFileViewerApp" );
+		this.listeners = new ArrayList<>( );
 		this.events = new ConcurrentLinkedDeque<>( );
 		this.logStream = new LogStream( );
 		this.logStream.addLogStreamStateListener( this );
@@ -60,14 +76,25 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		this.eventSem = new Semaphore( 0, true );
 	}
 
+	public void removeListener( LogFileViewerAppListener l )
+	{
+		synchronized ( this.listeners )
+		{
+			this.listeners.remove( l );
+		}
+	}
+
+	public void addListener( LogFileViewerAppListener l )
+	{
+		synchronized ( this.listeners )
+		{
+			this.listeners.add( l );
+		}
+	}
+
 	public LogStream getLogStream( )
 	{
 		return logStream;
-	}
-
-	public PluginManager getPluginManager( )
-	{
-		return pluginManager;
 	}
 
 	public void quit( )
@@ -133,15 +160,15 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		// 1. start all plugins
 		long elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "1. Start --> notify all plugins ... " );
-		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			IPlugin plugin = entry.getValue( );
+			Plugin plugin = entry.getValue( );
 			LOG( ).info( "\t- Start: '" + plugin.getPluginName( ) + "'" );
 			plugin.start( );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
-		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			IPlugin plugin = entry.getValue( );
+			Plugin plugin = entry.getValue( );
 			plugin.onStarted( );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
@@ -150,15 +177,16 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		// 2. register all plugins
 		elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "2. Register --> notify all plugins ... " );
-		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			IPlugin plugin = entry.getValue( );
+			Plugin plugin = entry.getValue( );
 			LOG( ).info( "\t- Register: '" + plugin.getPluginName( ) + "'" );
 			plugin.onRegistered( this.pluginManager );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
 		LOG( ).info( "2. Register --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 
+		this.fireOnPluginsAvailable( );
 	}
 
 	private void onQuit( )
@@ -169,10 +197,10 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		// 3. unregister all plugins
 		long elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "3. Unregister --> notify all plugins ... " );
-		Map<String, IPlugin> tmpPlugins = new HashMap<>( this.pluginManager.getPlugins( ) );
-		for ( Entry<String, IPlugin> entry : tmpPlugins.entrySet( ) )
+		Map<String, Plugin> tmpPlugins = new HashMap<>( this.pluginManager.getPlugins( ) );
+		for ( Entry<String, Plugin> entry : tmpPlugins.entrySet( ) )
 		{
-			IPlugin plugin = entry.getValue( );
+			Plugin plugin = entry.getValue( );
 			LOG( ).info( "\t- Unregister: '" + plugin.getPluginName( ) + "'" );
 			plugin.onUnRegistered( );
 			this.pluginManager.unregisterPlugin( plugin );
@@ -184,9 +212,9 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		// 4. stop all plugins
 		elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "4. Stopped--> notify all plugins ... " );
-		for ( Entry<String, IPlugin> entry : tmpPlugins.entrySet( ) )
+		for ( Entry<String, Plugin> entry : tmpPlugins.entrySet( ) )
 		{
-			IPlugin plugin = entry.getValue( );
+			Plugin plugin = entry.getValue( );
 			LOG( ).info( "\t- Stop: '" + plugin.getPluginName( ) + "'" );
 			long elapsedTimeForPlugin = System.currentTimeMillis( );
 			plugin.quit( );
@@ -216,9 +244,9 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		// 2b. prepare closing the LogStream
 		long elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "2b. Prepare LogStream closed --> notify all plugins ... " );
-		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			IPlugin plugin = entry.getValue( );
+			Plugin plugin = entry.getValue( );
 			plugin.onPrepareCloseLogStream( this.logStream );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
@@ -227,9 +255,9 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		// 2c. closing the LogStream
 		elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "2c. LogStream closed --> notify all plugins ... " );
-		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			IPlugin plugin = entry.getValue( );
+			Plugin plugin = entry.getValue( );
 			plugin.onLogStreamClosed( );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
@@ -241,13 +269,28 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		// 2a. opening the LogStream
 		long elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "2a. LogStream opened --> notify all plugins ... " );
-		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			IPlugin plugin = entry.getValue( );
+			Plugin plugin = entry.getValue( );
 			plugin.onLogStreamOpened( this.logStream );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
 		LOG( ).info( "2a. LogStream opened --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+	}
+
+	private void fireOnPluginsAvailable( )
+	{
+		synchronized ( this.listeners )
+		{
+			long elapsedTime = System.currentTimeMillis( );
+			LOG( ).info( "Publish: plugins are available (started and registered) ... " );
+			for ( LogFileViewerAppListener l : this.listeners )
+			{
+				l.newPluginsAvailable( this.pluginManager );
+			}// for ( LogFileViewerAppListener l : this.listeners ).
+			elapsedTime = System.currentTimeMillis( ) - elapsedTime;
+			LOG( ).info( "Publish: plugins are available (started and registered) ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+		}// synchronized ( this.listeners ).
 	}
 
 	private Logger LOG( )
@@ -257,10 +300,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 
 	@Override
 	public void onEOFReached( )
-	{
-		// TODO Auto-generated method stub
-
-	}
+	{}
 
 	@Override
 	public void onOpened( )
@@ -281,4 +321,15 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 	{
 		return "LogFileViewerApp";
 	}
+
+	/**
+	 * @author Thomas Obenaus
+	 * @source LogFileViewerAppEvent.java
+	 * @date May 31, 2014
+	 */
+	private enum LogFileViewerAppEvent
+	{
+		QUIT, LS_OPENED, LS_CLOSED;
+	}
+
 }
