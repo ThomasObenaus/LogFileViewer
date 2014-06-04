@@ -10,12 +10,13 @@
 
 package thobe.logfileviewer.server;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Date;
-import java.util.Calendar;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -49,23 +50,29 @@ public class EthSource
 			System.out.println( "client connected" );
 			PrintWriter out = new PrintWriter( clientSocket.getOutputStream( ), true );
 
-			long line = 0;
 			while ( true )
-			{				
-				
-				Date d = new Date( System.currentTimeMillis( ) );
-				out.println( "<em>" + String.format( "%tT",d.getTime( )) + "</em> huhu" );
-				
-				try
+			{
+				String fileName = "backupfile.txt";
+				System.out.println( "Opening file " + fileName );
+
+				BufferedReader reader = new BufferedReader( new FileReader( new File( fileName ) ) );
+				String line = null;
+
+				while ( ( line = reader.readLine( ) ) != null )
 				{
-					Thread.sleep( 500 );
+					out.println( line );
+
+					try
+					{
+						Thread.sleep( 0 );
+					}
+					catch ( InterruptedException e )
+					{
+						// TODO Auto-generated catch block
+						e.printStackTrace( );
+					}
 				}
-				catch ( InterruptedException e )
-				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				line++;
+				reader.close( );
 			}
 		}
 		catch ( IOException e )

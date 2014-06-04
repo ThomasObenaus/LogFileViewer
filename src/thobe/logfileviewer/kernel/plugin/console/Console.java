@@ -10,14 +10,26 @@
 
 package thobe.logfileviewer.kernel.plugin.console;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
+
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
 
-import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
+import thobe.widgets.log.LogPanel;
 
 /**
  * @author Thomas Obenaus
@@ -28,15 +40,25 @@ public class Console extends Plugin implements LogStreamDataListener
 {
 	public static final String	FULL_PLUGIN_NAME	= "thobe.logfileviewer.plugin.Console";
 
+	private LogPanel			logPanel;
+	private Deque<LogLine>		lineBuffer;
+
 	public Console( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
+		this.lineBuffer = new ConcurrentLinkedDeque<>( );
+		this.buildGUI( );
+	}
+
+	private void buildGUI( )
+	{
+		this.logPanel = new LogPanel( true, false );
 	}
 
 	@Override
 	public JComponent getVisualComponent( )
 	{
-		return new JLabel( "sldslksldk" );
+		return this.logPanel;
 	}
 
 	@Override
@@ -104,6 +126,13 @@ public class Console extends Plugin implements LogStreamDataListener
 		while ( !this.isQuitRequested( ) )
 		{
 
+			if ( !this.lineBuffer.isEmpty( ) )
+			{
+
+				LogLine line = this.lineBuffer.pollFirst( );
+				this.logPanel.addLine( line.getData( ) );
+			}
+
 			try
 			{
 				Thread.sleep( 100 );
@@ -119,8 +148,7 @@ public class Console extends Plugin implements LogStreamDataListener
 	@Override
 	public void onNewLine( LogLine line )
 	{
-		// TODO Auto-generated method stub
-		System.out.println( "##################### " + line );
+		this.lineBuffer.add( line );
 	}
 
 	@Override

@@ -26,7 +26,7 @@ public class TimeStampExtractor
 
 	public TimeStampExtractor( )
 	{
-		String pattern = "HH:mm:ss";
+		String pattern = "HH:mm:ss.SSS";
 		this.formatter = new SimpleDateFormat( pattern );
 		this.timePattern = dateFormatPatternToRegex( pattern );
 	}

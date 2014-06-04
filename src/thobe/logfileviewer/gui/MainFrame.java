@@ -155,6 +155,9 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 			this.console.setAttachedToGUI( );
 			this.console.setVisible( true );
 		}// if ( this.console != null && !this.console.isAttachedToGUI( ) ) .
+
+		this.revalidate( );
+		this.repaint( );
 	}
 
 	private Logger LOG( )
