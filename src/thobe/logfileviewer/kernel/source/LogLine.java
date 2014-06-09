@@ -43,9 +43,14 @@ public class LogLine
 		return data;
 	}
 
+	public String getTimeStampStr( )
+	{
+		return String.format( "%tH:%tM:%tS.%tL", this.timeStamp, this.timeStamp, this.timeStamp, this.timeStamp );
+	}
+
 	@Override
 	public String toString( )
 	{
-		return String.format( "{%5d|%tH:%tM:%tS.%tL} - %s", this.id, this.timeStamp,this.timeStamp,this.timeStamp,this.timeStamp, this.data );
+		return String.format( "{%5d|%s} - %s", this.id, this.getTimeStampStr( ), this.data );
 	}
 }
