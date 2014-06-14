@@ -19,17 +19,17 @@ package thobe.logfileviewer.server;
 public final class Arguments
 {
 	private Integer	port;
-	private String	host;
+	private String	filename;
 
-	public Arguments( String host, Integer port )
+	public Arguments( String filename, Integer port )
 	{
-		this.host = host;
+		this.filename = filename;
 		this.port = port;
 	}
 
-	public String getHost( )
+	public String getFilename( )
 	{
-		return host;
+		return filename;
 	}
 
 	public Integer getPort( )

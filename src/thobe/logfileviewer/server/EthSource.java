@@ -12,11 +12,16 @@ package thobe.logfileviewer.server;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -33,52 +38,307 @@ import org.apache.commons.cli.ParseException;
  * @source EthSource.java
  * @date May 15, 2014
  */
-public class EthSource
+public class EthSource extends Thread
 {
-	private static final String	APP_NAME	= "ethsource";
+	private static final String			APP_NAME					= "ethsource";
+	private static final int			CLIENT_CONNECTION_TIMEOUT	= 10000;
+	private static final long			MAX_TIMEOUT					= 25000;
+	private static final int			MAX_LINES_PER_BLOCK			= 50;
+
+	private Map<Socket, PrintWriter>	clientWriterMap;
+	private ServerSocket				serverSocket;
+	private boolean						quitRequested;
+	private ClientAccepter				clientAccepter;
+	private ClientConnectionChecker		clientConnectionChecker;
+	private File						file;
+
+	public EthSource( int port, File file ) throws IOException
+	{
+		this.file = file;
+		this.clientWriterMap = new HashMap<>( );
+		this.serverSocket = new ServerSocket( port );
+		this.quitRequested = false;
+	}
+
+	void addClient( Socket client ) throws IOException
+	{
+		PrintWriter writer = new PrintWriter( client.getOutputStream( ) );
+		synchronized ( this.clientWriterMap )
+		{
+			this.clientWriterMap.put( client, writer );
+		}
+	}
+
+	void removeClient( Socket client )
+	{
+		synchronized ( this.clientWriterMap )
+		{
+			this.clientWriterMap.remove( client );
+		}
+	}
+
+	Map<Socket, PrintWriter> getClientWriterMap( )
+	{
+		Map<Socket, PrintWriter> copyOfMap = new HashMap<>( );
+		synchronized ( this.clientWriterMap )
+		{
+			copyOfMap.putAll( this.clientWriterMap );
+		}
+		return copyOfMap;
+	}
+
+	@Override
+	public void run( )
+	{
+		System.out.println( "Starting EthSource" );
+		this.clientAccepter = new ClientAccepter( this, this.serverSocket );
+		System.out.println( "ClientAccepter created, start it" );
+		this.clientAccepter.start( );
+
+		System.out.println( "ClientConnectionChecker created, start it" );
+		this.clientConnectionChecker = new ClientConnectionChecker( this );
+		this.clientConnectionChecker.start( );
+
+		BufferedReader reader = null;
+		StringBuffer strBuffer = new StringBuffer( );
+		while ( !this.quitRequested )
+		{
+			// Open the file 
+			if ( reader == null )
+			{
+				System.out.println( "Opening " + this.file.getAbsolutePath( ) );
+				try
+				{
+					reader = new BufferedReader( new FileReader( this.file ) );
+				}
+				catch ( FileNotFoundException e )
+				{
+					System.err.println( "Could not find file " + this.file.getAbsolutePath( ) + ": " + e.getLocalizedMessage( ) );
+					break;
+				}
+			}
+
+			// clear the strBuffer
+			strBuffer.setLength( 0 );
+			String line = null;
+			int linesCollected = 0;
+
+			// collect N lines from the file
+			try
+			{
+				while ( ( ( line = reader.readLine( ) ) != null ) && linesCollected < MAX_LINES_PER_BLOCK )
+				{
+					strBuffer.append( line + "\n" );
+					linesCollected++;
+				}
+			}
+			catch ( IOException e1 )
+			{
+				System.err.println( "Error reading file: " + e1.getLocalizedMessage( ) );
+				break;
+			}
+
+			// now put the lines to the clients
+			synchronized ( this.clientWriterMap )
+			{
+				String block = strBuffer.toString( );
+				for ( Entry<Socket, PrintWriter> entry : this.clientWriterMap.entrySet( ) )
+				{
+					PrintWriter out = entry.getValue( );
+					out.write( block, 0, block.length( ) );
+					//System.out.println( "Block : " + block + " written" );
+				}
+			}
+
+			try
+			{
+				Thread.sleep( 100 );
+			}
+			catch ( InterruptedException e )
+			{
+				break;
+			}
+		}
+
+		// close the reader 
+		if ( reader != null )
+		{
+			try
+			{
+				reader.close( );
+			}
+			catch ( IOException e )
+			{
+				System.err.println( "Error closing reader: " + e.getLocalizedMessage( ) );
+			}
+		}
+
+		try
+		{
+			System.out.println( "Quit the client accepter" );
+			this.clientAccepter.quit( );
+			this.clientAccepter.interrupt( );
+			this.clientAccepter.join( );
+
+			System.out.println( "Quit the client connection checker" );
+			this.clientConnectionChecker.quit( );
+			this.clientConnectionChecker.interrupt( );
+			this.clientConnectionChecker.join( );
+		}
+		catch ( InterruptedException e )
+		{}
+
+		System.out.println( "Stopping EthSource" );
+	}
+
+	private class ClientConnectionChecker extends Thread
+	{
+		private boolean		quitRequested;
+		private EthSource	ethSource;
+
+		public ClientConnectionChecker( EthSource ethSource )
+		{
+			this.ethSource = ethSource;
+			this.quitRequested = false;
+		}
+
+		public void quit( )
+		{
+			this.quitRequested = true;
+		}
+
+		@Override
+		public void run( )
+		{
+			System.out.println( "ClientConnectionChecker started" );
+			while ( !this.quitRequested )
+			{
+				Map<Socket, PrintWriter> clients = this.ethSource.getClientWriterMap( );
+
+				for ( Entry<Socket, PrintWriter> entry : clients.entrySet( ) )
+				{
+					Socket client = entry.getKey( );
+					long lastReadTime = System.currentTimeMillis( );
+					boolean clientDisconnected = false;
+					try
+					{
+						int result = client.getInputStream( ).read( );
+						clientDisconnected = ( result == -1 );
+					}
+					catch ( SocketTimeoutException e )
+					{
+						clientDisconnected = !( System.currentTimeMillis( ) - lastReadTime < MAX_TIMEOUT );
+					}
+					catch ( IOException e )
+					{
+						clientDisconnected = true;
+					}
+
+					if ( clientDisconnected )
+					{
+						System.out.println( "Client " + client.getInetAddress( ) + " disconnected" );
+						this.ethSource.removeClient( client );
+						try
+						{
+							client.close( );
+						}
+						catch ( IOException e )
+						{
+							e.printStackTrace( );
+						}
+					}
+				}
+
+				try
+				{
+					Thread.sleep( 500 );
+				}
+				catch ( InterruptedException e )
+				{
+					break;
+				}
+			}
+
+			System.out.println( "ClientConnectionChecker stopped" );
+		}
+	}
+
+	private class ClientAccepter extends Thread
+	{
+		private ServerSocket	serverSocket;
+		private EthSource		ethSource;
+		private boolean			quitRequested;
+
+		public ClientAccepter( EthSource ethSource, ServerSocket serverSocket )
+		{
+			this.ethSource = ethSource;
+			this.serverSocket = serverSocket;
+			this.quitRequested = false;
+		}
+
+		public void quit( )
+		{
+			this.quitRequested = true;
+		}
+
+		@Override
+		public void run( )
+		{
+			System.out.println( "Starting ClientAccepter" );
+			while ( !this.quitRequested )
+			{
+				try
+				{
+					Socket client = this.serverSocket.accept( );
+					client.setSoTimeout( CLIENT_CONNECTION_TIMEOUT );
+					if ( client != null )
+					{
+						System.out.println( "New client " + client.getInetAddress( ) + " found" );
+						this.ethSource.addClient( client );
+					}
+				}
+				catch ( IOException e )
+				{
+					System.err.println( "Error waiting for clients: " + e.getLocalizedMessage( ) );
+				}
+
+				try
+				{
+					Thread.sleep( 500 );
+				}
+				catch ( InterruptedException e )
+				{
+					break;
+				}
+			}
+
+			System.out.println( "Stopping ClientAccepter" );
+		}
+	}
 
 	public static void main( String[] args )
 	{
 		Arguments parsedArgs = parseCommandLine( args );
-		System.out.println( "Connecting to " + parsedArgs.getHost( ) + ":" + parsedArgs.getPort( ) );
+		System.out.println( "Connecting to localhost at port=" + parsedArgs.getPort( ) + ", reading file='" + parsedArgs.getFilename( ) + "'" );
 
 		try
 		{
-			ServerSocket serverSocket = new ServerSocket( parsedArgs.getPort( ) );
-			System.out.println( "waiting..." );
-			Socket clientSocket = serverSocket.accept( );
-			System.out.println( "client connected" );
-			PrintWriter out = new PrintWriter( clientSocket.getOutputStream( ), true );
+			EthSource ethSource = new EthSource( parsedArgs.getPort( ), new File( parsedArgs.getFilename( ) ) );
+			ethSource.start( );
 
-			while ( true )
+			try
 			{
-				String fileName = "backupfile.txt";
-				System.out.println( "Opening file " + fileName );
-
-				BufferedReader reader = new BufferedReader( new FileReader( new File( fileName ) ) );
-				String line = null;
-
-				while ( ( line = reader.readLine( ) ) != null )
-				{
-					out.println( line );
-
-					try
-					{
-						Thread.sleep( 0 );
-					}
-					catch ( InterruptedException e )
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace( );
-					}
-				}
-				reader.close( );
+				ethSource.join( );
+			}
+			catch ( InterruptedException e )
+			{
+				e.printStackTrace( );
 			}
 		}
 		catch ( IOException e )
 		{
-			System.out.println( "Exception caught when trying to listen on port " + parsedArgs.getPort( ) + " or listening for a connection" );
-			System.out.println( e.getMessage( ) );
+			System.err.println( "Error opening connection: " + e.getLocalizedMessage( ) );
+			System.exit( 1 );
 		}
 	}
 
@@ -91,32 +351,32 @@ public class EthSource
 	public static Arguments parseCommandLine( String args[] )
 	{
 
-		final String OPT_HOSTNAME = "h";
 		final String OPT_PORT = "p";
+		final String OPT_FILE = "f";
 
 		// create Options object
 		Options options = new Options( );
 
 		@SuppressWarnings ( "static-access")
-		Option optHostname = OptionBuilder.withArgName( "hostname" ).hasArg( ).withLongOpt( "host" ).withDescription( "Name of the host (e.g. 192.168.1.4)" ).create( OPT_HOSTNAME );
+		Option optFilename = OptionBuilder.withArgName( "filename" ).hasArg( ).withLongOpt( "filename" ).withDescription( "Name of the file that should be read and send over socket." ).create( OPT_FILE );
 
 		@SuppressWarnings ( "static-access")
 		Option optPort = OptionBuilder.withArgName( "portnumber" ).hasArg( ).withLongOpt( "port" ).withDescription( "The port to listen/send to." ).create( OPT_PORT );
 
-		options.addOption( optHostname );
+		options.addOption( optFilename );
 		options.addOption( optPort );
 
-		String hostname = null;
+		String filename = null;
 		Integer port = null;
 		try
 		{
 			CommandLineParser parser = new GnuParser( );
 			CommandLine cmd = parser.parse( options, args );
 
-			hostname = cmd.getOptionValue( OPT_HOSTNAME );
-			if ( hostname == null )
+			filename = cmd.getOptionValue( OPT_FILE );
+			if ( filename == null )
 			{
-				System.err.println( "Hostname is missing" );
+				System.err.println( "Filename is missing" );
 				usage( options );
 				System.exit( 1 );
 			}
@@ -148,6 +408,6 @@ public class EthSource
 			System.exit( 2 );
 		}
 
-		return new Arguments( hostname, port );
+		return new Arguments( filename, port );
 	}
 }
