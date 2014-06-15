@@ -10,6 +10,8 @@
 
 package thobe.logfileviewer.kernel.source;
 
+import thobe.logfileviewer.kernel.plugin.SizeOf;
+
 /**
  * @author Thomas Obenaus
  * @source LogLine.java
@@ -52,5 +54,10 @@ public class LogLine
 	public String toString( )
 	{
 		return String.format( "{%5d|%s} - %s", this.id, this.getTimeStampStr( ), this.data );
+	}
+
+	public long getMem( )
+	{
+		return ( SizeOf.LONG * 2 ) + SizeOf.STRING( this.data );
 	}
 }

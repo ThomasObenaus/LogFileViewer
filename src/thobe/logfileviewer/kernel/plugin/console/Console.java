@@ -41,11 +41,12 @@ public class Console extends Plugin implements LogStreamDataListener
 	private Deque<LogLine>		lineBuffer;
 	private ConsoleTableModel	tableModel;
 	private JPanel				pa_logPanel;
+	private long				memInLineBuffer;
 
 	public Console( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
-
+		this.memInLineBuffer = 0;
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
 		this.buildGUI( );
 	}
@@ -141,7 +142,9 @@ public class Console extends Plugin implements LogStreamDataListener
 			// collect some lines
 			while ( ( !this.lineBuffer.isEmpty( ) ) && !timeThresholdHurt && !blockSizeThresholdHurt )
 			{
-				block.add( this.lineBuffer.pollFirst( ) );
+				LogLine ll = this.lineBuffer.pollFirst( );
+				this.memInLineBuffer -= ll.getMem( );
+				block.add( ll );
 				blockSizeThresholdHurt = block.size( ) > MAX_LINES_PER_BLOCK;
 				timeThresholdHurt = ( System.currentTimeMillis( ) - startTime ) > MAX_TIME_PER_BLOCK_IN_MS;
 			}// while ( ( !this.lineBuffer.isEmpty( ) ) && !timeThresholdHurt && !blockSizeThresholdHurt ).
@@ -169,11 +172,18 @@ public class Console extends Plugin implements LogStreamDataListener
 	public void onNewLine( LogLine line )
 	{
 		this.lineBuffer.add( line );
+		this.memInLineBuffer += line.getMem( );
 	}
 
 	@Override
 	public String getLineFilter( )
 	{
 		return ".*";
+	}
+
+	@Override
+	public long getCurrentMemory( )
+	{
+		return this.memInLineBuffer + this.tableModel.getMem( );
 	}
 }

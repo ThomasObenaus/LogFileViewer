@@ -28,16 +28,19 @@ public class ConsoleTableModel extends AbstractTableModel
 	private static String	columnNames[]	= new String[]
 											{ "Time", "Entry" };
 	private List<LogLine>	entries;
+	private long			memory;
 
 	public ConsoleTableModel( )
 	{
 		this.entries = new ArrayList<>( );
+		this.memory = 0;
 	}
 
 	public void addLine( LogLine line )
 	{
 		int rows = this.entries.size( );
 		this.entries.add( line );
+		this.memory += line.getMem( );
 		this.fireTableRowsInserted( rows, rows + 1 );
 	}
 
@@ -58,6 +61,10 @@ public class ConsoleTableModel extends AbstractTableModel
 			int rows = this.getRowCount( );
 			this.entries.addAll( block );
 			this.fireTableRowsInserted( rows, rows + block.size( ) );
+
+			// collect mem-information
+			for ( LogLine l : block )
+				this.memory += l.getMem( );
 		}
 	}
 
@@ -65,6 +72,7 @@ public class ConsoleTableModel extends AbstractTableModel
 	{
 		int lastRow = this.entries.size( );
 		this.entries.clear( );
+		this.memory = 0;
 		this.fireTableRowsDeleted( 0, lastRow );
 	}
 
@@ -100,4 +108,8 @@ public class ConsoleTableModel extends AbstractTableModel
 		return line.getData( );
 	}
 
+	public long getMem( )
+	{
+		return this.memory;
+	}
 }

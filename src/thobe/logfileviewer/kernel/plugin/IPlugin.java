@@ -99,4 +99,10 @@ public interface IPlugin
 	 * @return
 	 */
 	public String getPluginDescription( );
+
+	/**
+	 * This method should return the memory currently allocated by this plugin in byte.
+	 * @return
+	 */
+	public long getCurrentMemory( );
 }
