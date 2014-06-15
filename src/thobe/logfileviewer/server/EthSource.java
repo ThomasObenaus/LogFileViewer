@@ -131,6 +131,12 @@ public class EthSource extends Thread
 					strBuffer.append( line + "\n" );
 					linesCollected++;
 				}
+
+				if ( line == null )
+				{
+					System.out.println( "EOF reached, reopeneing file" );
+					reader = null;
+				}
 			}
 			catch ( IOException e1 )
 			{
