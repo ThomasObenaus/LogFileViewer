@@ -61,6 +61,12 @@ public class Console extends Plugin implements LogStreamDataListener
 		this.pa_logPanel.add( ta_logTable.getTableHeader( ), BorderLayout.NORTH );
 		JScrollPane scrpa_main = new JScrollPane( ta_logTable );
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
+		
+		// adjust column-sizes
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setMinWidth( 110 );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setMaxWidth(  110 );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setPreferredWidth( 110 );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setResizable( false );
 	}
 
 	@Override

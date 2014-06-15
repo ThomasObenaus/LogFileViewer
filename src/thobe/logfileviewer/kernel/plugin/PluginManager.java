@@ -32,7 +32,7 @@ public class PluginManager implements IPluginAccess
 		this.plugins = new HashMap<>( );
 
 		Timer timer = new Timer( );
-		timer.schedule( new MemConsumptionPrinter( this ), 2000, 2000 );
+		timer.schedule( new MemConsumptionPrinter( this ), 2000, 10000 );
 	}
 
 	public void findAndRegisterPlugins( )
