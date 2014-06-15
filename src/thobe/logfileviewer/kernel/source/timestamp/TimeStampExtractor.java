@@ -14,21 +14,25 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import thobe.tools.log.ILoggable;
+
 /**
  * @author Thomas Obenaus
  * @source TimeStampExtractor.java
  * @date Jun 1, 2014
  */
-public class TimeStampExtractor
+public class TimeStampExtractor extends ILoggable
 {
 	private String				timePattern;
 	private SimpleDateFormat	formatter;
+	private long				previousTimeStamp;
 
 	public TimeStampExtractor( )
 	{
 		String pattern = "HH:mm:ss.SSS";
 		this.formatter = new SimpleDateFormat( pattern );
 		this.timePattern = dateFormatPatternToRegex( pattern );
+		this.previousTimeStamp = System.currentTimeMillis( );
 	}
 
 	private String dateFormatPatternToRegex( String dateFormatPattern )
@@ -48,14 +52,20 @@ public class TimeStampExtractor
 		try
 		{
 			Date date = this.formatter.parse( line );
-
-			return new LineAndTime( date.getTime( ), line.replaceFirst( this.timePattern, "" ) );
+			this.previousTimeStamp = date.getTime( );
+			return new LineAndTime( this.previousTimeStamp, line.replaceFirst( this.timePattern, "" ).trim( ) );
 		}
 		catch ( ParseException e )
 		{
-			e.printStackTrace( );
+			LOG( ).info( "Failed to find/parse timestamp in line '" + line + "'" );
 		}
 
-		return new LineAndTime( System.currentTimeMillis( ), line );
+		return new LineAndTime( this.previousTimeStamp, line );
+	}
+
+	@Override
+	protected String getLogChannelName( )
+	{
+		return "thobe.logfileviewer.source.TimeStampExtractor";
 	}
 }

@@ -126,8 +126,12 @@ public class LogStreamContentPublisher extends Thread
 				{
 					try
 					{
-						String nextLine = this.traceSource.nextLine( );
-						this.fireNewLine( nextLine );
+						String nextLine = this.traceSource.nextLine( );						
+						// skip empty lines
+						if ( nextLine != null && !nextLine.trim( ).isEmpty( ) )
+						{
+							this.fireNewLine( nextLine );
+						}// if(nextLine != null && !nextLine.trim( ).isEmpty( )) .
 					}
 					catch ( LogStreamException e )
 					{
