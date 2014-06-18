@@ -11,6 +11,8 @@
 package thobe.logfileviewer.kernel.plugin.console;
 
 import java.awt.BorderLayout;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
@@ -20,9 +22,15 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.Plugin;
+import thobe.logfileviewer.kernel.plugin.console.events.CEvt_Scroll;
+import thobe.logfileviewer.kernel.plugin.console.events.CEvt_ScrollToLast;
+import thobe.logfileviewer.kernel.plugin.console.events.CEvt_SetAutoScrollMode;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
@@ -38,16 +46,23 @@ public class Console extends Plugin implements LogStreamDataListener
 	private static long			MAX_TIME_PER_BLOCK_IN_MS	= 1000;
 	private static long			MAX_LINES_PER_BLOCK			= 100;
 
+	private Deque<CEvt_Scroll>	scrollEventQueue;
+
 	private Deque<LogLine>		lineBuffer;
 	private ConsoleTableModel	tableModel;
 	private JPanel				pa_logPanel;
 	private long				memInLineBuffer;
+
+	private boolean				autoScrollingEnabled;
+	private JTable				ta_logTable;
 
 	public Console( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
 		this.memInLineBuffer = 0;
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
+		this.scrollEventQueue = new ConcurrentLinkedDeque<>( );
+		this.autoScrollingEnabled = true;
 		this.buildGUI( );
 	}
 
@@ -57,16 +72,56 @@ public class Console extends Plugin implements LogStreamDataListener
 		this.pa_logPanel = new JPanel( new BorderLayout( ) );
 		this.tableModel = new ConsoleTableModel( );
 
-		JTable ta_logTable = new JTable( this.tableModel );
+		this.ta_logTable = new JTable( this.tableModel );
 		this.pa_logPanel.add( ta_logTable.getTableHeader( ), BorderLayout.NORTH );
-		JScrollPane scrpa_main = new JScrollPane( ta_logTable );
+		final JScrollPane scrpa_main = new JScrollPane( ta_logTable );
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
-		
+
 		// adjust column-sizes
 		ta_logTable.getColumnModel( ).getColumn( 0 ).setMinWidth( 110 );
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setMaxWidth(  110 );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setMaxWidth( 110 );
 		ta_logTable.getColumnModel( ).getColumn( 0 ).setPreferredWidth( 110 );
 		ta_logTable.getColumnModel( ).getColumn( 0 ).setResizable( false );
+
+		// listener that is responsible to scroll the table to the last entry 
+		this.tableModel.addTableModelListener( new TableModelListener( )
+		{
+			@Override
+			public void tableChanged( final TableModelEvent e )
+			{
+				if ( e.getType( ) == TableModelEvent.INSERT && autoScrollingEnabled )
+				{
+					addScrollEvent( new CEvt_ScrollToLast( ) );
+				}
+			}
+		} );
+
+		// listener keeping track of disabling/enabling autoscrolling
+		scrpa_main.getVerticalScrollBar( ).addAdjustmentListener( new AdjustmentListener( )
+		{
+			@Override
+			public void adjustmentValueChanged( AdjustmentEvent evt )
+			{
+				// Disable auto-scrolling if the scrollbar is moved 
+				int extent = scrpa_main.getVerticalScrollBar( ).getModel( ).getExtent( );
+				int currentScrollPos = scrpa_main.getVerticalScrollBar( ).getValue( ) + extent;
+
+				// bottom is reached in case the current-scrolling pos is greater than 98% of the maximum-scroll position of the table
+				// if bottom is reached we want to enable autoscrolling 
+				boolean bottomReached = currentScrollPos >= ( scrpa_main.getVerticalScrollBar( ).getMaximum( ) * 0.98 );
+
+				// in case we have changed the autoscrolling-mode (disable/enable) we generate the according event to force the modification
+				if ( ( evt.getValueIsAdjusting( ) == true ) && ( evt.getAdjustmentType( ) == AdjustmentEvent.TRACK ) && ( autoScrollingEnabled != bottomReached ) )
+				{
+					addScrollEvent( new CEvt_SetAutoScrollMode( bottomReached ) );
+				}
+			}
+		} );
+	}
+
+	private void addScrollEvent( CEvt_Scroll evt )
+	{
+		this.scrollEventQueue.add( evt );
 	}
 
 	@Override
@@ -140,6 +195,9 @@ public class Console extends Plugin implements LogStreamDataListener
 		List<LogLine> block = new ArrayList<>( );
 		while ( !this.isQuitRequested( ) )
 		{
+			// process next event from the event-queue
+			processScrollEvents( );
+
 			long startTime = System.currentTimeMillis( );
 			boolean timeThresholdHurt = false;
 			boolean blockSizeThresholdHurt = false;
@@ -172,6 +230,41 @@ public class Console extends Plugin implements LogStreamDataListener
 				e.printStackTrace( );
 			}
 		}// while ( !this.isQuitRequested( ) ).
+	}
+
+	private void processScrollEvents( )
+	{
+
+		CEvt_Scroll evt = null;
+		boolean hasScrollToLast = false;
+		while ( ( evt = this.scrollEventQueue.poll( ) ) != null )
+		{
+			switch ( evt.getType( ) )
+			{
+			case SCROLL_TO_LAST:
+				hasScrollToLast = true;
+				break;
+			case SET_AUTOSCROLL_MODE:
+				this.autoScrollingEnabled = ( ( CEvt_SetAutoScrollMode ) evt ).isEnable( );
+				break;
+			default:
+				LOG( ).warning( "Unknown event: " + evt );
+				break;
+			}
+		}
+
+		// scroll to the last line if needed
+		if ( hasScrollToLast && this.autoScrollingEnabled )
+		{
+			SwingUtilities.invokeLater( new Runnable( )
+			{
+				public void run( )
+				{
+					int viewRow = ta_logTable.convertRowIndexToView( tableModel.getRowCount( ) );
+					ta_logTable.scrollRectToVisible( ta_logTable.getCellRect( viewRow, 0, true ) );
+				}
+			} );
+		}
 	}
 
 	@Override
