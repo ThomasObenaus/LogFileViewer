@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.List;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.err.LogStreamTimeoutException;
@@ -39,7 +41,7 @@ public class IpLogStreamReader extends LogStreamReader
 	}
 
 	@Override
-	protected String readLineImpl( int maxBlockTime ) throws LogStreamException,LogStreamTimeoutException
+	protected String readLineImpl( int maxBlockTime ) throws LogStreamException, LogStreamTimeoutException
 	{
 		if ( this.reader == null )
 		{
@@ -48,7 +50,10 @@ public class IpLogStreamReader extends LogStreamReader
 
 		try
 		{
-			this.socket.setSoTimeout( maxBlockTime );
+			if ( this.socket.getSoTimeout( ) != maxBlockTime )
+			{
+				this.socket.setSoTimeout( maxBlockTime );
+			}
 			return this.reader.readLine( );
 		}
 		catch ( SocketTimeoutException e )
@@ -109,6 +114,44 @@ public class IpLogStreamReader extends LogStreamReader
 		catch ( IOException e )
 		{
 			throw new LogStreamException( "Failed to close connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
+		}
+	}
+
+	@Override
+	protected List<String> readBlockImpl( int maxBlockTime, int maxBlockSize ) throws LogStreamException, LogStreamTimeoutException
+	{
+		List<String> block = new ArrayList<>( );
+
+		if ( this.reader == null )
+		{
+			throw new LogStreamException( "Reader not open, resource is null" );
+		}// if ( this.reader == null ) .
+
+		try
+		{
+			if ( this.socket.getSoTimeout( ) != maxBlockTime )
+			{
+				this.socket.setSoTimeout( maxBlockTime );
+			}
+
+			long startTime = System.currentTimeMillis( );
+			long elapsedTime = 0;
+
+			while ( ( elapsedTime < maxBlockTime ) && ( block.size( ) < maxBlockSize ) )
+			{
+				block.add( this.reader.readLine( ) );
+				elapsedTime = System.currentTimeMillis( ) - startTime;
+			}
+
+			return block;
+		}
+		catch ( SocketTimeoutException e )
+		{
+			throw new LogStreamTimeoutException( e.getLocalizedMessage( ) );
+		}
+		catch ( IOException e )
+		{
+			throw new LogStreamException( e.getLocalizedMessage( ) );
 		}
 	}
 

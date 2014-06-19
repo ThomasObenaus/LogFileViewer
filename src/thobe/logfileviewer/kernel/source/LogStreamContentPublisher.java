@@ -126,12 +126,23 @@ public class LogStreamContentPublisher extends Thread
 				{
 					try
 					{
-						String nextLine = this.traceSource.nextLine( );						
-						// skip empty lines
-						if ( nextLine != null && !nextLine.trim( ).isEmpty( ) )
+						if ( this.traceSource.isBlockModeEnabled( ) )
 						{
-							this.fireNewLine( nextLine );
-						}// if(nextLine != null && !nextLine.trim( ).isEmpty( )) .
+							List<String> nextBlock = this.traceSource.nextLines( );
+							if ( !nextBlock.isEmpty( ) )
+							{
+								this.fireNewBlock( nextBlock );
+							}// if ( !nextBlock.isEmpty( ) ) .
+						}// if ( this.traceSource.isBlockModeEnabled( ) ) .
+						else
+						{
+							String nextLine = this.traceSource.nextLine( );
+							// skip empty lines
+							if ( nextLine != null && !nextLine.trim( ).isEmpty( ) )
+							{
+								this.fireNewLine( nextLine );
+							}// if(nextLine != null && !nextLine.trim( ).isEmpty( )) .
+						}// if ( this.traceSource.isBlockModeEnabled( ) ) ... else ...
 					}
 					catch ( LogStreamException e )
 					{
@@ -207,6 +218,24 @@ public class LogStreamContentPublisher extends Thread
 				if ( elapsedTime > 100 )
 				{
 					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the new-line event." );
+				}// if ( elapsedTime > 100 ).
+			}// for ( LogStreamContentPublisherListener l : this.listeners ).
+		}// synchronized ( listeners ).
+	}
+
+	private void fireNewBlock( List<String> newBlock )
+	{
+		synchronized ( listeners )
+		{
+			for ( LogStreamContentPublisherListener l : this.listeners )
+			{
+				long elapsedTime = System.currentTimeMillis( );
+				l.onNewBlock( newBlock );
+				elapsedTime = System.currentTimeMillis( ) - elapsedTime;
+
+				if ( elapsedTime > 100 )
+				{
+					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the new-block event." );
 				}// if ( elapsedTime > 100 ).
 			}// for ( LogStreamContentPublisherListener l : this.listeners ).
 		}// synchronized ( listeners ).

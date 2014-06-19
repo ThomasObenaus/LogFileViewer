@@ -325,4 +325,53 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 			}// for ( LogStreamStateListener l : this.logStreamStateListeners ) .
 		}// synchronized ( this.logStreamStateListeners ) .
 	}
+
+	@Override
+	public void onNewBlock( List<String> newBlock )
+	{
+		System.out.println("LogStream.onNewBlock() Not implemented yet --> use non-blockmode of LogStreamReader!" );
+		/*final boolean logFine = LOG( ).isLoggable( Level.FINE );
+
+		if ( logFine )
+		{
+			LOG( ).fine( "New line '" + newLine + "' will be send to listeners." );
+		}
+
+		// build the log-line
+		LogLine line = null;
+
+		synchronized ( this.logStreamDataListeners )
+		{
+			for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) )
+			{
+				String lineFilter = entry.getKey( );
+
+				try
+				{
+					// look if the filter matches the line
+					if ( newLine != null && newLine.matches( lineFilter ) )
+					{
+						// only build the line if at least one filter matches
+						if ( line == null )
+						{
+							line = this.buildLogLine( newLine );
+						}// if ( line == null ).
+
+						// send the line to all registered listeners
+						for ( LogStreamDataListener l : entry.getValue( ) )
+						{
+							l.onNewLine( line );
+						}// for ( LogStreamDataListener l : entry.getValue( ) ).
+
+					}// if ( newLine != null && newLine.matches( lineFilter ) ).
+				}// try
+				catch ( PatternSyntaxException e )
+				{
+					LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + lineFilter + "': " + e.getLocalizedMessage( ) );
+				}// catch ( PatternSyntaxException e ).
+			}// for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) ) .
+		}// synchronized ( this.logStreamDataListeners ) .
+		*/
+
+	}
 }

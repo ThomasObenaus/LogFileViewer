@@ -10,7 +10,9 @@
 
 package thobe.logfileviewer.kernel.source;
 
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,6 +65,31 @@ public abstract class LogStreamReader extends Thread
 	private Logger			log;
 
 	/**
+	 * Size of one block (in case block-mode is used)
+	 */
+	private int				maxBlockSize;
+
+	/**
+	 * Max time (in ms) one read should block.
+	 */
+	private int				maxBlockTime;
+
+	/**
+	 * If true, block-mode instead of line-mode is used.
+	 */
+	private boolean			blockModeEnabled;
+
+	/**
+	 * Number of lines read since opening the source
+	 */
+	private long			numLinesRead;
+
+	/**
+	 * The time at which the source was opened.
+	 */
+	private long			timeStampOfOpeningSource;
+
+	/**
 	 * Ctor
 	 */
 	public LogStreamReader( )
@@ -74,6 +101,11 @@ public abstract class LogStreamReader extends Thread
 		this.sleepTime = new AtomicInteger( 100 );
 		this.stopOnReachingEOF = true;
 		this.log = Logger.getLogger( "thobe.logfileviewer.source.LogStreamReader" );
+		this.maxBlockSize = 10;
+		this.maxBlockTime = 2000;
+		this.blockModeEnabled = false;
+		this.numLinesRead = 0;
+		this.timeStampOfOpeningSource = 0;
 	}
 
 	/**
@@ -88,7 +120,29 @@ public abstract class LogStreamReader extends Thread
 	{
 		if ( !this.hasNextLine( ) )
 			throw new LogStreamException( "The queue is empty" );
+
 		return this.lineBuffer.pop( );
+	}
+
+	/**
+	 * Returns the next lines that are available (was read from the log source). On accessing this method all lines will be consumed, that
+	 * means further calls to this method will result in different results (the next lines).
+	 * @return - the next lines as list of {@link String}'s
+	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link LogStreamReader#hasNextLine()} to check if more
+	 *             lines are available.
+	 */
+	public List<String> nextLines( ) throws LogStreamException
+	{
+		if ( !this.hasNextLine( ) )
+			throw new LogStreamException( "The queue is empty" );
+
+		List<String> block = null;
+		synchronized ( this.lineBuffer )
+		{
+			block = new ArrayList<>( this.lineBuffer );
+			this.lineBuffer.clear( );
+		}
+		return block;
 	}
 
 	/**
@@ -128,20 +182,44 @@ public abstract class LogStreamReader extends Thread
 
 			try
 			{
-				// delegate the reading to the specific source-implementation
-				String newLine = readLineImpl( 2000 );
+				boolean somethingAdded = false;
 
-				if ( newLine != null )
+				// BLOCK-MODE
+				if ( this.isBlockModeEnabled( ) )
 				{
-					// add the line to the buffer
-					this.lineBuffer.add( newLine );
-				}// if ( newLine != null ) . 
+					// delegate the reading to the specific source-implementation
+					List<String> block = readBlockImpl( this.maxBlockTime, this.maxBlockSize );
+
+					if ( !block.isEmpty( ) )
+					{
+						somethingAdded = true;
+						// add the lines to the buffer
+						this.lineBuffer.addAll( block );
+						this.numLinesRead += block.size( );
+					}// if ( !block.isEmpty( ) ) .
+				}// if ( this.isBlockModeEnabled( ) ) .				
+					// LINE-MODE
 				else
+				{
+					// delegate the reading to the specific source-implementation
+					String newLine = readLineImpl( this.maxBlockTime );
+					if ( newLine != null )
+					{
+						somethingAdded = true;
+						// add the line to the buffer
+						this.lineBuffer.add( newLine );
+						this.numLinesRead++;
+					}// if ( newLine != null ) .
+				}
+
+				// set EOF if nothing was read/added
+				if ( !somethingAdded )
 				{
 					// end of file reached
 					this.EOFReached.set( true );
 					LOG( ).info( "End of file reached" );
 				}// if ( newLine != null ) ... else ...
+
 			}
 			catch ( LogStreamTimeoutException e )
 			{
@@ -169,7 +247,6 @@ public abstract class LogStreamReader extends Thread
 					break;
 				}// catch ( InterruptedException e ) .
 			}// if ( !this.EOFReached.get( ) || !this.stopOnReachingEOF ) .
-
 		}// while ( !this.quitRequested.get( ) && ( !this.EOFReached.get( ) || !this.stopOnReachingEOF ) ).
 
 		// close the LogStreamReader in case of EOF reading should be stopped  
@@ -189,6 +266,18 @@ public abstract class LogStreamReader extends Thread
 		this.sleepTime.set( sleepTime );
 	}
 
+	/**
+	 * Returns the lines per second read from the opened source
+	 * @return
+	 */
+	public double getLinesPerSecond( )
+	{
+		if ( !this.isOpen( ) )
+			return 0;
+		long elapsed = System.currentTimeMillis( ) - this.timeStampOfOpeningSource;
+		return ( this.numLinesRead / ( elapsed / 1000.0d ) );
+	}
+
 	public boolean isEOFReached( )
 	{
 		return EOFReached.get( );
@@ -206,6 +295,8 @@ public abstract class LogStreamReader extends Thread
 				// call the source-specific close-method
 				this.closeImpl( );
 				this.opened.set( false );
+				this.numLinesRead = 0;
+				this.timeStampOfOpeningSource = 0;
 			}
 			catch ( LogStreamException e )
 			{
@@ -224,6 +315,17 @@ public abstract class LogStreamReader extends Thread
 	 * @throws LogStreamTimeoutException
 	 */
 	protected abstract String readLineImpl( int maxBlockTime ) throws LogStreamException, LogStreamTimeoutException;
+
+	/**
+	 * Implement this method in the specific trace-source. This method will called each time a new block of lines should be read from the
+	 * source.
+	 * @param maxBlockTime - max time in ms the method should block (need to return)
+	 * @param maxBlockSize - max number of lines the block should contain
+	 * @return - list of lines (the block) read from the source
+	 * @throws LogStreamException
+	 * @throws LogStreamTimeoutException
+	 */
+	protected abstract List<String> readBlockImpl( int maxBlockTime, int maxBlockSize ) throws LogStreamException, LogStreamTimeoutException;
 
 	/**
 	 * Implement this method in the specific trace-source. This method will called each time a new source should be opened.
@@ -253,6 +355,9 @@ public abstract class LogStreamReader extends Thread
 
 		try
 		{
+			this.numLinesRead = 0;
+			this.timeStampOfOpeningSource = System.currentTimeMillis( );
+
 			// delegate opening to the specific trace-source
 			this.openImpl( );
 			this.opened.set( true );
@@ -280,5 +385,35 @@ public abstract class LogStreamReader extends Thread
 	protected Logger LOG( )
 	{
 		return this.log;
+	}
+
+	public int getMaxBlockSize( )
+	{
+		return maxBlockSize;
+	}
+
+	public int getMaxBlockTime( )
+	{
+		return maxBlockTime;
+	}
+
+	public void setMaxBlockSize( int maxBlockSize )
+	{
+		this.maxBlockSize = maxBlockSize;
+	}
+
+	public void setMaxBlockTime( int maxBlockTime )
+	{
+		this.maxBlockTime = maxBlockTime;
+	}
+
+	public boolean isBlockModeEnabled( )
+	{
+		return blockModeEnabled;
+	}
+
+	public void setBlockModeEnabled( boolean blockModeEnabled )
+	{
+		this.blockModeEnabled = blockModeEnabled;
 	}
 }

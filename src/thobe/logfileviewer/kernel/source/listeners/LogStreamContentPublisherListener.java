@@ -10,6 +10,8 @@
 
 package thobe.logfileviewer.kernel.source.listeners;
 
+import java.util.List;
+
 import thobe.logfileviewer.kernel.source.LogStreamContentPublisher;
 
 /**
@@ -21,4 +23,6 @@ import thobe.logfileviewer.kernel.source.LogStreamContentPublisher;
 public interface LogStreamContentPublisherListener extends LogStreamStateListener
 {
 	public void onNewLine( String newLine );
+
+	public void onNewBlock( List<String> newBlock );
 }
