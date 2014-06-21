@@ -98,12 +98,12 @@ public abstract class LogStreamReader extends Thread
 		this.quitRequested = new AtomicBoolean( false );
 		this.opened = new AtomicBoolean( false );
 		this.EOFReached = new AtomicBoolean( false );
-		this.sleepTime = new AtomicInteger( 100 );
+		this.sleepTime = new AtomicInteger( 0 );
 		this.stopOnReachingEOF = true;
 		this.log = Logger.getLogger( "thobe.logfileviewer.source.LogStreamReader" );
-		this.maxBlockSize = 10;
+		this.maxBlockSize = 100;
 		this.maxBlockTime = 2000;
-		this.blockModeEnabled = false;
+		this.blockModeEnabled = true;
 		this.numLinesRead = 0;
 		this.timeStampOfOpeningSource = 0;
 	}
@@ -118,10 +118,14 @@ public abstract class LogStreamReader extends Thread
 	 */
 	public String nextLine( ) throws LogStreamException
 	{
-		if ( !this.hasNextLine( ) )
-			throw new LogStreamException( "The queue is empty" );
-
-		return this.lineBuffer.pop( );
+		String result = null;
+		synchronized ( this.lineBuffer )
+		{
+			if ( !this.hasNextLine( ) )
+				throw new LogStreamException( "The queue is empty" );
+			result = this.lineBuffer.pop( );
+		}// synchronized ( this.lineBuffer ) .
+		return result;
 	}
 
 	/**
@@ -133,15 +137,15 @@ public abstract class LogStreamReader extends Thread
 	 */
 	public List<String> nextLines( ) throws LogStreamException
 	{
-		if ( !this.hasNextLine( ) )
-			throw new LogStreamException( "The queue is empty" );
-
 		List<String> block = null;
 		synchronized ( this.lineBuffer )
 		{
+			if ( !this.hasNextLine( ) )
+				throw new LogStreamException( "The queue is empty" );
+
 			block = new ArrayList<>( this.lineBuffer );
 			this.lineBuffer.clear( );
-		}
+		}// synchronized ( this.lineBuffer ) .
 		return block;
 	}
 
@@ -188,19 +192,19 @@ public abstract class LogStreamReader extends Thread
 				if ( this.isBlockModeEnabled( ) )
 				{
 					// delegate the reading to the specific source-implementation
-					List<String> block = readBlockImpl( this.maxBlockTime, this.maxBlockSize );
-
+					List<String> block = readBlockImpl( 200, this.maxBlockTime, 10, this.maxBlockSize );
 					if ( !block.isEmpty( ) )
 					{
 						somethingAdded = true;
+
 						// add the lines to the buffer
 						this.lineBuffer.addAll( block );
 						this.numLinesRead += block.size( );
 					}// if ( !block.isEmpty( ) ) .
 				}// if ( this.isBlockModeEnabled( ) ) .				
-					// LINE-MODE
 				else
 				{
+					// LINE-MODE
 					// delegate the reading to the specific source-implementation
 					String newLine = readLineImpl( this.maxBlockTime );
 					if ( newLine != null )
@@ -219,7 +223,6 @@ public abstract class LogStreamReader extends Thread
 					this.EOFReached.set( true );
 					LOG( ).info( "End of file reached" );
 				}// if ( newLine != null ) ... else ...
-
 			}
 			catch ( LogStreamTimeoutException e )
 			{
@@ -325,14 +328,15 @@ public abstract class LogStreamReader extends Thread
 	 * @throws LogStreamException
 	 * @throws LogStreamTimeoutException
 	 */
-	protected abstract List<String> readBlockImpl( int maxBlockTime, int maxBlockSize ) throws LogStreamException, LogStreamTimeoutException;
+	protected abstract List<String> readBlockImpl( int minBlockTime, int maxBlockTime, int minBlockSize, int maxBlockSize ) throws LogStreamException, LogStreamTimeoutException;
 
 	/**
 	 * Implement this method in the specific trace-source. This method will called each time a new source should be opened.
+	 * @param timeout - max time (in ms) this method will be blocked until an {@link LogStreamException} is thrown.
 	 * @return - the line that was read from the source
 	 * @throws LogStreamException
 	 */
-	protected abstract void openImpl( ) throws LogStreamException;
+	protected abstract void openImpl( int timeout ) throws LogStreamException;
 
 	/**
 	 * Implement this method in the specific trace-source. This method will called each time the source should be closed.
@@ -359,7 +363,7 @@ public abstract class LogStreamReader extends Thread
 			this.timeStampOfOpeningSource = System.currentTimeMillis( );
 
 			// delegate opening to the specific trace-source
-			this.openImpl( );
+			this.openImpl( 2000 );
 			this.opened.set( true );
 		}
 		catch ( LogStreamException e )

@@ -10,6 +10,8 @@
 
 package thobe.logfileviewer.kernel.source.listeners;
 
+import java.util.List;
+
 import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.LogStream;
 
@@ -21,6 +23,8 @@ import thobe.logfileviewer.kernel.source.LogStream;
 public interface LogStreamDataListener
 {
 	public void onNewLine( LogLine line );
+
+	public void onNewBlockOfLines( List<LogLine> blockOfLines );
 
 	/**
 	 * This method should return a regular expression. This regular expression is used to filter the lines of the {@link LogStream}

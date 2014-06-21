@@ -57,7 +57,7 @@ public class TimeStampExtractor extends ILoggable
 		}
 		catch ( ParseException e )
 		{
-			LOG( ).info( "Failed to find/parse timestamp in line '" + line + "'" );
+			//LOG( ).info( "Failed to find/parse timestamp in line '" + line + "'" );
 		}
 
 		return new LineAndTime( this.previousTimeStamp, line );

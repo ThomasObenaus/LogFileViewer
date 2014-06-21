@@ -39,36 +39,42 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	/**
 	 * {@link Thread} that reads the log-file asynchronously.
 	 */
-	private LogStreamReader							logStreamReader;
+	private LogStreamReader									logStreamReader;
 
 	/**
 	 * {@link Thread} that publishes events fired by the {@link LogStreamReader} (e.g. new line, opened, closed,...)
 	 */
-	private LogStreamContentPublisher				publishThread;
+	private LogStreamContentPublisher						publishThread;
 
 	/**
 	 * List of listeners that are interested in state-changes of the log-file ({@link LogStream}) e.g. open, closed, eofReached.
 	 */
-	private List<LogStreamStateListener>			logStreamStateListeners;
+	private List<LogStreamStateListener>					logStreamStateListeners;
 
 	/**
 	 * Map of listeners that are interested in data of the log-file ({@link LogStream}). Within this map the listeners are ordered by their
 	 * line-filter. Map<line-filter,set of listeners>
 	 */
-	private Map<String, Set<LogStreamDataListener>>	logStreamDataListeners;
+	private Map<String, Set<LogStreamDataListener>>			logStreamDataListeners;
 
 	/**
 	 * Id of the {@link LogLine}s;
 	 */
-	private int										logLineId;
+	private int												logLineId;
 
-	private TimeStampExtractor						timeStampExtractor;
+	/**
+	 * Mapping for a block of {@link LogLine}s to the registered {@link LogStreamDataListener}s having the same filter.
+	 */
+	private Map<String, LogLineBlockToLogStreamListener>	logLineBlockToLSDLMap;
+
+	private TimeStampExtractor								timeStampExtractor;
 
 	/**
 	 * Ctor
 	 */
 	public LogStream( )
 	{
+		this.logLineBlockToLSDLMap = new HashMap<>( );
 		this.timeStampExtractor = new TimeStampExtractor( );
 		this.logStreamStateListeners = new ArrayList<>( );
 		this.logStreamDataListeners = new HashMap<>( );
@@ -119,6 +125,18 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 			}
 			listeners.add( l );
 		}
+
+		// add the entry to the mapping LogLine<->LogStreamStateListener too
+		synchronized ( this.logLineBlockToLSDLMap )
+		{
+			LogLineBlockToLogStreamListener entry = this.logLineBlockToLSDLMap.get( l.getLineFilter( ) );
+			if ( entry == null )
+			{
+				entry = new LogLineBlockToLogStreamListener( new ArrayList<LogLine>( ), new HashSet<LogStreamDataListener>( ) );
+				this.logLineBlockToLSDLMap.put( l.getLineFilter( ), entry );
+			}// if ( entry == null ) .
+			entry.value.add( l );
+		}// synchronized ( this.logLineBlockToLSDLMap ) .
 	}
 
 	/**
@@ -135,6 +153,21 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 				listeners.remove( l );
 			}
 		}
+
+		// remove the entry to the mapping LogLine<->LogStreamStateListener too
+		synchronized ( this.logLineBlockToLSDLMap )
+		{
+			LogLineBlockToLogStreamListener entry = this.logLineBlockToLSDLMap.get( l.getLineFilter( ) );
+			if ( entry != null )
+			{
+				// remove the listener
+				entry.getValue( ).remove( l );
+
+				// remove the complete entry if no more listeners are attached
+				if ( entry.getValue( ).isEmpty( ) )
+					this.logLineBlockToLSDLMap.remove( l.getLineFilter( ) );
+			}// if ( entry != null ) .
+		}// synchronized ( this.logLineBlockToLSDLMap ) .
 	}
 
 	/**
@@ -329,49 +362,99 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	@Override
 	public void onNewBlock( List<String> newBlock )
 	{
-		System.out.println("LogStream.onNewBlock() Not implemented yet --> use non-blockmode of LogStreamReader!" );
-		/*final boolean logFine = LOG( ).isLoggable( Level.FINE );
-
-		if ( logFine )
+		// for each line of the block
+		for ( String newLine : newBlock )
 		{
-			LOG( ).fine( "New line '" + newLine + "' will be send to listeners." );
+			LogLine logLine = null;
+			synchronized ( this.logLineBlockToLSDLMap )
+			{
+				for ( Entry<String, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
+				{
+					String lineFilter = entry.getKey( );
+
+					try
+					{
+						// look if the filter matches the line
+						if ( newLine != null && newLine.matches( lineFilter ) )
+						{
+							// only build the line if at least one filter matches
+							if ( logLine == null )
+							{
+								logLine = this.buildLogLine( newLine );
+							}// if ( line == null ).
+
+							// add the logline
+							entry.getValue( ).key.add( logLine );
+						}// if ( newLine != null && newLine.matches( lineFilter ) ).
+
+					}// try
+					catch ( PatternSyntaxException e )
+					{
+						LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + lineFilter + "': " + e.getLocalizedMessage( ) );
+					}// catch ( PatternSyntaxException e ).
+				}// for ( Entry<String, LogLineBlockToLogStreamListener> entry : logLineBlockToLSDLMap.entrySet( ) ) .
+			}// synchronized ( this.logLineBlockToLSDLMap ) .
+		}// for ( String newLine : newBlock ) .
+
+		// now fire the blocks to the listeners
+		synchronized ( this.logLineBlockToLSDLMap )
+		{
+			for ( Entry<String, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
+			{
+				List<LogLine> logLines = entry.getValue( ).getKey( );
+				Set<LogStreamDataListener> listeners = entry.getValue( ).getValue( );
+
+				for ( LogStreamDataListener listener : listeners )
+				{
+					listener.onNewBlockOfLines( logLines );
+				}// for(LogStreamDataListener listener : listeners).
+
+				// clear the block of loglines
+				entry.getValue( ).getKey( ).clear( );
+			}// for ( Entry<String, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) ).
+		}// synchronized ( this.logLineBlockToLSDLMap   ).
+	}
+
+	/**
+	 * Returns the lines per second read by the reader ({@link LogStreamReader}).
+	 * @return
+	 */
+	public double getLogStreamReaderLPS( )
+	{
+		if ( this.logStreamReader == null )
+			return 0;
+		return this.logStreamReader.getLinesPerSecond( );
+	}
+
+	final class LogLineBlockToLogStreamListener implements Map.Entry<List<LogLine>, Set<LogStreamDataListener>>
+	{
+		private final List<LogLine>			key;
+		private Set<LogStreamDataListener>	value;
+
+		public LogLineBlockToLogStreamListener( List<LogLine> key, Set<LogStreamDataListener> value )
+		{
+			this.key = key;
+			this.value = value;
 		}
 
-		// build the log-line
-		LogLine line = null;
-
-		synchronized ( this.logStreamDataListeners )
+		@Override
+		public List<LogLine> getKey( )
 		{
-			for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) )
-			{
-				String lineFilter = entry.getKey( );
+			return key;
+		}
 
-				try
-				{
-					// look if the filter matches the line
-					if ( newLine != null && newLine.matches( lineFilter ) )
-					{
-						// only build the line if at least one filter matches
-						if ( line == null )
-						{
-							line = this.buildLogLine( newLine );
-						}// if ( line == null ).
+		@Override
+		public Set<LogStreamDataListener> getValue( )
+		{
+			return value;
+		}
 
-						// send the line to all registered listeners
-						for ( LogStreamDataListener l : entry.getValue( ) )
-						{
-							l.onNewLine( line );
-						}// for ( LogStreamDataListener l : entry.getValue( ) ).
-
-					}// if ( newLine != null && newLine.matches( lineFilter ) ).
-				}// try
-				catch ( PatternSyntaxException e )
-				{
-					LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + lineFilter + "': " + e.getLocalizedMessage( ) );
-				}// catch ( PatternSyntaxException e ).
-			}// for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) ) .
-		}// synchronized ( this.logStreamDataListeners ) .
-		*/
-
+		@Override
+		public Set<LogStreamDataListener> setValue( Set<LogStreamDataListener> value )
+		{
+			Set<LogStreamDataListener> old = this.value;
+			this.value = value;
+			return old;
+		}
 	}
 }

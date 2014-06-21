@@ -26,7 +26,7 @@ import thobe.logfileviewer.kernel.source.LogLine;
 public class ConsoleTableModel extends AbstractTableModel
 {
 	private static String	columnNames[]	= new String[]
-											{ "Time", "Entry" };
+											{ "LineNo", "Time", "Entry" };
 	private List<LogLine>	entries;
 	private long			memory;
 
@@ -51,6 +51,8 @@ public class ConsoleTableModel extends AbstractTableModel
 			return columnNames[0];
 		if ( column == 1 )
 			return columnNames[1];
+		if ( column == 2 )
+			return columnNames[2];
 		return "";
 	}
 
@@ -80,8 +82,10 @@ public class ConsoleTableModel extends AbstractTableModel
 	public Class<?> getColumnClass( int columnIndex )
 	{
 		if ( columnIndex == 0 )
-			return String.class;
+			return Integer.class;
 		if ( columnIndex == 1 )
+			return String.class;
+		if ( columnIndex == 2 )
 			return String.class;
 		return super.getColumnClass( columnIndex );
 	}
@@ -104,6 +108,8 @@ public class ConsoleTableModel extends AbstractTableModel
 		LogLine line = this.entries.get( row );
 
 		if ( col == 0 )
+			return row;
+		if ( col == 1 )
 			return line.getTimeStampStr( );
 		return line.getData( );
 	}

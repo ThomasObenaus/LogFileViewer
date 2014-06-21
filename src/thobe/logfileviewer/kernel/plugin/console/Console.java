@@ -51,7 +51,6 @@ public class Console extends Plugin implements LogStreamDataListener
 	private Deque<LogLine>		lineBuffer;
 	private ConsoleTableModel	tableModel;
 	private JPanel				pa_logPanel;
-	private long				memInLineBuffer;
 
 	private boolean				autoScrollingEnabled;
 	private JTable				ta_logTable;
@@ -59,7 +58,6 @@ public class Console extends Plugin implements LogStreamDataListener
 	public Console( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
-		this.memInLineBuffer = 0;
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
 		this.scrollEventQueue = new ConcurrentLinkedDeque<>( );
 		this.autoScrollingEnabled = true;
@@ -78,10 +76,14 @@ public class Console extends Plugin implements LogStreamDataListener
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
 
 		// adjust column-sizes
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setMinWidth( 110 );
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setMaxWidth( 110 );
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setPreferredWidth( 110 );
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setResizable( false );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setMinWidth( 60 );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setMaxWidth( 60 );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setPreferredWidth( 60 );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setResizable( true );
+		ta_logTable.getColumnModel( ).getColumn( 1 ).setMinWidth( 110 );
+		ta_logTable.getColumnModel( ).getColumn( 1 ).setMaxWidth( 110 );
+		ta_logTable.getColumnModel( ).getColumn( 1 ).setPreferredWidth( 110 );
+		ta_logTable.getColumnModel( ).getColumn( 1 ).setResizable( false );
 
 		// listener that is responsible to scroll the table to the last entry 
 		this.tableModel.addTableModelListener( new TableModelListener( )
@@ -156,6 +158,7 @@ public class Console extends Plugin implements LogStreamDataListener
 	{
 		LOG( ).info( this.getPluginName( ) + " prepare to close LogStream." );
 		logStreamAccess.removeLogStreamDataListener( this );
+		this.lineBuffer.clear( );
 	}
 
 	@Override
@@ -204,14 +207,16 @@ public class Console extends Plugin implements LogStreamDataListener
 			block.clear( );
 
 			// collect some lines
-			while ( ( !this.lineBuffer.isEmpty( ) ) && !timeThresholdHurt && !blockSizeThresholdHurt )
+			synchronized ( this.lineBuffer )
 			{
-				LogLine ll = this.lineBuffer.pollFirst( );
-				this.memInLineBuffer -= ll.getMem( );
-				block.add( ll );
-				blockSizeThresholdHurt = block.size( ) > MAX_LINES_PER_BLOCK;
-				timeThresholdHurt = ( System.currentTimeMillis( ) - startTime ) > MAX_TIME_PER_BLOCK_IN_MS;
-			}// while ( ( !this.lineBuffer.isEmpty( ) ) && !timeThresholdHurt && !blockSizeThresholdHurt ).
+				while ( ( !this.lineBuffer.isEmpty( ) ) && !timeThresholdHurt && !blockSizeThresholdHurt )
+				{
+					LogLine ll = this.lineBuffer.pollFirst( );
+					block.add( ll );
+					blockSizeThresholdHurt = block.size( ) > MAX_LINES_PER_BLOCK;
+					timeThresholdHurt = ( System.currentTimeMillis( ) - startTime ) > MAX_TIME_PER_BLOCK_IN_MS;
+				}// while ( ( !this.lineBuffer.isEmpty( ) ) && !timeThresholdHurt && !blockSizeThresholdHurt ).
+			}// synchronized ( this.lineBuffer ).
 
 			// Add the block if we have collected some lines
 			if ( !block.isEmpty( ) )
@@ -271,7 +276,6 @@ public class Console extends Plugin implements LogStreamDataListener
 	public void onNewLine( LogLine line )
 	{
 		this.lineBuffer.add( line );
-		this.memInLineBuffer += line.getMem( );
 	}
 
 	@Override
@@ -283,6 +287,15 @@ public class Console extends Plugin implements LogStreamDataListener
 	@Override
 	public long getCurrentMemory( )
 	{
-		return this.memInLineBuffer + this.tableModel.getMem( );
+		long memInLineBuffer = 0;
+		for ( LogLine ll : this.lineBuffer )
+			memInLineBuffer += ll.getMem( );
+		return memInLineBuffer + this.tableModel.getMem( );
+	}
+
+	@Override
+	public void onNewBlockOfLines( List<LogLine> blockOfLines )
+	{
+		this.lineBuffer.addAll( blockOfLines );
 	}
 }

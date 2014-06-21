@@ -30,9 +30,6 @@ public class PluginManager implements IPluginAccess
 	public PluginManager( )
 	{
 		this.plugins = new HashMap<>( );
-
-		Timer timer = new Timer( );
-		timer.schedule( new MemConsumptionPrinter( this ), 2000, 10000 );
 	}
 
 	public void findAndRegisterPlugins( )
@@ -82,33 +79,5 @@ public class PluginManager implements IPluginAccess
 			console = ( Console ) plugin;
 		}
 		return console;
-	}
-
-	// TODO: Remove will be available in GUI 
-	private class MemConsumptionPrinter extends TimerTask
-	{
-		private PluginManager	mngr;
-
-		public MemConsumptionPrinter( PluginManager mngr )
-		{
-			this.mngr = mngr;
-		}
-
-		@Override
-		public void run( )
-		{
-			System.out.println( "---------------------------------------------" );
-			System.out.println( "Memor-Consumption: " );
-			long completeMemory = 0;
-			for ( Entry<String, Plugin> entry : this.mngr.getPlugins( ).entrySet( ) )
-			{
-				Plugin plugin = entry.getValue( );
-				completeMemory += plugin.getCurrentMemory( );
-				System.out.println( "--|" + plugin.getName( ) + ": " + ( plugin.getCurrentMemory( ) / 1024.0f / 1024.0f ) + " MB" );
-			}
-			System.out.println( "" );
-			System.out.println( "-OverAll: " + ( completeMemory / 1024.0f / 1024.0f ) + " MB" );
-			System.out.println( "---------------------------------------------" );
-		}
 	}
 }

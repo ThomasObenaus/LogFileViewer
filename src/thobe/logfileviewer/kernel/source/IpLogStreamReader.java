@@ -13,6 +13,7 @@ package thobe.logfileviewer.kernel.source;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class IpLogStreamReader extends LogStreamReader
 	}
 
 	@Override
-	protected String readLineImpl( int maxBlockTime ) throws LogStreamException, LogStreamTimeoutException
+	protected synchronized String readLineImpl( int maxBlockTime ) throws LogStreamException, LogStreamTimeoutException
 	{
 		if ( this.reader == null )
 		{
@@ -67,7 +68,7 @@ public class IpLogStreamReader extends LogStreamReader
 	}
 
 	@Override
-	protected void openImpl( ) throws LogStreamException
+	protected synchronized void openImpl( int timeout ) throws LogStreamException
 	{
 		if ( this.host == null || this.host.trim( ).isEmpty( ) )
 			throw new LogStreamException( "Hostname is missing" );
@@ -76,8 +77,15 @@ public class IpLogStreamReader extends LogStreamReader
 
 		try
 		{
-			this.socket = new Socket( this.host, this.port );
+			this.socket = new Socket( );
+			// connect to socket regarding timeout
+			this.socket.connect( new InetSocketAddress( this.host, this.port ), timeout );
 			this.reader = new BufferedReader( new InputStreamReader( this.socket.getInputStream( ) ) );
+		}
+		catch ( SocketTimeoutException e )
+		{
+			// could not open connection within 
+			throw new LogStreamException( "Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
 		}
 		catch ( IOException e )
 		{
@@ -99,7 +107,7 @@ public class IpLogStreamReader extends LogStreamReader
 	}
 
 	@Override
-	protected void closeImpl( ) throws LogStreamException
+	protected synchronized void closeImpl( ) throws LogStreamException
 	{
 		try
 		{
@@ -118,7 +126,7 @@ public class IpLogStreamReader extends LogStreamReader
 	}
 
 	@Override
-	protected List<String> readBlockImpl( int maxBlockTime, int maxBlockSize ) throws LogStreamException, LogStreamTimeoutException
+	protected synchronized List<String> readBlockImpl( int minBlockTime, int maxBlockTime, int minBlockSize, int maxBlockSize ) throws LogStreamException, LogStreamTimeoutException
 	{
 		List<String> block = new ArrayList<>( );
 
@@ -136,13 +144,23 @@ public class IpLogStreamReader extends LogStreamReader
 
 			long startTime = System.currentTimeMillis( );
 			long elapsedTime = 0;
+			boolean minBlockTimeExceeded = false;
+			boolean minBlockSizeExceeded = false;
 
 			while ( ( elapsedTime < maxBlockTime ) && ( block.size( ) < maxBlockSize ) )
 			{
 				block.add( this.reader.readLine( ) );
 				elapsedTime = System.currentTimeMillis( ) - startTime;
-			}
 
+				minBlockTimeExceeded = elapsedTime >= minBlockTime;
+				minBlockSizeExceeded = block.size( ) >= minBlockSize;
+
+				// leave loop if min-blocktime and min-blocksize where exceeded 
+				if ( minBlockSizeExceeded && minBlockTimeExceeded )
+				{
+					break;
+				}
+			}// while ( ( elapsedTime < maxBlockTime ) && ( block.size( ) < maxBlockSize ) ).
 			return block;
 		}
 		catch ( SocketTimeoutException e )

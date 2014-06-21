@@ -51,6 +51,7 @@ public class Act_OpenConnection extends AbstrAction implements LogStreamStateLis
 			LogFileViewerApp app = this.mainframe.getApp( );
 			LogStream logStream = app.getLogStream( );
 			logStream.open( new IpLogStreamReader( "127.0.0.1", 15000 ) );
+			//logStream.open( new IpLogStreamReader( "192.168.1.4", 15361 ) );
 
 		}
 		catch ( LogStreamException e )

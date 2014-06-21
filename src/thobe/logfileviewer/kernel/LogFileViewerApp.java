@@ -26,6 +26,7 @@ import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
+import thobe.logfileviewer.kernel.util.StatsPrinter;
 
 /**
  * @author Thomas Obenaus
@@ -64,6 +65,8 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 	 */
 	private Semaphore						eventSem;
 
+	private StatsPrinter					statsPrinter;
+
 	public LogFileViewerApp( )
 	{
 		super( "LogFileViewerApp" );
@@ -74,6 +77,10 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		this.logStream.addLogStreamStateListener( this );
 		this.pluginManager = new PluginManager( );
 		this.eventSem = new Semaphore( 0, true );
+
+		// starting background task, that prints out some statistics
+		this.statsPrinter = new StatsPrinter( this.pluginManager, this.logStream );
+		this.statsPrinter.start( );
 	}
 
 	public void removeListener( LogFileViewerAppListener l )
@@ -237,6 +244,20 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
 		LOG( ).info( "4. Stopped --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 
+		// quit the StatsPrinter too
+		if ( this.statsPrinter != null )
+		{
+			this.statsPrinter.quit( );
+			try
+			{
+				this.statsPrinter.interrupt( );
+				this.statsPrinter.join( );
+			}
+			catch ( InterruptedException e )
+			{
+				LOG( ).severe( "Exception while closing StatsPrinter: " + e.getLocalizedMessage( ) );
+			}
+		}// if ( this.statsPrinter != null ).
 	}
 
 	private void onLogStreamClosed( )
@@ -331,5 +352,4 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 	{
 		QUIT, LS_OPENED, LS_CLOSED;
 	}
-
 }
