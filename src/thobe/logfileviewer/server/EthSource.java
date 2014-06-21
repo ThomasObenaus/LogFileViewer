@@ -22,6 +22,9 @@ import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -51,6 +54,8 @@ public class EthSource extends Thread
 	private ClientAccepter				clientAccepter;
 	private ClientConnectionChecker		clientConnectionChecker;
 	private File						file;
+	private AtomicLong					linesSend;
+	private AtomicLong					startTime;
 
 	public EthSource( int port, File file ) throws IOException
 	{
@@ -58,6 +63,8 @@ public class EthSource extends Thread
 		this.clientWriterMap = new HashMap<>( );
 		this.serverSocket = new ServerSocket( port );
 		this.quitRequested = false;
+		this.linesSend = new AtomicLong( 0 );
+		this.startTime = new AtomicLong( 0 );
 	}
 
 	void addClient( Socket client ) throws IOException
@@ -87,9 +94,16 @@ public class EthSource extends Thread
 		return copyOfMap;
 	}
 
+	public double getLinesPerSecond( )
+	{
+		long elapsed = System.currentTimeMillis( ) - this.startTime.get( );
+		return ( this.linesSend.get( ) / ( elapsed / 1000.0d ) );
+	}
+
 	@Override
 	public void run( )
 	{
+
 		System.out.println( "Starting EthSource" );
 		this.clientAccepter = new ClientAccepter( this, this.serverSocket );
 		System.out.println( "ClientAccepter created, start it" );
@@ -98,6 +112,11 @@ public class EthSource extends Thread
 		System.out.println( "ClientConnectionChecker created, start it" );
 		this.clientConnectionChecker = new ClientConnectionChecker( this );
 		this.clientConnectionChecker.start( );
+
+		this.startTime.set( System.currentTimeMillis( ) );
+
+		Timer timer = new Timer( );
+		timer.schedule( new LPSPrinter( this ), 5000, 5000 );
 
 		BufferedReader reader = null;
 		StringBuffer strBuffer = new StringBuffer( );
@@ -130,6 +149,7 @@ public class EthSource extends Thread
 				{
 					strBuffer.append( line + "\n" );
 					linesCollected++;
+					this.linesSend.incrementAndGet( );
 				}
 
 				if ( line == null )
@@ -152,7 +172,6 @@ public class EthSource extends Thread
 				{
 					PrintWriter out = entry.getValue( );
 					out.write( block, 0, block.length( ) );
-					//System.out.println( "Block : " + block + " written" );
 				}
 			}
 
@@ -415,5 +434,21 @@ public class EthSource extends Thread
 		}
 
 		return new Arguments( filename, port );
+	}
+
+	private class LPSPrinter extends TimerTask
+	{
+		private EthSource	src;
+
+		public LPSPrinter( EthSource src )
+		{
+			this.src = src;
+		}
+
+		@Override
+		public void run( )
+		{
+			System.out.println( String.format( "%.3f", this.src.getLinesPerSecond( ) ) + " lps" );
+		}
 	}
 }
