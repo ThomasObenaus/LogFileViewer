@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -25,8 +27,11 @@ import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 
+import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_Scroll;
@@ -37,6 +42,7 @@ import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 
 /**
+ * Implementation of the {@link Console} {@link IPlugin}.
  * @author Thomas Obenaus
  * @source Console.java
  * @date May 29, 2014
@@ -44,7 +50,14 @@ import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 public class Console extends Plugin implements LogStreamDataListener
 {
 	public static final String	FULL_PLUGIN_NAME			= "thobe.logfileviewer.plugin.Console";
+	/**
+	 * Max time spent waiting for completion of the next block of {@link LogLine}s (in MS)
+	 */
 	private static long			MAX_TIME_PER_BLOCK_IN_MS	= 1000;
+
+	/**
+	 * Max amount of {@link LogLine} waiting for completion of one block until the block will be drawn.
+	 */
 	private static long			MAX_LINES_PER_BLOCK			= 100;
 
 	/**
@@ -52,16 +65,37 @@ public class Console extends Plugin implements LogStreamDataListener
 	 */
 	private Deque<CEvt_Scroll>	scrollEventQueue;
 
+	/**
+	 * Queue containing all incoming {@link LogLine}s
+	 */
 	private Deque<LogLine>		lineBuffer;
+
+	/**
+	 * The internal {@link TableModel}
+	 */
 	private ConsoleTableModel	tableModel;
+
+	/**
+	 * The plugin-panel (returned by {@link IPluginUI#getVisualComponent()}.
+	 */
 	private JPanel				pa_logPanel;
 
+	/**
+	 * True if autoscrolling is enabled, false otherwise
+	 */
 	private boolean				autoScrollingEnabled;
+
+	/**
+	 * The table.
+	 */
 	private JTable				ta_logTable;
+
+	private Semaphore			eventSemaphore;
 
 	public Console( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
+		this.eventSemaphore = new Semaphore( 1, true );
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
 		this.scrollEventQueue = new ConcurrentLinkedDeque<>( );
 		this.autoScrollingEnabled = true;
@@ -128,6 +162,7 @@ public class Console extends Plugin implements LogStreamDataListener
 	private void addScrollEvent( CEvt_Scroll evt )
 	{
 		this.scrollEventQueue.add( evt );
+		eventSemaphore.release( );
 	}
 
 	@Override
@@ -155,6 +190,7 @@ public class Console extends Plugin implements LogStreamDataListener
 	{
 		LOG( ).info( this.getPluginName( ) + " LogStream opened." );
 		logStreamAccess.addLogStreamDataListener( this );
+		this.eventSemaphore.release( );
 	}
 
 	@Override
@@ -163,6 +199,7 @@ public class Console extends Plugin implements LogStreamDataListener
 		LOG( ).info( this.getPluginName( ) + " prepare to close LogStream." );
 		logStreamAccess.removeLogStreamDataListener( this );
 		this.lineBuffer.clear( );
+		this.eventSemaphore.release( );
 	}
 
 	@Override
@@ -175,6 +212,7 @@ public class Console extends Plugin implements LogStreamDataListener
 	public boolean onStopped( )
 	{
 		LOG( ).info( this.getPluginName( ) + " stopped." );
+		this.eventSemaphore.release( );
 		return true;
 	}
 
@@ -228,15 +266,13 @@ public class Console extends Plugin implements LogStreamDataListener
 				this.tableModel.addBlock( block );
 			}// if ( !block.isEmpty( ) ).
 
-			// sleep ... 
 			try
 			{
-				Thread.sleep( 100 );
+				this.eventSemaphore.tryAcquire( 2, TimeUnit.SECONDS );
 			}
 			catch ( InterruptedException e )
 			{
-				// TODO Auto-generated catch block
-				e.printStackTrace( );
+				LOG( ).severe( "Exception caught in console-plugin main-loop: " + e.getLocalizedMessage( ) );
 			}
 		}// while ( !this.isQuitRequested( ) ).
 	}
@@ -280,6 +316,7 @@ public class Console extends Plugin implements LogStreamDataListener
 	public void onNewLine( LogLine line )
 	{
 		this.lineBuffer.add( line );
+		this.eventSemaphore.release( );
 	}
 
 	@Override
@@ -304,5 +341,12 @@ public class Console extends Plugin implements LogStreamDataListener
 	public void onNewBlockOfLines( List<LogLine> blockOfLines )
 	{
 		this.lineBuffer.addAll( blockOfLines );
+		this.eventSemaphore.release( );
+	}
+
+	public void setAutoScrollingEnabled( boolean autoScrollingEnabled )
+	{
+		this.autoScrollingEnabled = autoScrollingEnabled;
+		this.eventSemaphore.release( );
 	}
 }
