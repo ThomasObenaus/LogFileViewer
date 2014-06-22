@@ -15,6 +15,7 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
+import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.source.LogLine;
 
 /**
@@ -25,8 +26,12 @@ import thobe.logfileviewer.kernel.source.LogLine;
 @SuppressWarnings ( "serial")
 public class ConsoleTableModel extends AbstractTableModel
 {
-	private static String	columnNames[]	= new String[]
-											{ "LineNo", "Time", "Entry" };
+	/**
+	 * Memory (in bytes) needed for one line of the table
+	 */
+	private static long		BYTES_FOR_ONE_TABLE_ENTRY	= 2048;
+	private static String	columnNames[]				= new String[]
+														{ "LineNo", "Time", "Entry" };
 	private List<LogLine>	entries;
 	private long			memory;
 
@@ -66,7 +71,7 @@ public class ConsoleTableModel extends AbstractTableModel
 
 			// collect mem-information
 			for ( LogLine l : block )
-				this.memory += l.getMem( );
+				this.memory += l.getMem( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY;
 		}
 	}
 
@@ -116,6 +121,7 @@ public class ConsoleTableModel extends AbstractTableModel
 
 	public long getMem( )
 	{
-		return this.memory;
+		// mem + the size of the reference and house-keeping for the list of LogLines
+		return this.memory + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
 	}
 }

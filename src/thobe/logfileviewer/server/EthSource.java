@@ -177,7 +177,7 @@ public class EthSource extends Thread
 
 			try
 			{
-				Thread.sleep( 100 );
+				Thread.sleep( 5 );
 			}
 			catch ( InterruptedException e )
 			{

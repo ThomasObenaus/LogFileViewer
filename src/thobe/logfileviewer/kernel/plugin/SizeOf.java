@@ -20,51 +20,66 @@ public class SizeOf
 	/**
 	 * #bytes of a byte (8 Bit signed)
 	 */
-	public static final long	BYTE	= 1;
+	public static final long	BYTE				= 1;
 
 	/**
 	 * #bytes of a boolean (not really defined)
 	 */
-	public static final long	BOOLEAN	= 1;
+	public static final long	BOOLEAN				= 1;
 
 	/**
 	 * #bytes of a char (16 Bit unicode)
 	 */
-	public static final long	CHAR	= 2;
+	public static final long	CHAR				= 2;
 
 	/**
 	 * #bytes of a short (16 Bit signed)
 	 */
-	public static final long	SHORT	= 2;
+	public static final long	SHORT				= 2;
 
 	/**
 	 * #bytes of a integer (32 Bit signed)
 	 */
-	public static final long	INT		= 4;
+	public static final long	INT					= 4;
 
 	/**
 	 * #bytes of a long (64 Bit signed)
 	 */
-	public static final long	LONG	= 8;
+	public static final long	LONG				= 8;
 
 	/**
 	 * #bytes of a float (32 Bit)
 	 */
-	public static final long	FLOAT	= 4;
+	public static final long	FLOAT				= 4;
 
 	/**
 	 * #bytes of a double (64 Bit)
 	 */
-	public static final long	DOUBLE	= 8;
+	public static final long	DOUBLE				= 8;
 
 	/**
-	 * Size of a {@link String}
+	 * #bytes for a reference field
+	 */
+	public static final long	REFERENCE			= 4;
+
+	/**
+	 * #bytes for house-keeping (for normal objects), needed by every object
+	 */
+	public static final long	HOUSE_KEEPING		= 8;
+
+	/**
+	 * #bytes for house-keeping (for arrays), needed by every object
+	 */
+	public static final long	HOUSE_KEEPING_ARRAY	= 12;
+
+	/**
+	 * Size of a {@link String}, incl. HOUSE_KEEPING incl. REFERENCE
 	 * @param str
 	 * @return
 	 */
 	public static long STRING( String str )
 	{
-		return str.length( ) * CHAR;
+		return str.length( ) * CHAR + HOUSE_KEEPING_ARRAY + REFERENCE;
 	}
 
 }

@@ -66,7 +66,6 @@ public class StatsPrinter extends Thread
 		LOG( ).info( "Thread: " + NAME + " started" );
 		while ( !this.quitRequested.get( ) )
 		{
-
 			if ( this.enabled.get( ) )
 			{
 				StringBuffer strBuffer = new StringBuffer( );
@@ -88,6 +87,7 @@ public class StatsPrinter extends Thread
 				strBuffer.append( "---------------------------------------------\n" );
 
 				LOG( ).info( strBuffer.toString( ) );
+
 			}// if ( this.enabled.get( ) ).
 
 			// wait

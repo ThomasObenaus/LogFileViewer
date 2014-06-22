@@ -28,6 +28,7 @@ import javax.swing.event.TableModelListener;
 
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.Plugin;
+import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_Scroll;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_ScrollToLast;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_SetAutoScrollMode;
@@ -46,6 +47,9 @@ public class Console extends Plugin implements LogStreamDataListener
 	private static long			MAX_TIME_PER_BLOCK_IN_MS	= 1000;
 	private static long			MAX_LINES_PER_BLOCK			= 100;
 
+	/**
+	 * Queue containing all scroll-events
+	 */
 	private Deque<CEvt_Scroll>	scrollEventQueue;
 
 	private Deque<LogLine>		lineBuffer;
@@ -289,8 +293,11 @@ public class Console extends Plugin implements LogStreamDataListener
 	{
 		long memInLineBuffer = 0;
 		for ( LogLine ll : this.lineBuffer )
-			memInLineBuffer += ll.getMem( );
-		return memInLineBuffer + this.tableModel.getMem( );
+			memInLineBuffer += ll.getMem( ) + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
+		long memInEventQueue = this.scrollEventQueue.size( ) * SizeOf.REFERENCE * SizeOf.HOUSE_KEEPING;
+		memInEventQueue += SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
+
+		return memInLineBuffer + this.tableModel.getMem( ) + memInEventQueue;
 	}
 
 	@Override
