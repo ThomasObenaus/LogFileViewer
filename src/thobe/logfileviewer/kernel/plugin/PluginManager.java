@@ -12,9 +12,10 @@ package thobe.logfileviewer.kernel.plugin;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.plugin.console.Console;
 
@@ -25,11 +26,18 @@ import thobe.logfileviewer.kernel.plugin.console.Console;
  */
 public class PluginManager implements IPluginAccess
 {
+	private static final long	MEMORY_THRESHOLD	= 1000 * 1024 * 1024;
+
 	private Map<String, Plugin>	plugins;
+	private Logger				log;
 
 	public PluginManager( )
 	{
+		this.log = Logger.getLogger( "thobe.logfileviewer.kernel.PluginManager" );
 		this.plugins = new HashMap<>( );
+
+		Timer memWDTimer = new Timer( );
+		memWDTimer.schedule( new MemoryWatchDog( this ), 2000, 1000 );
 	}
 
 	public void findAndRegisterPlugins( )
@@ -69,6 +77,30 @@ public class PluginManager implements IPluginAccess
 		return this.plugins.containsKey( pluginName );
 	}
 
+	public void freeMemory( )
+	{
+		synchronized ( this.plugins )
+		{
+			for ( Entry<String, Plugin> entry : this.plugins.entrySet( ) )
+			{
+				Plugin plugin = entry.getValue( );
+				long memBeforeFree = plugin.getCurrentMemory( );
+				entry.getValue( ).freeMemory( );
+
+				long memAfterFree = plugin.getCurrentMemory( );
+				if ( ( memBeforeFree != 0 ) && ( memBeforeFree <= memAfterFree ) )
+				{
+					LOG( ).warning( "Plugin '" + plugin.getName( ) + "' failed to free memory (remaining: " + ( memAfterFree / 1024f / 1024f ) + "MB)" );
+				}// if ( ( memBeforeFree != 0 ) && ( memBeforeFree <= memAfterFree ) ).
+			}// for ( Entry<String, Plugin> entry : this.plugins.entrySet( ) ).
+		}// synchronized ( this.plugins ) .
+	}
+
+	Logger LOG( )
+	{
+		return this.log;
+	}
+
 	@Override
 	public Console getConsole( )
 	{
@@ -79,5 +111,35 @@ public class PluginManager implements IPluginAccess
 			console = ( Console ) plugin;
 		}
 		return console;
+	}
+
+	private class MemoryWatchDog extends TimerTask
+	{
+		private PluginManager	pluginManager;
+
+		public MemoryWatchDog( PluginManager pluginManager )
+		{
+			this.pluginManager = pluginManager;
+		}
+
+		@Override
+		public void run( )
+		{
+			long completeMemory = 0;
+			for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+			{
+				Plugin plugin = entry.getValue( );
+				completeMemory += plugin.getCurrentMemory( );
+			}// for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
+
+			if ( completeMemory >= MEMORY_THRESHOLD )
+			{
+				this.pluginManager.LOG( ).info( "Memorythreshold exceeded (threshold=" + ( MEMORY_THRESHOLD / 1024f / 1024f ) + "MB, currentMemory=" + ( completeMemory / 1024f / 1024f ) + "MB)" );
+				for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+				{
+					entry.getValue( ).freeMemory( );
+				}// for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ).
+			}// if ( completeMemory >= MEMORY_THRESHOLD ).
+		}
 	}
 }

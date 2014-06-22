@@ -41,7 +41,7 @@ public class ConsoleTableModel extends AbstractTableModel
 		this.memory = 0;
 	}
 
-	public void addLine( LogLine line )
+	public synchronized void addLine( LogLine line )
 	{
 		int rows = this.entries.size( );
 		this.entries.add( line );
@@ -61,7 +61,7 @@ public class ConsoleTableModel extends AbstractTableModel
 		return "";
 	}
 
-	public void addBlock( List<LogLine> block )
+	public synchronized void addBlock( List<LogLine> block )
 	{
 		if ( !block.isEmpty( ) )
 		{
@@ -75,7 +75,7 @@ public class ConsoleTableModel extends AbstractTableModel
 		}
 	}
 
-	public void clear( )
+	public synchronized void clear( )
 	{
 		int lastRow = this.entries.size( );
 		this.entries.clear( );
@@ -102,14 +102,17 @@ public class ConsoleTableModel extends AbstractTableModel
 	}
 
 	@Override
-	public int getRowCount( )
+	public synchronized int getRowCount( )
 	{
 		return this.entries.size( );
 	}
 
 	@Override
-	public Object getValueAt( int row, int col )
+	public synchronized Object getValueAt( int row, int col )
 	{
+		if ( this.entries.size( ) <= row )
+			return null;
+
 		LogLine line = this.entries.get( row );
 
 		if ( col == 0 )

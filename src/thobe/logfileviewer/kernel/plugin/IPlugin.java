@@ -105,4 +105,9 @@ public interface IPlugin
 	 * @return
 	 */
 	public long getCurrentMemory( );
+
+	/**
+	 * If this method gets called the according {@link IPlugin} should free its internal memory (release all data).
+	 */
+	public void freeMemory( );
 }

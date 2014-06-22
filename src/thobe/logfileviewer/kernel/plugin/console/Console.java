@@ -349,4 +349,15 @@ public class Console extends Plugin implements LogStreamDataListener
 		this.autoScrollingEnabled = autoScrollingEnabled;
 		this.eventSemaphore.release( );
 	}
+
+	@Override
+	public void freeMemory( )
+	{
+		synchronized ( this.lineBuffer )
+		{
+			this.tableModel.clear( );
+			this.lineBuffer.clear( );
+		}
+		this.eventSemaphore.release( );
+	}
 }
