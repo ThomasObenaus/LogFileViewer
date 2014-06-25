@@ -19,11 +19,13 @@ import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -31,6 +33,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.FormLayout;
 
 import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
@@ -55,16 +60,21 @@ import thobe.widgets.buttons.SmallButton;
  */
 public class Console extends Plugin implements LogStreamDataListener
 {
-	public static final String	FULL_PLUGIN_NAME			= "thobe.logfileviewer.plugin.Console";
+	public static final String	FULL_PLUGIN_NAME				= "thobe.logfileviewer.plugin.Console";
 	/**
 	 * Max time spent waiting for completion of the next block of {@link LogLine}s (in MS)
 	 */
-	private static long			MAX_TIME_PER_BLOCK_IN_MS	= 1000;
+	private static long			MAX_TIME_PER_BLOCK_IN_MS		= 1000;
 
 	/**
 	 * Max amount of {@link LogLine} waiting for completion of one block until the block will be drawn.
 	 */
-	private static long			MAX_LINES_PER_BLOCK			= 100;
+	private static long			MAX_LINES_PER_BLOCK				= 100;
+
+	/**
+	 * Time in ms to wait for the next update of the console plugins display-values
+	 */
+	private static long			UPDATE_DISPLAY_VALUES_INTERVAL	= 1000;
 
 	/**
 	 * Queue containing all scroll-events
@@ -110,6 +120,13 @@ public class Console extends Plugin implements LogStreamDataListener
 	private SmallButton			bu_settings;
 	private SmallButton			bu_enableAutoScroll;
 
+	private JLabel				l_statusline;
+
+	/**
+	 * Timestamp of next time the console's display-values will be updated
+	 */
+	private long				nextUpdateOfDisplayValues;
+
 	public Console( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
@@ -118,6 +135,7 @@ public class Console extends Plugin implements LogStreamDataListener
 		this.scrollEventQueue = new ConcurrentLinkedDeque<>( );
 		this.eventQueue = new ConcurrentLinkedDeque<>( );
 		this.autoScrollingEnabled = true;
+		this.nextUpdateOfDisplayValues = 0;
 		this.buildGUI( );
 	}
 
@@ -131,9 +149,15 @@ public class Console extends Plugin implements LogStreamDataListener
 
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
 
-		JPanel pa_buttons = new JPanel( new FlowLayout( FlowLayout.RIGHT, 0, 0 ) );
-		this.pa_logPanel.add( pa_buttons, BorderLayout.NORTH );
+		CellConstraints cc_settings = new CellConstraints( );
+		JPanel pa_settings = new JPanel( new FormLayout( "3dlu,fill:pref,pref:grow,pref,3dlu", "3dlu,pref,3dlu" ) );
+		this.pa_logPanel.add( pa_settings, BorderLayout.NORTH );
 
+		this.l_statusline = new JLabel( "Lines: 0/" + this.tableModel.getMaxNumberOfConsoleEntries( ) );
+		pa_settings.add( this.l_statusline, cc_settings.xy( 2, 2 ) );
+
+		JPanel pa_buttons = new JPanel( new FlowLayout( FlowLayout.RIGHT, 0, 0 ) );
+		pa_settings.add( pa_buttons, cc_settings.xy( 4, 2 ) );
 
 		this.bu_enableAutoScroll = new SmallButton( "Autoscroll" );
 		pa_buttons.add( this.bu_enableAutoScroll );
@@ -161,7 +185,9 @@ public class Console extends Plugin implements LogStreamDataListener
 		pa_buttons.add( this.bu_settings );
 
 		// adjust column-sizes
+
 		ta_logTable.getColumnModel( ).getColumn( 0 ).setMinWidth( 60 );
+		ta_logTable.getColumnModel( ).getColumn( 0 ).setWidth( 60 );
 		ta_logTable.getColumnModel( ).getColumn( 0 ).setMaxWidth( 60 );
 		ta_logTable.getColumnModel( ).getColumn( 0 ).setPreferredWidth( 60 );
 		ta_logTable.getColumnModel( ).getColumn( 0 ).setResizable( true );
@@ -169,7 +195,6 @@ public class Console extends Plugin implements LogStreamDataListener
 		ta_logTable.getColumnModel( ).getColumn( 1 ).setMaxWidth( 110 );
 		ta_logTable.getColumnModel( ).getColumn( 1 ).setPreferredWidth( 110 );
 		ta_logTable.getColumnModel( ).getColumn( 1 ).setResizable( false );
-
 		// listener that is responsible to scroll the table to the last entry 
 		this.tableModel.addTableModelListener( new TableModelListener( )
 		{
@@ -293,6 +318,15 @@ public class Console extends Plugin implements LogStreamDataListener
 		return "A simple console displaying the whole logfile";
 	}
 
+	private void updateDisplayValues( )
+	{
+		if ( this.nextUpdateOfDisplayValues <= System.currentTimeMillis( ) )
+		{
+			this.nextUpdateOfDisplayValues = System.currentTimeMillis( ) + UPDATE_DISPLAY_VALUES_INTERVAL;
+			this.l_statusline.setText( "Lines: " + this.tableModel.getRowCount( ) + "/" + this.tableModel.getMaxNumberOfConsoleEntries( ) );
+		}// if ( this.nextUpdateOfDisplayValues <= System.currentTimeMillis( ) ) .
+	}
+
 	@Override
 	public void run( )
 	{
@@ -304,6 +338,9 @@ public class Console extends Plugin implements LogStreamDataListener
 
 			// process misc events
 			processEvents( );
+
+			// update display-values
+			updateDisplayValues( );
 
 			long startTime = System.currentTimeMillis( );
 			boolean timeThresholdHurt = false;

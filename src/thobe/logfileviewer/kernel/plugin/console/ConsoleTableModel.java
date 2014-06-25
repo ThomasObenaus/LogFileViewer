@@ -12,6 +12,8 @@ package thobe.logfileviewer.kernel.plugin.console;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -42,7 +44,10 @@ public class ConsoleTableModel extends AbstractTableModel
 		this.entries = new ArrayList<>( );
 		this.memory = 0;
 		this.maxNumberOfConsoleEntries = 100000;
-		this.linesToRemoveOnReachingMaxNumberOfConsoleEntries = 3000;
+		this.linesToRemoveOnReachingMaxNumberOfConsoleEntries = ( int ) ( this.maxNumberOfConsoleEntries * 0.4 );
+
+		Timer timer = new Timer( );
+		timer.schedule( new BufferOverFlowWatcher( this ), 4000, 4000 );
 	}
 
 	private synchronized void removeEntriesIfMaxNumberOfConsoleEntriesWasReached( )
@@ -56,6 +61,7 @@ public class ConsoleTableModel extends AbstractTableModel
 			for ( int i = 0; i < linesToRemove; ++i )
 				this.memory -= ( this.entries.get( i ).getMem( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY );
 			this.entries = this.entries.subList( ( linesToRemove - 1 ), this.entries.size( ) - 1 );
+
 			this.fireTableRowsDeleted( 0, linesToRemove - 1 );
 		}// if ( this.entries.size( ) >= this.maxNumberOfConsoleEntries ) .
 	}
@@ -66,8 +72,6 @@ public class ConsoleTableModel extends AbstractTableModel
 		this.entries.add( line );
 		this.memory += line.getMem( );
 		this.fireTableRowsInserted( rows, rows + 1 );
-
-		this.removeEntriesIfMaxNumberOfConsoleEntriesWasReached( );
 	}
 
 	@Override
@@ -93,8 +97,7 @@ public class ConsoleTableModel extends AbstractTableModel
 			// collect mem-information
 			for ( LogLine l : block )
 				this.memory += l.getMem( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY;
-		}
-		this.removeEntriesIfMaxNumberOfConsoleEntriesWasReached( );
+		}// if ( !block.isEmpty( ) ) .
 	}
 
 	public synchronized void clear( )
@@ -148,5 +151,29 @@ public class ConsoleTableModel extends AbstractTableModel
 	{
 		// mem + the size of the reference and house-keeping for the list of LogLines
 		return this.memory + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
+	}
+	
+	public int getMaxNumberOfConsoleEntries( )
+	{
+		return maxNumberOfConsoleEntries;
+	}
+	
+	/**
+	 * Task that removes all lines from the console that exceed the max number of lines.
+	 */
+	private class BufferOverFlowWatcher extends TimerTask
+	{
+		private ConsoleTableModel	tableModel;
+
+		public BufferOverFlowWatcher( ConsoleTableModel tableModel )
+		{
+			this.tableModel = tableModel;
+		}
+
+		@Override
+		public void run( )
+		{
+			this.tableModel.removeEntriesIfMaxNumberOfConsoleEntriesWasReached( );
+		}
 	}
 }
