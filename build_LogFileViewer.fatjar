@@ -1,0 +1,14 @@
+#Fat Jar Configuration File
+#Mon Jun 23 11:10:02 CEST 2014
+onejar.license.required=true
+manifest.classpath=
+manifest.removesigners=true
+onejar.checkbox=false
+jarname=LogFileViewer.jar
+manifest.mergeall=true
+manifest.mainclass=thobe.logfileviewer.kernel.MainClass
+manifest.file=<createnew>
+jarname.isextern=false
+onejar.expand=
+excludes=
+includes=
