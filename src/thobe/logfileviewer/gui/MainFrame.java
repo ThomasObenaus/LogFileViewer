@@ -10,6 +10,7 @@
 
 package thobe.logfileviewer.gui;
 
+import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.logging.Logger;
@@ -100,7 +101,7 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 
 	private void buildGUI( )
 	{
-
+		this.setLayout( new BorderLayout( ) );
 	}
 
 	public void exit( )
@@ -151,7 +152,7 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 		// add console in case we have one
 		if ( this.console != null && !this.console.isAttachedToGUI( ) )
 		{
-			this.add( this.console.getVisualComponent( ) );
+			this.add( this.console.getVisualComponent( ));
 			this.console.setAttachedToGUI( );
 			this.console.setVisible( true );
 		}// if ( this.console != null && !this.console.isAttachedToGUI( ) ) .

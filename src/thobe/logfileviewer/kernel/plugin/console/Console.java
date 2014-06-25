@@ -11,6 +11,9 @@
 package thobe.logfileviewer.kernel.plugin.console;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
@@ -34,12 +37,15 @@ import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.SizeOf;
+import thobe.logfileviewer.kernel.plugin.console.events.CEvtClear;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_Scroll;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_ScrollToLast;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_SetAutoScrollMode;
+import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
+import thobe.widgets.buttons.SmallButton;
 
 /**
  * Implementation of the {@link Console} {@link IPlugin}.
@@ -66,6 +72,11 @@ public class Console extends Plugin implements LogStreamDataListener
 	private Deque<CEvt_Scroll>	scrollEventQueue;
 
 	/**
+	 * Queue for misc console-events.
+	 */
+	private Deque<ConsoleEvent>	eventQueue;
+
+	/**
 	 * Queue containing all incoming {@link LogLine}s
 	 */
 	private Deque<LogLine>		lineBuffer;
@@ -90,7 +101,14 @@ public class Console extends Plugin implements LogStreamDataListener
 	 */
 	private JTable				ta_logTable;
 
+	/**
+	 * Semaphore for the internal event-main-loop
+	 */
 	private Semaphore			eventSemaphore;
+
+	private SmallButton			bu_clear;
+	private SmallButton			bu_settings;
+	private SmallButton			bu_enableAutoScroll;
 
 	public Console( )
 	{
@@ -98,20 +116,49 @@ public class Console extends Plugin implements LogStreamDataListener
 		this.eventSemaphore = new Semaphore( 1, true );
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
 		this.scrollEventQueue = new ConcurrentLinkedDeque<>( );
+		this.eventQueue = new ConcurrentLinkedDeque<>( );
 		this.autoScrollingEnabled = true;
 		this.buildGUI( );
 	}
 
 	private void buildGUI( )
 	{
-
-		this.pa_logPanel = new JPanel( new BorderLayout( ) );
+		this.pa_logPanel = new JPanel( new BorderLayout( 0, 0 ) );
 		this.tableModel = new ConsoleTableModel( );
 
 		this.ta_logTable = new JTable( this.tableModel );
-		this.pa_logPanel.add( ta_logTable.getTableHeader( ), BorderLayout.NORTH );
 		final JScrollPane scrpa_main = new JScrollPane( ta_logTable );
+
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
+
+		JPanel pa_buttons = new JPanel( new FlowLayout( FlowLayout.RIGHT, 0, 0 ) );
+		this.pa_logPanel.add( pa_buttons, BorderLayout.NORTH );
+
+
+		this.bu_enableAutoScroll = new SmallButton( "Autoscroll" );
+		pa_buttons.add( this.bu_enableAutoScroll );
+		this.bu_enableAutoScroll.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				toggleAutoScroll( );
+			}
+		} );
+
+		this.bu_clear = new SmallButton( "clear" );
+		pa_buttons.add( this.bu_clear );
+		this.bu_clear.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				clear( );
+			}
+		} );
+
+		this.bu_settings = new SmallButton( "Settings" );
+		pa_buttons.add( this.bu_settings );
 
 		// adjust column-sizes
 		ta_logTable.getColumnModel( ).getColumn( 0 ).setMinWidth( 60 );
@@ -157,6 +204,18 @@ public class Console extends Plugin implements LogStreamDataListener
 				}
 			}
 		} );
+	}
+
+	public void clear( )
+	{
+		this.eventQueue.add( new CEvtClear( ) );
+		this.eventSemaphore.release( );
+	}
+
+	public void toggleAutoScroll( )
+	{
+		this.addScrollEvent( new CEvt_SetAutoScrollMode( !this.autoScrollingEnabled ) );
+		this.eventSemaphore.release( );
 	}
 
 	private void addScrollEvent( CEvt_Scroll evt )
@@ -243,6 +302,9 @@ public class Console extends Plugin implements LogStreamDataListener
 			// process next event from the event-queue
 			processScrollEvents( );
 
+			// process misc events
+			processEvents( );
+
 			long startTime = System.currentTimeMillis( );
 			boolean timeThresholdHurt = false;
 			boolean blockSizeThresholdHurt = false;
@@ -277,26 +339,49 @@ public class Console extends Plugin implements LogStreamDataListener
 		}// while ( !this.isQuitRequested( ) ).
 	}
 
+	private void processEvents( )
+	{
+		ConsoleEvent evt = null;
+		synchronized ( this.eventQueue )
+		{
+
+			while ( ( evt = this.eventQueue.poll( ) ) != null )
+			{
+				switch ( evt.getType( ) )
+				{
+				case CLEAR:
+					this.tableModel.clear( );
+					break;
+				default:
+					LOG( ).warning( "Unknown event: " + evt );
+					break;
+				}// switch ( evt.getType( ) ) .
+			}// while ( ( evt = this.eventQueue.poll( ) ) != null ) .
+		}// synchronized ( this.eventQueue ) .
+	}
+
 	private void processScrollEvents( )
 	{
-
 		CEvt_Scroll evt = null;
 		boolean hasScrollToLast = false;
-		while ( ( evt = this.scrollEventQueue.poll( ) ) != null )
+		synchronized ( this.scrollEventQueue )
 		{
-			switch ( evt.getType( ) )
+			while ( ( evt = this.scrollEventQueue.poll( ) ) != null )
 			{
-			case SCROLL_TO_LAST:
-				hasScrollToLast = true;
-				break;
-			case SET_AUTOSCROLL_MODE:
-				this.autoScrollingEnabled = ( ( CEvt_SetAutoScrollMode ) evt ).isEnable( );
-				break;
-			default:
-				LOG( ).warning( "Unknown event: " + evt );
-				break;
+				switch ( evt.getType( ) )
+				{
+				case SCROLL_TO_LAST:
+					hasScrollToLast = true;
+					break;
+				case SET_AUTOSCROLL_MODE:
+					this.autoScrollingEnabled = ( ( CEvt_SetAutoScrollMode ) evt ).isEnable( );
+					break;
+				default:
+					LOG( ).warning( "Unknown event: " + evt );
+					break;
+				}
 			}
-		}
+		}// synchronized ( this.scrollEventQueue ) .
 
 		// scroll to the last line if needed
 		if ( hasScrollToLast && this.autoScrollingEnabled )

@@ -34,11 +34,30 @@ public class ConsoleTableModel extends AbstractTableModel
 														{ "LineNo", "Time", "Entry" };
 	private List<LogLine>	entries;
 	private long			memory;
+	private int				maxNumberOfConsoleEntries;
+	private int				linesToRemoveOnReachingMaxNumberOfConsoleEntries;
 
 	public ConsoleTableModel( )
 	{
 		this.entries = new ArrayList<>( );
 		this.memory = 0;
+		this.maxNumberOfConsoleEntries = 100000;
+		this.linesToRemoveOnReachingMaxNumberOfConsoleEntries = 3000;
+	}
+
+	private synchronized void removeEntriesIfMaxNumberOfConsoleEntriesWasReached( )
+	{
+		if ( this.entries.size( ) >= this.maxNumberOfConsoleEntries )
+		{
+			// compute lines to be removed:
+			int linesToRemove = ( this.entries.size( ) - this.maxNumberOfConsoleEntries ) + this.linesToRemoveOnReachingMaxNumberOfConsoleEntries;
+
+			// for memory only
+			for ( int i = 0; i < linesToRemove; ++i )
+				this.memory -= ( this.entries.get( i ).getMem( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY );
+			this.entries = this.entries.subList( ( linesToRemove - 1 ), this.entries.size( ) - 1 );
+			this.fireTableRowsDeleted( 0, linesToRemove - 1 );
+		}// if ( this.entries.size( ) >= this.maxNumberOfConsoleEntries ) .
 	}
 
 	public synchronized void addLine( LogLine line )
@@ -47,6 +66,8 @@ public class ConsoleTableModel extends AbstractTableModel
 		this.entries.add( line );
 		this.memory += line.getMem( );
 		this.fireTableRowsInserted( rows, rows + 1 );
+
+		this.removeEntriesIfMaxNumberOfConsoleEntriesWasReached( );
 	}
 
 	@Override
@@ -73,6 +94,7 @@ public class ConsoleTableModel extends AbstractTableModel
 			for ( LogLine l : block )
 				this.memory += l.getMem( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY;
 		}
+		this.removeEntriesIfMaxNumberOfConsoleEntriesWasReached( );
 	}
 
 	public synchronized void clear( )
@@ -116,7 +138,7 @@ public class ConsoleTableModel extends AbstractTableModel
 		LogLine line = this.entries.get( row );
 
 		if ( col == 0 )
-			return row;
+			return line.getId( );
 		if ( col == 1 )
 			return line.getTimeStampStr( );
 		return line.getData( );
