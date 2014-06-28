@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.cli.CommandLine;
@@ -56,6 +57,7 @@ public class EthSource extends Thread
 	private File						file;
 	private AtomicLong					linesSend;
 	private AtomicLong					startTime;
+	private AtomicInteger				sleepTime;
 
 	public EthSource( int port, File file ) throws IOException
 	{
@@ -65,6 +67,27 @@ public class EthSource extends Thread
 		this.quitRequested = false;
 		this.linesSend = new AtomicLong( 0 );
 		this.startTime = new AtomicLong( 0 );
+		this.sleepTime = new AtomicInteger( 5 );
+	}
+
+	/**
+	 * Set the lines the eth-source should pump lines per second over ethernet. (Max ~9500 lps)
+	 * @param lps
+	 */
+	public void setLinesPerSecond( int lps )
+	{
+		if ( lps > 9500 )
+			lps = 9500;
+
+		int blocksPerSecond = lps / MAX_LINES_PER_BLOCK;
+		if ( blocksPerSecond == 0 )
+			blocksPerSecond++;
+
+		int sleepFor = 1000 / blocksPerSecond;
+		if ( sleepFor < 5 )
+			sleepFor = 5;
+
+		this.sleepTime.set( sleepFor );
 	}
 
 	void addClient( Socket client ) throws IOException
@@ -177,7 +200,7 @@ public class EthSource extends Thread
 
 			try
 			{
-				Thread.sleep( 5 );
+				Thread.sleep( this.sleepTime.get( ) );
 			}
 			catch ( InterruptedException e )
 			{
@@ -349,6 +372,7 @@ public class EthSource extends Thread
 		try
 		{
 			EthSource ethSource = new EthSource( parsedArgs.getPort( ), new File( parsedArgs.getFilename( ) ) );
+			ethSource.setLinesPerSecond( parsedArgs.getLps( ) );
 			ethSource.start( );
 
 			try
@@ -378,6 +402,7 @@ public class EthSource extends Thread
 
 		final String OPT_PORT = "p";
 		final String OPT_FILE = "f";
+		final String OPT_LPS = "l";
 
 		// create Options object
 		Options options = new Options( );
@@ -388,11 +413,16 @@ public class EthSource extends Thread
 		@SuppressWarnings ( "static-access")
 		Option optPort = OptionBuilder.withArgName( "portnumber" ).hasArg( ).withLongOpt( "port" ).withDescription( "The port to listen/send to." ).create( OPT_PORT );
 
+		@SuppressWarnings ( "static-access")
+		Option optLPS = OptionBuilder.withArgName( "lines per second" ).hasArg( ).withLongOpt( "lps" ).withDescription( "The lines per second that should be published over eth by this source." ).create( OPT_LPS );
+
 		options.addOption( optFilename );
 		options.addOption( optPort );
+		options.addOption( optLPS );
 
 		String filename = null;
 		Integer port = null;
+		int lps = 9500;
 		try
 		{
 			CommandLineParser parser = new GnuParser( );
@@ -425,6 +455,19 @@ public class EthSource extends Thread
 				System.exit( 1 );
 			}
 
+			String lpsStr = cmd.getOptionValue( OPT_LPS );
+			if ( lpsStr != null )
+			{
+				try
+				{
+					lps = Integer.parseInt( lpsStr );
+				}
+				catch ( NumberFormatException e )
+				{
+					System.err.println( "Ignore parameter '" + OPT_LPS + "' (lines per second) since '" + lpsStr + "' is not a number" );
+				}
+			}
+
 		}
 		catch ( ParseException e )
 		{
@@ -433,7 +476,7 @@ public class EthSource extends Thread
 			System.exit( 2 );
 		}
 
-		return new Arguments( filename, port );
+		return new Arguments( filename, port, lps );
 	}
 
 	private class LPSPrinter extends TimerTask

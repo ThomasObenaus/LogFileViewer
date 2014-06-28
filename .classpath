@@ -23,5 +23,8 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/jgoodies-common-1.8.0/jgoodies-common-1.8.0-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="libs/mydoggy/mydoggy-res-1.5.0.jar"/>
+	<classpathentry kind="lib" path="libs/mydoggy/mydoggy-plaf-1.5.0.jar"/>
+	<classpathentry kind="lib" path="libs/mydoggy/mydoggy-api-1.5.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

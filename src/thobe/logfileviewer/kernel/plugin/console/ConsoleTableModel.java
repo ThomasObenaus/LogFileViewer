@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.PatternSyntaxException;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -74,6 +75,34 @@ public class ConsoleTableModel extends AbstractTableModel
 		this.fireTableRowsInserted( rows, rows + 1 );
 	}
 
+	/**
+	 * Returns true if the data of the {@link LogLine} specified by the row-index matches the given regular expression.
+	 * @param row
+	 * @param regex
+	 * @return
+	 */
+	public boolean matches( int row, String regex )
+	{
+		if ( this.getRowCount( ) <= row )
+			return false;
+
+		if ( regex == null )
+			return false;
+		if ( regex.trim( ).isEmpty( ) )
+			return false;
+
+		boolean result = false;
+
+		try
+		{
+			result = this.entries.get( row ).getData( ).matches( regex );
+		}
+		catch ( PatternSyntaxException e )
+		{}
+
+		return result;
+	}
+
 	@Override
 	public String getColumnName( int column )
 	{
@@ -92,7 +121,7 @@ public class ConsoleTableModel extends AbstractTableModel
 		{
 			int rows = this.getRowCount( );
 			this.entries.addAll( block );
-			this.fireTableRowsInserted( rows, rows + block.size( ) );
+			this.fireTableRowsInserted( rows, rows + block.size( ) - 1 );
 
 			// collect mem-information
 			for ( LogLine l : block )
@@ -105,7 +134,7 @@ public class ConsoleTableModel extends AbstractTableModel
 		int lastRow = this.entries.size( );
 		this.entries.clear( );
 		this.memory = 0;
-		this.fireTableRowsDeleted( 0, lastRow );
+		this.fireTableRowsDeleted( 0, lastRow - 1 );
 	}
 
 	@Override
@@ -152,12 +181,12 @@ public class ConsoleTableModel extends AbstractTableModel
 		// mem + the size of the reference and house-keeping for the list of LogLines
 		return this.memory + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
 	}
-	
+
 	public int getMaxNumberOfConsoleEntries( )
 	{
 		return maxNumberOfConsoleEntries;
 	}
-	
+
 	/**
 	 * Task that removes all lines from the console that exceed the max number of lines.
 	 */

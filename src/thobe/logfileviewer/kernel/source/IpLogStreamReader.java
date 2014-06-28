@@ -146,6 +146,7 @@ public class IpLogStreamReader extends LogStreamReader
 			long elapsedTime = 0;
 			boolean minBlockTimeExceeded = false;
 			boolean minBlockSizeExceeded = false;
+			long halfBlockTime = maxBlockTime / 2;
 
 			while ( ( elapsedTime < maxBlockTime ) && ( block.size( ) < maxBlockSize ) )
 			{
@@ -156,7 +157,7 @@ public class IpLogStreamReader extends LogStreamReader
 				minBlockSizeExceeded = block.size( ) >= minBlockSize;
 
 				// leave loop if min-blocktime and min-blocksize where exceeded 
-				if ( minBlockSizeExceeded && minBlockTimeExceeded )
+				if ( ( minBlockSizeExceeded && minBlockTimeExceeded ) || ( minBlockSizeExceeded && ( elapsedTime >= halfBlockTime ) ) )
 				{
 					break;
 				}

@@ -20,11 +20,18 @@ public final class Arguments
 {
 	private Integer	port;
 	private String	filename;
+	private int		lps;
 
-	public Arguments( String filename, Integer port )
+	public Arguments( String filename, Integer port, int lps )
 	{
 		this.filename = filename;
 		this.port = port;
+		this.lps = lps;
+	}
+
+	public int getLps( )
+	{
+		return lps;
 	}
 
 	public String getFilename( )

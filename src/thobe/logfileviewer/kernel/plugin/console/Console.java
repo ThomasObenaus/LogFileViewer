@@ -11,6 +11,8 @@
 package thobe.logfileviewer.kernel.plugin.console;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,7 +21,6 @@ import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.Timer;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -32,10 +33,8 @@ import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
-
-import com.jgoodies.forms.layout.CellConstraints;
-import com.jgoodies.forms.layout.FormLayout;
 
 import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
@@ -51,6 +50,11 @@ import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.widgets.buttons.SmallButton;
+import thobe.widgets.textfield.RestrictedTextFieldAdapter;
+import thobe.widgets.textfield.RestrictedTextFieldString;
+
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.FormLayout;
 
 /**
  * Implementation of the {@link Console} {@link IPlugin}.
@@ -60,72 +64,74 @@ import thobe.widgets.buttons.SmallButton;
  */
 public class Console extends Plugin implements LogStreamDataListener
 {
-	public static final String	FULL_PLUGIN_NAME				= "thobe.logfileviewer.plugin.Console";
+	public static final String			FULL_PLUGIN_NAME				= "thobe.logfileviewer.plugin.Console";
 	/**
 	 * Max time spent waiting for completion of the next block of {@link LogLine}s (in MS)
 	 */
-	private static long			MAX_TIME_PER_BLOCK_IN_MS		= 1000;
+	private static long					MAX_TIME_PER_BLOCK_IN_MS		= 1000;
 
 	/**
 	 * Max amount of {@link LogLine} waiting for completion of one block until the block will be drawn.
 	 */
-	private static long			MAX_LINES_PER_BLOCK				= 100;
+	private static long					MAX_LINES_PER_BLOCK				= 100;
 
 	/**
 	 * Time in ms to wait for the next update of the console plugins display-values
 	 */
-	private static long			UPDATE_DISPLAY_VALUES_INTERVAL	= 1000;
+	private static long					UPDATE_DISPLAY_VALUES_INTERVAL	= 1000;
 
 	/**
 	 * Queue containing all scroll-events
 	 */
-	private Deque<CEvt_Scroll>	scrollEventQueue;
+	private Deque<CEvt_Scroll>			scrollEventQueue;
 
 	/**
 	 * Queue for misc console-events.
 	 */
-	private Deque<ConsoleEvent>	eventQueue;
+	private Deque<ConsoleEvent>			eventQueue;
 
 	/**
 	 * Queue containing all incoming {@link LogLine}s
 	 */
-	private Deque<LogLine>		lineBuffer;
+	private Deque<LogLine>				lineBuffer;
 
 	/**
 	 * The internal {@link TableModel}
 	 */
-	private ConsoleTableModel	tableModel;
+	private ConsoleTableModel			tableModel;
 
 	/**
 	 * The plugin-panel (returned by {@link IPluginUI#getVisualComponent()}.
 	 */
-	private JPanel				pa_logPanel;
+	private JPanel						pa_logPanel;
 
 	/**
 	 * True if autoscrolling is enabled, false otherwise
 	 */
-	private boolean				autoScrollingEnabled;
+	private boolean						autoScrollingEnabled;
 
 	/**
 	 * The table.
 	 */
-	private JTable				ta_logTable;
+	private JTable						ta_logTable;
 
 	/**
 	 * Semaphore for the internal event-main-loop
 	 */
-	private Semaphore			eventSemaphore;
+	private Semaphore					eventSemaphore;
 
-	private SmallButton			bu_clear;
-	private SmallButton			bu_settings;
-	private SmallButton			bu_enableAutoScroll;
+	private SmallButton					bu_clear;
+	private SmallButton					bu_settings;
+	private SmallButton					bu_enableAutoScroll;
 
-	private JLabel				l_statusline;
+	private JLabel						l_statusline;
+
+	private ConsoleFilterCellRenderer	rowFilter;
 
 	/**
 	 * Timestamp of next time the console's display-values will be updated
 	 */
-	private long				nextUpdateOfDisplayValues;
+	private long						nextUpdateOfDisplayValues;
 
 	public Console( )
 	{
@@ -150,14 +156,38 @@ public class Console extends Plugin implements LogStreamDataListener
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
 
 		CellConstraints cc_settings = new CellConstraints( );
-		JPanel pa_settings = new JPanel( new FormLayout( "3dlu,fill:pref,pref:grow,pref,3dlu", "3dlu,pref,3dlu" ) );
+		JPanel pa_settings = new JPanel( new FormLayout( "3dlu,fill:pref,10dlu,pref,1dlu,pref,pref:grow,pref,3dlu", "3dlu,pref,3dlu" ) );
 		this.pa_logPanel.add( pa_settings, BorderLayout.NORTH );
 
 		this.l_statusline = new JLabel( "Lines: 0/" + this.tableModel.getMaxNumberOfConsoleEntries( ) );
 		pa_settings.add( this.l_statusline, cc_settings.xy( 2, 2 ) );
 
+		JLabel l_filter = new JLabel( "Filter: " );
+		pa_settings.add( l_filter, cc_settings.xy( 4, 2 ) );
+		l_filter.setToolTipText( "Filter the Console using regular expressions (matching lines will be colored)" );
+
+		final RestrictedTextFieldString rtf_filter = new RestrictedTextFieldString( 60, true );
+		pa_settings.add( rtf_filter, cc_settings.xy( 6, 2 ) );
+		rtf_filter.setToolTipText( "Filter the Console using regular expressions (matching lines will be colored)" );
+		rtf_filter.addListener( new RestrictedTextFieldAdapter( )
+		{
+			@Override
+			public void valueChangeCommitted( )
+			{
+				rowFilter.setFilterRegex( rtf_filter.getText( ) );
+				// repaint/ filter the whole log on commit
+				tableModel.fireTableDataChanged( );
+			}
+
+			@Override
+			public void valueChanged( )
+			{
+				rowFilter.setFilterRegex( rtf_filter.getText( ) );
+			};
+		} );
+
 		JPanel pa_buttons = new JPanel( new FlowLayout( FlowLayout.RIGHT, 0, 0 ) );
-		pa_settings.add( pa_buttons, cc_settings.xy( 4, 2 ) );
+		pa_settings.add( pa_buttons, cc_settings.xy( 8, 2 ) );
 
 		this.bu_enableAutoScroll = new SmallButton( "Autoscroll" );
 		pa_buttons.add( this.bu_enableAutoScroll );
@@ -229,6 +259,13 @@ public class Console extends Plugin implements LogStreamDataListener
 				}
 			}
 		} );
+
+		this.rowFilter = new ConsoleFilterCellRenderer( this.tableModel );
+
+		// set the cell-renderer that should be used for filtering
+		this.ta_logTable.getColumnModel( ).getColumn( 0 ).setCellRenderer( this.rowFilter );
+		this.ta_logTable.getColumnModel( ).getColumn( 1 ).setCellRenderer( this.rowFilter );
+		this.ta_logTable.getColumnModel( ).getColumn( 2 ).setCellRenderer( this.rowFilter );
 	}
 
 	public void clear( )
@@ -427,7 +464,7 @@ public class Console extends Plugin implements LogStreamDataListener
 			{
 				public void run( )
 				{
-					int viewRow = ta_logTable.convertRowIndexToView( tableModel.getRowCount( ) );
+					int viewRow = ta_logTable.convertRowIndexToView( ta_logTable.getRowCount( ) - 1 );
 					ta_logTable.scrollRectToVisible( ta_logTable.getCellRect( viewRow, 0, true ) );
 				}
 			} );
@@ -481,5 +518,55 @@ public class Console extends Plugin implements LogStreamDataListener
 			this.lineBuffer.clear( );
 		}
 		this.eventSemaphore.release( );
+	}
+
+	@SuppressWarnings ( "serial")
+	private class ConsoleFilterCellRenderer extends DefaultTableCellRenderer
+	{
+		private ConsoleTableModel	tableModel;
+		private String				filterRegex;
+
+		public ConsoleFilterCellRenderer( ConsoleTableModel tableModel )
+		{
+			this.tableModel = tableModel;
+			this.filterRegex = "";
+		}
+
+		public void setFilterRegex( String filterRegex )
+		{
+			// improve regex
+			if ( ( filterRegex != null ) && ( !filterRegex.trim( ).isEmpty( ) ) )
+			{
+				// add any character as prefix but only if start of line is not selected
+				if ( !filterRegex.startsWith( "^" ) )
+					filterRegex = ".*" + filterRegex;
+
+				// add any character as suffix but only if end of line is not selected
+				if ( !filterRegex.endsWith( "$" ) )
+					filterRegex = filterRegex + ".*";
+			}
+
+			this.filterRegex = filterRegex;
+		}
+
+		@Override
+		public Component getTableCellRendererComponent( JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column )
+		{
+			Component result = super.getTableCellRendererComponent( table, value, isSelected, hasFocus, row, column );
+
+			if ( !isSelected )
+			{
+				if ( this.tableModel.matches( row, this.filterRegex ) )
+				{
+					result.setBackground( Color.orange );
+				}
+				else
+				{
+					result.setBackground( ta_logTable.getBackground( ) );
+
+				}
+			}
+			return result;
+		}
 	}
 }

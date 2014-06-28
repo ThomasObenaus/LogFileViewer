@@ -57,7 +57,7 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 
 		this.buildMenu( );
 		this.buildGUI( );
-		this.setSize( 300, 200 );
+		this.setSize( 1200, 700 );
 		this.setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
 		this.addWindowListener( new WindowAdapter( )
 		{
