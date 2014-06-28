@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import javax.swing.table.AbstractTableModel;
@@ -76,26 +78,25 @@ public class ConsoleTableModel extends AbstractTableModel
 	}
 
 	/**
-	 * Returns true if the data of the {@link LogLine} specified by the row-index matches the given regular expression.
+	 * Returns true if the data of the {@link LogLine} specified by the row-index matches the given {@link Pattern}.
 	 * @param row
-	 * @param regex
+	 * @param pattern
 	 * @return
 	 */
-	public boolean matches( int row, String regex )
+	public boolean matches( int row, Pattern pattern )
 	{
 		if ( this.getRowCount( ) <= row )
 			return false;
 
-		if ( regex == null )
-			return false;
-		if ( regex.trim( ).isEmpty( ) )
+		if ( pattern == null || pattern.pattern( ).trim( ).isEmpty( ) )
 			return false;
 
 		boolean result = false;
 
 		try
 		{
-			result = this.entries.get( row ).getData( ).matches( regex );
+			Matcher m = pattern.matcher( this.entries.get( row ).getData( ) );
+			result = m.find( );
 		}
 		catch ( PatternSyntaxException e )
 		{}

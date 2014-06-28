@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -36,6 +38,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 
+import thobe.logfileviewer.gui.RestrictedTextFieldRegexp;
 import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
@@ -51,7 +54,6 @@ import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.widgets.buttons.SmallButton;
 import thobe.widgets.textfield.RestrictedTextFieldAdapter;
-import thobe.widgets.textfield.RestrictedTextFieldString;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
@@ -164,11 +166,28 @@ public class Console extends Plugin implements LogStreamDataListener
 
 		JLabel l_filter = new JLabel( "Filter: " );
 		pa_settings.add( l_filter, cc_settings.xy( 4, 2 ) );
-		l_filter.setToolTipText( "Filter the Console using regular expressions (matching lines will be colored)" );
+		String tt_filter = "<html><h4>Filter the Console using regular expressions (matching lines will be colored):</h4>";
+		tt_filter += "</br>";
+		tt_filter += "<ul>";
+		tt_filter += "<li>. - any character</li>";
+		tt_filter += "<li>.* - any character multiple times</li>";
+		tt_filter += "<li>| - this is a OR. E.g. 'Info|Debug' will match all lines containing 'Info' OR 'Debug'</li>";
+		tt_filter += "<li>^ - start of line</li>";
+		tt_filter += "<li>$ - end of line</li>";
+		tt_filter += "<li>[0-9] - any number between 0 and 9</li>";
+		tt_filter += "<li>[0-9]* - any number between 0 and 9 multiple times</li>";
+		tt_filter += "<li>[0-9]{3,} - any number between 0 and 9 at min 3 times in a row</li>";
+		tt_filter += "<li>[0-9]{,3} - any number between 0 and 9 at max 3 times in a row</li>";
+		tt_filter += "<li>\\[ - [ ... (since [ and ] are control characters they have to be escaped)</li>";
+		tt_filter += "<li>\\. - . ... (since . is a control character it has to be escaped)</li>";
+		tt_filter += "</ul>";
+		tt_filter += "</html>";
 
-		final RestrictedTextFieldString rtf_filter = new RestrictedTextFieldString( 60, true );
+		l_filter.setToolTipText( tt_filter );
+
+		final RestrictedTextFieldRegexp rtf_filter = new RestrictedTextFieldRegexp( 60 );
 		pa_settings.add( rtf_filter, cc_settings.xy( 6, 2 ) );
-		rtf_filter.setToolTipText( "Filter the Console using regular expressions (matching lines will be colored)" );
+		rtf_filter.setToolTipText( tt_filter );
 		rtf_filter.addListener( new RestrictedTextFieldAdapter( )
 		{
 			@Override
@@ -524,29 +543,22 @@ public class Console extends Plugin implements LogStreamDataListener
 	private class ConsoleFilterCellRenderer extends DefaultTableCellRenderer
 	{
 		private ConsoleTableModel	tableModel;
-		private String				filterRegex;
+		private Pattern				pattern;
 
 		public ConsoleFilterCellRenderer( ConsoleTableModel tableModel )
 		{
+			this.pattern = null;
 			this.tableModel = tableModel;
-			this.filterRegex = "";
 		}
 
 		public void setFilterRegex( String filterRegex )
 		{
-			// improve regex
-			if ( ( filterRegex != null ) && ( !filterRegex.trim( ).isEmpty( ) ) )
+			try
 			{
-				// add any character as prefix but only if start of line is not selected
-				if ( !filterRegex.startsWith( "^" ) )
-					filterRegex = ".*" + filterRegex;
-
-				// add any character as suffix but only if end of line is not selected
-				if ( !filterRegex.endsWith( "$" ) )
-					filterRegex = filterRegex + ".*";
+				this.pattern = Pattern.compile( filterRegex );
 			}
-
-			this.filterRegex = filterRegex;
+			catch ( PatternSyntaxException e )
+			{}
 		}
 
 		@Override
@@ -556,7 +568,7 @@ public class Console extends Plugin implements LogStreamDataListener
 
 			if ( !isSelected )
 			{
-				if ( this.tableModel.matches( row, this.filterRegex ) )
+				if ( this.tableModel.matches( row, this.pattern ) )
 				{
 					result.setBackground( Color.orange );
 				}
