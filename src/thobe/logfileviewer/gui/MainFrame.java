@@ -15,11 +15,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.logging.Logger;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
+import javax.swing.SwingUtilities;
 
 import thobe.logfileviewer.LogFileViewerInfo;
 import thobe.logfileviewer.gui.actions.Act_Close;
@@ -31,6 +33,8 @@ import thobe.logfileviewer.kernel.LogFileViewerAppListener;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.widgets.action.ActionRegistry;
+import bibliothek.gui.dock.common.CControl;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
 
 /**
  * @author Thomas Obenaus
@@ -42,6 +46,8 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 {
 	private Logger				log;
 	private LogFileViewerApp	app;
+
+	private CControl			dockableControl;
 
 	private Console				console;
 
@@ -102,6 +108,9 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 	private void buildGUI( )
 	{
 		this.setLayout( new BorderLayout( ) );
+
+		dockableControl = new CControl( this );
+		this.add( this.dockableControl.getContentArea( ),BorderLayout.CENTER );
 	}
 
 	public void exit( )
@@ -152,9 +161,25 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 		// add console in case we have one
 		if ( this.console != null && !this.console.isAttachedToGUI( ) )
 		{
-			this.add( this.console.getVisualComponent( ));
+			final DefaultSingleCDockable consoleDockable = new DefaultSingleCDockable( "Console",this.console.getVisualComponent( ));
+			this.dockableControl.addDockable( consoleDockable );
+
 			this.console.setAttachedToGUI( );
 			this.console.setVisible( true );
+			
+			
+			final DefaultSingleCDockable consoleDockable2 = new DefaultSingleCDockable( "b",new JButton("jdhfjdh"));
+			this.dockableControl.addDockable( consoleDockable2 );
+			SwingUtilities.invokeLater( new Runnable( )
+			{
+				@Override
+				public void run( )
+				{
+					consoleDockable.setVisible( true );
+					consoleDockable2.setVisible( true );					
+				}
+			} );
+			
 		}// if ( this.console != null && !this.console.isAttachedToGUI( ) ) .
 
 		this.revalidate( );
