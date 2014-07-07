@@ -20,7 +20,7 @@ import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
  * @source IPlugin.java
  * @date Jun 2, 2014
  */
-public interface IPlugin
+public interface IPlugin extends IPluginBase
 {
 	/**
 	 * Returns true if previously the method {@link IPlugin#quit()} was called.
@@ -87,18 +87,6 @@ public interface IPlugin
 	 * @return
 	 */
 	public boolean onStopped( );
-
-	/**
-	 * This method should return the name of this {@link IPlugin}.
-	 * @return
-	 */
-	public String getPluginName( );
-
-	/**
-	 * This method should return a short description of this {@link IPlugin}
-	 * @return
-	 */
-	public String getPluginDescription( );
 
 	/**
 	 * This method should return the memory currently allocated by this plugin in byte.

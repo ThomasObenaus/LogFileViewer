@@ -11,7 +11,9 @@
 package thobe.logfileviewer.kernel.plugin;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
@@ -141,5 +143,21 @@ public class PluginManager implements IPluginAccess
 				}// for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ).
 			}// if ( completeMemory >= MEMORY_THRESHOLD ).
 		}
+	}
+
+	@Override
+	public Set<IPluginUI> getPluginsNotAttachedToGui( )
+	{
+		Set<IPluginUI> result = new HashSet<>( );
+
+		for ( Map.Entry<String, Plugin> entry : this.plugins.entrySet( ) )
+		{
+			if ( !entry.getValue( ).isAttachedToGUI( ) )
+			{
+				result.add( entry.getValue( ) );
+			}// if ( !entry.getValue( ).isAttachedToGUI( ) )
+		}// for ( Map.Entry<String, Plugin> entry : this.plugins.entrySet( ) )
+
+		return result;
 	}
 }

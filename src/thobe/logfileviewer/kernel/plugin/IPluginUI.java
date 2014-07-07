@@ -17,7 +17,7 @@ import javax.swing.JComponent;
  * @source IPluginUI.java
  * @date Jun 2, 2014
  */
-public interface IPluginUI
+public interface IPluginUI extends IPluginBase
 {
 	/**
 	 * If the {@link IPluginUI} was attached to a gui-component/ container this method should be called to store the state of attachment.

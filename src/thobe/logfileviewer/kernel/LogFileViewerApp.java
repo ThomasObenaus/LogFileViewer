@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
+import thobe.logfileviewer.kernel.plugin.performance.PerformanceMonitor;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 import thobe.logfileviewer.kernel.util.StatsPrinter;
@@ -117,6 +118,9 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 
 		// register console-plugin
 		pluginManager.registerPlugin( new Console( ) );
+
+		// register the performance-plugin
+		pluginManager.registerPlugin( new PerformanceMonitor( ) );
 
 		// look for new plugins
 		pluginManager.findAndRegisterPlugins( );

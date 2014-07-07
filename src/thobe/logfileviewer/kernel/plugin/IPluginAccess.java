@@ -11,6 +11,7 @@
 package thobe.logfileviewer.kernel.plugin;
 
 import java.util.Map;
+import java.util.Set;
 
 import thobe.logfileviewer.kernel.plugin.console.Console;
 
@@ -40,6 +41,12 @@ public interface IPluginAccess
 	 * @return
 	 */
 	public Map<String, Plugin> getPlugins( );
+
+	/**
+	 * Returns a set containing all {@link IPluginUI}s that are not already attached to the gui.
+	 * @return
+	 */
+	public Set<IPluginUI> getPluginsNotAttachedToGui( );
 
 	/**
 	 * Returns the {@link Console}-plugin.

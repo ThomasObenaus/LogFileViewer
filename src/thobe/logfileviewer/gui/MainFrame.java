@@ -15,26 +15,25 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.logging.Logger;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
-import javax.swing.SwingUtilities;
 
 import thobe.logfileviewer.LogFileViewerInfo;
 import thobe.logfileviewer.gui.actions.Act_Close;
 import thobe.logfileviewer.gui.actions.Act_Exit;
 import thobe.logfileviewer.gui.actions.Act_OpenConnection;
 import thobe.logfileviewer.gui.actions.Act_OpenFile;
+import thobe.logfileviewer.gui.plugin.DockPluginWindowManager;
+import thobe.logfileviewer.gui.plugin.IPluginWindowManager;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.LogFileViewerAppListener;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.widgets.action.ActionRegistry;
-import bibliothek.gui.dock.common.CControl;
-import bibliothek.gui.dock.common.DefaultSingleCDockable;
 
 /**
  * @author Thomas Obenaus
@@ -44,12 +43,12 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 @SuppressWarnings ( "serial")
 public class MainFrame extends JFrame implements LogFileViewerAppListener
 {
-	private Logger				log;
-	private LogFileViewerApp	app;
+	private Logger					log;
+	private LogFileViewerApp		app;
 
-	private CControl			dockableControl;
+	private IPluginWindowManager	pluginWindowManager;
 
-	private Console				console;
+	private Console					console;
 
 	public MainFrame( LogFileViewerApp app )
 	{
@@ -109,8 +108,11 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 	{
 		this.setLayout( new BorderLayout( ) );
 
-		dockableControl = new CControl( this );
-		this.add( this.dockableControl.getContentArea( ),BorderLayout.CENTER );
+		// currently we use the docking-frames library
+		this.pluginWindowManager = new DockPluginWindowManager( this );
+
+		// add the main-panel
+		this.add( this.pluginWindowManager.getMainPanel( ), BorderLayout.CENTER );
 	}
 
 	public void exit( )
@@ -138,52 +140,41 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 	public void newPluginsAvailable( IPluginAccess pluginAccess )
 	{
 		LOG( ).info( "New plugins available" );
-		boolean rebuildNeeded = false;
 
 		// we dont have the console --> look for it
 		if ( this.console == null )
 		{
 			this.console = pluginAccess.getConsole( );
-			if ( this.console != null )
-			{
-				LOG( ).info( "IPlugin '" + this.console + "' found and added." );
-				rebuildNeeded = true;
-			}// if ( this.console != null ) .
 		}// if ( this.console == null ).
 
-		// rebuild GUI if needed (if a new plugin is available)
-		if ( rebuildNeeded )
-			this.rebuildGUI( );
+		// rebuilds the Gui (e.g. adds new plugins)
+		this.rebuildGUI( pluginAccess );
 	}
 
-	private void rebuildGUI( )
+	private void rebuildGUI( IPluginAccess pluginAccess )
 	{
+		boolean repaintNeeded = false;
+
 		// add console in case we have one
 		if ( this.console != null && !this.console.isAttachedToGUI( ) )
 		{
-			final DefaultSingleCDockable consoleDockable = new DefaultSingleCDockable( "Console",this.console.getVisualComponent( ));
-			this.dockableControl.addDockable( consoleDockable );
-
-			this.console.setAttachedToGUI( );
-			this.console.setVisible( true );
-			
-			
-			final DefaultSingleCDockable consoleDockable2 = new DefaultSingleCDockable( "b",new JButton("jdhfjdh"));
-			this.dockableControl.addDockable( consoleDockable2 );
-			SwingUtilities.invokeLater( new Runnable( )
-			{
-				@Override
-				public void run( )
-				{
-					consoleDockable.setVisible( true );
-					consoleDockable2.setVisible( true );					
-				}
-			} );
-			
+			this.pluginWindowManager.addPlugin( this.console );
+			repaintNeeded = true;
+			LOG( ).info( "IPlugin '" + this.console + "' found and added." );
 		}// if ( this.console != null && !this.console.isAttachedToGUI( ) ) .
 
-		this.revalidate( );
-		this.repaint( );
+		for ( IPluginUI plugin : pluginAccess.getPluginsNotAttachedToGui( ) )
+		{
+			this.pluginWindowManager.addPlugin( plugin );
+			LOG( ).info( "IPlugin '" + plugin + "' found and added." );
+			repaintNeeded = true;
+		}// for ( IPluginUI plugins : pluginAccess.getPluginsNotAttachedToGui( ) )
+
+		if ( repaintNeeded )
+		{
+			this.revalidate( );
+			this.repaint( );
+		}// if ( repaintNeeded )
 	}
 
 	private Logger LOG( )
