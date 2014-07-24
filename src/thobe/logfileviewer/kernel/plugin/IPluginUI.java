@@ -48,4 +48,9 @@ public interface IPluginUI extends IPluginBase
 	 * @return
 	 */
 	public JComponent getVisualComponent( );
+	
+	
+	public IPluginWindowManagerAccess getPluginWindowManagerAccess();
+	
+	void setPluginWindowManagerAccess(IPluginWindowManagerAccess pWMA);	
 }

@@ -98,7 +98,7 @@ public class PluginManager implements IPluginAccess
 		}// synchronized ( this.plugins ) .
 	}
 
-	Logger LOG( )
+	protected Logger LOG( )
 	{
 		return this.log;
 	}

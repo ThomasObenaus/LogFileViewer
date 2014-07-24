@@ -159,6 +159,7 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 		if ( this.console != null && !this.console.isAttachedToGUI( ) )
 		{
 			this.pluginWindowManager.addPlugin( this.console );
+			this.console.setPluginWindowManagerAccess( this.pluginWindowManager );
 			repaintNeeded = true;
 			LOG( ).info( "IPlugin '" + this.console + "' found and added." );
 		}// if ( this.console != null && !this.console.isAttachedToGUI( ) ) .
@@ -166,6 +167,7 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 		for ( IPluginUI plugin : pluginAccess.getPluginsNotAttachedToGui( ) )
 		{
 			this.pluginWindowManager.addPlugin( plugin );
+			plugin.setPluginWindowManagerAccess( this.pluginWindowManager );
 			LOG( ).info( "IPlugin '" + plugin + "' found and added." );
 			repaintNeeded = true;
 		}// for ( IPluginUI plugins : pluginAccess.getPluginsNotAttachedToGui( ) )

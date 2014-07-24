@@ -26,16 +26,18 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	/**
 	 * true if a stop was requested --> in this case the {@link Plugin} has to leave its run-method
 	 */
-	private AtomicBoolean	quitRequested;
+	private AtomicBoolean				quitRequested;
 
 	/**
 	 * Internal instance of the logger
 	 */
-	private Logger			log;
+	private Logger						log;
 
-	private String			pluginName;
+	private String						pluginName;
 
-	private AtomicBoolean	attachedToGUI;
+	private AtomicBoolean				attachedToGUI;
+
+	private IPluginWindowManagerAccess	pluginWindowMngAccess;
 
 	public Plugin( String pluginName, String logChannelName )
 	{
@@ -140,4 +142,15 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 		return this.getPluginName( ) + " {" + this.getPluginDescription( ) + "}";
 	}
 
+	@Override
+	public void setPluginWindowManagerAccess( IPluginWindowManagerAccess pWMA )
+	{
+		this.pluginWindowMngAccess = pWMA;
+	}
+
+	@Override
+	public IPluginWindowManagerAccess getPluginWindowManagerAccess( )
+	{
+		return this.pluginWindowMngAccess;
+	}
 }

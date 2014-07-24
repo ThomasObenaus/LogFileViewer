@@ -41,7 +41,6 @@ public class MainClass
 		// set the look and feel
 		setLookAndFeel( );
 
-		
 		LogFileViewerApp app = new LogFileViewerApp( );
 		// add the running application to its visual representation
 		MainFrame mainFrame = new MainFrame( app );

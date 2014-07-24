@@ -13,13 +13,14 @@ package thobe.logfileviewer.gui.plugin;
 import javax.swing.JPanel;
 
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
+import thobe.logfileviewer.kernel.plugin.IPluginWindowManagerAccess;
 
 /**
  * @author Thomas Obenaus
  * @source IPluginWindowManager.java
  * @date Jul 7, 2014
  */
-public interface IPluginWindowManager
+public interface IPluginWindowManager extends IPluginWindowManagerAccess
 {
 	public JPanel getMainPanel( );
 

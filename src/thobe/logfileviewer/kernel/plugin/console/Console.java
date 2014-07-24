@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -135,6 +136,12 @@ public class Console extends Plugin implements LogStreamDataListener
 	 */
 	private long						nextUpdateOfDisplayValues;
 
+	
+	/**
+	 * The {@link RestrictedTextFieldRegexp} containing the filter for filtering the log-file.
+	 */
+	private RestrictedTextFieldRegexp rtf_filter;
+	
 	public Console( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
@@ -158,7 +165,7 @@ public class Console extends Plugin implements LogStreamDataListener
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
 
 		CellConstraints cc_settings = new CellConstraints( );
-		JPanel pa_settings = new JPanel( new FormLayout( "3dlu,fill:pref,10dlu,pref,1dlu,pref,pref:grow,pref,3dlu", "3dlu,pref,3dlu" ) );
+		JPanel pa_settings = new JPanel( new FormLayout( "3dlu,fill:pref,10dlu,pref,1dlu,pref,0dlu,10dlu,pref:grow,pref,3dlu", "3dlu,pref,3dlu" ) );
 		this.pa_logPanel.add( pa_settings, BorderLayout.NORTH );
 
 		this.l_statusline = new JLabel( "Lines: 0/" + this.tableModel.getMaxNumberOfConsoleEntries( ) );
@@ -185,7 +192,7 @@ public class Console extends Plugin implements LogStreamDataListener
 
 		l_filter.setToolTipText( tt_filter );
 
-		final RestrictedTextFieldRegexp rtf_filter = new RestrictedTextFieldRegexp( 60 );
+		this.rtf_filter = new RestrictedTextFieldRegexp( 60 );
 		pa_settings.add( rtf_filter, cc_settings.xy( 6, 2 ) );
 		rtf_filter.setToolTipText( tt_filter );
 		rtf_filter.addListener( new RestrictedTextFieldAdapter( )
@@ -205,8 +212,21 @@ public class Console extends Plugin implements LogStreamDataListener
 			};
 		} );
 
+		SmallButton bu_createFilter = new SmallButton( ">" );
+		pa_settings.add( bu_createFilter, cc_settings.xy( 8, 2 ) );
+		bu_createFilter.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				System.out.println("create filter: " + rtf_filter.getValue( ));// TODO Auto-generated method stub
+				getPluginWindowManagerAccess( ).registerComponent( Console.this, new JButton("kjew" ));
+				
+			}
+		} );
+
 		JPanel pa_buttons = new JPanel( new FlowLayout( FlowLayout.RIGHT, 0, 0 ) );
-		pa_settings.add( pa_buttons, cc_settings.xy( 8, 2 ) );
+		pa_settings.add( pa_buttons, cc_settings.xy( 10, 2 ) );
 
 		this.bu_enableAutoScroll = new SmallButton( "Autoscroll" );
 		pa_buttons.add( this.bu_enableAutoScroll );
