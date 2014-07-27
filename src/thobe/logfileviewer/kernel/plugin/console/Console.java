@@ -22,13 +22,12 @@ import java.util.regex.Pattern;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.table.TableModel;
 
 import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.Plugin;
-import thobe.logfileviewer.kernel.plugin.console.events.CEvtClear;
+import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
@@ -62,11 +61,6 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	 * Queue containing all incoming {@link LogLine}s
 	 */
 	private Deque<LogLine>				lineBuffer;
-
-	/**
-	 * The internal {@link TableModel}
-	 */
-	private ConsoleTableModel			tableModel;
 
 	/**
 	 * The plugin-panel (returned by {@link IPluginUI#getVisualComponent()}.
@@ -133,12 +127,6 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 		SubConsole consoleUI = createNewSubConsole( null, ".*" );
 		this.registerSubConsole( consoleUI, false );
 		this.pa_logPanel = consoleUI.getLogPanel( );
-	}
-
-	public void clear( )
-	{
-		this.eventQueue.add( new CEvtClear( ) );
-		this.eventSemaphore.release( );
 	}
 
 	@Override
@@ -274,9 +262,6 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 			{
 				switch ( evt.getType( ) )
 				{
-				case CLEAR:
-					this.tableModel.clear( );
-					break;
 				default:
 					LOG( ).warning( "Unknown event: " + evt );
 					break;
@@ -301,14 +286,19 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	@Override
 	public long getCurrentMemory( )
 	{
-		/*long memInLineBuffer = 0;
+		long memInLineBuffer = 0;
 		for ( LogLine ll : this.lineBuffer )
 			memInLineBuffer += ll.getMem( ) + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
-		long memInEventQueue = this.scrollEventQueue.size( ) * SizeOf.REFERENCE * SizeOf.HOUSE_KEEPING;
-		memInEventQueue += SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
+		long memInEventQueue = this.eventQueue.size( ) * SizeOf.REFERENCE * SizeOf.HOUSE_KEEPING;
 
-		return memInLineBuffer + this.tableModel.getMem( ) + memInEventQueue;*/
-		return 0;
+		long memoryOfAttachedDataListeners = 0;
+		synchronized ( this.consoleDataListeners )
+		{
+			for ( ConsoleDataListener cdl : this.consoleDataListeners )
+				memoryOfAttachedDataListeners += cdl.getCurrentMemory( );
+		}
+
+		return memInLineBuffer + memInEventQueue + memoryOfAttachedDataListeners;
 	}
 
 	@Override
@@ -321,11 +311,19 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	@Override
 	public void freeMemory( )
 	{
+		// free internal memory 
 		synchronized ( this.lineBuffer )
 		{
-			this.tableModel.clear( );
 			this.lineBuffer.clear( );
 		}
+
+		// free memory of attached listeners
+		synchronized ( this.consoleDataListeners )
+		{
+			for ( ConsoleDataListener cdl : this.consoleDataListeners )
+				cdl.freeMemory( );
+		}
+
 		this.eventSemaphore.release( );
 	}
 }

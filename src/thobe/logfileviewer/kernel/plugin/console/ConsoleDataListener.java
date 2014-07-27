@@ -22,4 +22,8 @@ import thobe.logfileviewer.kernel.source.LogLine;
 public interface ConsoleDataListener
 {
 	public void onNewData( List<LogLine> blockOfLines );
+
+	public void freeMemory( );
+
+	public long getCurrentMemory( );
 }
