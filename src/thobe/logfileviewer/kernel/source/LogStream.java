@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
@@ -55,7 +57,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	 * Map of listeners that are interested in data of the log-file ({@link LogStream}). Within this map the listeners are ordered by their
 	 * line-filter. Map<line-filter,set of listeners>
 	 */
-	private Map<String, Set<LogStreamDataListener>>			logStreamDataListeners;
+	private Map<Pattern, Set<LogStreamDataListener>>		logStreamDataListeners;
 
 	/**
 	 * Id of the {@link LogLine}s;
@@ -65,7 +67,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	/**
 	 * Mapping for a block of {@link LogLine}s to the registered {@link LogStreamDataListener}s having the same filter.
 	 */
-	private Map<String, LogLineBlockToLogStreamListener>	logLineBlockToLSDLMap;
+	private Map<Pattern, LogLineBlockToLogStreamListener>	logLineBlockToLSDLMap;
 
 	private TimeStampExtractor								timeStampExtractor;
 
@@ -241,14 +243,14 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 
 		synchronized ( this.logStreamDataListeners )
 		{
-			for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) )
+			for ( Entry<Pattern, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) )
 			{
-				String lineFilter = entry.getKey( );
+				Pattern linePattern = entry.getKey( );
 
 				try
 				{
 					// look if the filter matches the line
-					if ( newLine != null && newLine.matches( lineFilter ) )
+					if ( newLine != null && matches( linePattern, newLine ) )
 					{
 						// only build the line if at least one filter matches
 						if ( line == null )
@@ -266,11 +268,29 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 				}// try
 				catch ( PatternSyntaxException e )
 				{
-					LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + lineFilter + "': " + e.getLocalizedMessage( ) );
+					LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + linePattern.pattern( ) + "': " + e.getLocalizedMessage( ) );
 				}// catch ( PatternSyntaxException e ).
 			}// for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) ) .
 		}// synchronized ( this.logStreamDataListeners ) .
 
+	}
+
+	private static boolean matches( final Pattern pattern, final String line )
+	{
+		if ( pattern == null || pattern.pattern( ).trim( ).isEmpty( ) )
+			return false;
+
+		boolean result = false;
+
+		try
+		{
+			Matcher m = pattern.matcher( line );
+			result = m.find( );
+		}
+		catch ( PatternSyntaxException e )
+		{}
+
+		return result;
 	}
 
 	private LogLine buildLogLine( String newLine )
@@ -368,14 +388,14 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 			LogLine logLine = null;
 			synchronized ( this.logLineBlockToLSDLMap )
 			{
-				for ( Entry<String, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
+				for ( Entry<Pattern, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
 				{
-					String lineFilter = entry.getKey( );
+					Pattern linePattern = entry.getKey( );
 
 					try
 					{
 						// look if the filter matches the line
-						if ( newLine != null && newLine.matches( lineFilter ) )
+						if ( newLine != null && matches( linePattern, newLine ) )
 						{
 							// only build the line if at least one filter matches
 							if ( logLine == null )
@@ -390,7 +410,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 					}// try
 					catch ( PatternSyntaxException e )
 					{
-						LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + lineFilter + "': " + e.getLocalizedMessage( ) );
+						LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + linePattern.pattern( ) + "': " + e.getLocalizedMessage( ) );
 					}// catch ( PatternSyntaxException e ).
 				}// for ( Entry<String, LogLineBlockToLogStreamListener> entry : logLineBlockToLSDLMap.entrySet( ) ) .
 			}// synchronized ( this.logLineBlockToLSDLMap ) .
@@ -399,7 +419,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		// now fire the blocks to the listeners
 		synchronized ( this.logLineBlockToLSDLMap )
 		{
-			for ( Entry<String, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
+			for ( Entry<Pattern, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
 			{
 				List<LogLine> logLines = entry.getValue( ).getKey( );
 				Set<LogStreamDataListener> listeners = entry.getValue( ).getValue( );

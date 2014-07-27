@@ -12,6 +12,7 @@ package thobe.logfileviewer.kernel.plugin.performance;
 
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -131,9 +132,9 @@ public class PerformanceMonitor extends Plugin implements LogStreamDataListener
 	}
 
 	@Override
-	public String getLineFilter( )
+	public Pattern getLineFilter( )
 	{
-		return ".*";
+		return Pattern.compile( ".*" );
 	}
 
 	protected Logger LOG( )

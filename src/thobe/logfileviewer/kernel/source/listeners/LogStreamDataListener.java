@@ -11,6 +11,7 @@
 package thobe.logfileviewer.kernel.source.listeners;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.LogStream;
@@ -32,5 +33,5 @@ public interface LogStreamDataListener
 	 * the matching line of the log-file.
 	 * @return
 	 */
-	public String getLineFilter( );
+	public Pattern getLineFilter( );
 }
