@@ -193,7 +193,7 @@ public class SubConsole extends Thread implements ConsoleDataListener
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
 
 		CellConstraints cc_settings = new CellConstraints( );
-		JPanel pa_settings = new JPanel( new FormLayout( "3dlu,fill:pref,10dlu,pref,1dlu,pref,0dlu,10dlu,pref:grow,pref,3dlu", "3dlu,pref,3dlu" ) );
+		JPanel pa_settings = new JPanel( new FormLayout( "3dlu,fill:default,10dlu,default,1dlu,default,0dlu,10dlu,default:grow,default,3dlu", "3dlu,pref,3dlu" ) );
 		this.pa_logPanel.add( pa_settings, BorderLayout.NORTH );
 
 		this.l_statusline = new JLabel( "Lines: 0/" + this.tableModel.getMaxNumberOfConsoleEntries( ) );
