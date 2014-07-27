@@ -10,14 +10,6 @@
 
 package thobe.logfileviewer.kernel.plugin.console;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
@@ -26,19 +18,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 
 import thobe.logfileviewer.gui.RestrictedTextFieldRegexp;
@@ -46,20 +34,14 @@ import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.Plugin;
-import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvtClear;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_Scroll;
-import thobe.logfileviewer.kernel.plugin.console.events.CEvt_ScrollToLast;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_SetAutoScrollMode;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.widgets.buttons.SmallButton;
-import thobe.widgets.textfield.RestrictedTextFieldAdapter;
-
-import com.jgoodies.forms.layout.CellConstraints;
-import com.jgoodies.forms.layout.FormLayout;
 
 /**
  * Implementation of the {@link Console} {@link IPlugin}.
@@ -67,7 +49,7 @@ import com.jgoodies.forms.layout.FormLayout;
  * @source Console.java
  * @date May 29, 2014
  */
-public class Console extends Plugin// implements LogStreamDataListener
+public class Console extends Plugin implements LogStreamDataListener, ISubConsoleFactoryAccess
 {
 	public static final String			FULL_PLUGIN_NAME				= "thobe.logfileviewer.plugin.Console";
 	/**
@@ -131,8 +113,6 @@ public class Console extends Plugin// implements LogStreamDataListener
 
 	private JLabel						l_statusline;
 
-	private ConsoleFilterCellRenderer	rowFilter;
-
 	/**
 	 * Timestamp of next time the console's display-values will be updated
 	 */
@@ -143,47 +123,64 @@ public class Console extends Plugin// implements LogStreamDataListener
 	 */
 	private RestrictedTextFieldRegexp	rtf_filter;
 
-	private ConsoleUI					consoleUI;
+	private Set<ConsoleDataListener>	consoleDataListeners;
 
-	private Set<ConsoleUI>				registeredSubConsoleUIs;
-
-	private ILogStreamAccess			logStreamAccess;
+	private Pattern						pattern;
 
 	public Console( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
+		this.pattern = Pattern.compile( ".*" );
 		this.eventSemaphore = new Semaphore( 1, true );
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
 		this.scrollEventQueue = new ConcurrentLinkedDeque<>( );
 		this.eventQueue = new ConcurrentLinkedDeque<>( );
 		this.autoScrollingEnabled = true;
 		this.nextUpdateOfDisplayValues = 0;
-		this.registeredSubConsoleUIs = new HashSet<>( );
-		this.logStreamAccess = null;
+		this.consoleDataListeners = new HashSet<>( );
 		this.buildGUI( );
 	}
 
-	void registerNewSubConsoleUI( String lineFilter )
+	@Override
+	public SubConsole createNewSubConsole( String parentConsolePattern, String pattern )
 	{
-		Pattern linePattern = Pattern.compile( lineFilter );
+		LOG( ).info( "Create new console for filter '" + pattern + "'" );
 
-		ConsoleUI newSubConsoleUI = new ConsoleUI( linePattern, this, LOG( ) );
-		newSubConsoleUI.start( );
+		// create a new instance of a sub-console
+		SubConsole newSubConsoleUI = new SubConsole( parentConsolePattern, pattern, this, LOG( ) );
 
-		this.registeredSubConsoleUIs.add( newSubConsoleUI );
-		getPluginWindowManagerAccess( ).registerComponent( this, newSubConsoleUI.getLogPanel( ) );
+		return newSubConsoleUI;
+	}
 
-		if ( logStreamAccess != null )
+	@Override
+	public void registerSubConsole( SubConsole subConsole, boolean registerVisualComponent )
+	{
+		LOG( ).info( "Register new console for filter '" + subConsole + "'" );
+
+		if ( registerVisualComponent )
 		{
-			logStreamAccess.addLogStreamDataListener( newSubConsoleUI );
+			// register the window/panel of the new sub-console 
+			this.getPluginWindowManagerAccess( ).registerComponent( this, subConsole.getLogPanel( ) );
 		}
+
+		// register the new console as listener -> enable retrieval of log-lines
+		synchronized ( this.consoleDataListeners )
+		{
+			this.consoleDataListeners.add( subConsole );
+		}// synchronized ( this.consoleDataListeners )		
+
+		// start the new sub-console
+		subConsole.start( );
+
+		LOG( ).info( "New console '" + subConsole + "' is now running" );
 	}
 
 	private void buildGUI( )
 	{
-		this.consoleUI = new ConsoleUI( Pattern.compile( ".*" ), this, LOG( ) );
-		this.consoleUI.start( );
-		this.pa_logPanel = this.consoleUI.getLogPanel( );
+		// create and regiter the first sub-console
+		SubConsole consoleUI = createNewSubConsole( null, ".*" );
+		this.registerSubConsole( consoleUI, false );
+		this.pa_logPanel = consoleUI.getLogPanel( );
 
 		/*this.pa_logPanel = new JPanel( new BorderLayout( 0, 0 ) );
 		this.tableModel = new ConsoleTableModel( );
@@ -335,23 +332,24 @@ public class Console extends Plugin// implements LogStreamDataListener
 		this.ta_logTable.getColumnModel( ).getColumn( 2 ).setCellRenderer( this.rowFilter );*/
 	}
 
-	/*public void clear( )
+	public void clear( )
 	{
 		this.eventQueue.add( new CEvtClear( ) );
 		this.eventSemaphore.release( );
 	}
 
-	public void toggleAutoScroll( )
-	{
-		this.addScrollEvent( new CEvt_SetAutoScrollMode( !this.autoScrollingEnabled ) );
-		this.eventSemaphore.release( );
-	}
+	/*
+		public void toggleAutoScroll( )
+		{
+			this.addScrollEvent( new CEvt_SetAutoScrollMode( !this.autoScrollingEnabled ) );
+			this.eventSemaphore.release( );
+		}
 
-	private void addScrollEvent( CEvt_Scroll evt )
-	{
-		this.scrollEventQueue.add( evt );
-		eventSemaphore.release( );
-	}*/
+		private void addScrollEvent( CEvt_Scroll evt )
+		{
+			this.scrollEventQueue.add( evt );
+			eventSemaphore.release( );
+		}*/
 
 	@Override
 	public JComponent getVisualComponent( )
@@ -377,8 +375,7 @@ public class Console extends Plugin// implements LogStreamDataListener
 	public void onLogStreamOpened( ILogStreamAccess logStreamAccess )
 	{
 		LOG( ).info( this.getPluginName( ) + " LogStream opened." );
-		logStreamAccess.addLogStreamDataListener( this.consoleUI );
-		this.logStreamAccess = logStreamAccess;
+		logStreamAccess.addLogStreamDataListener( this );
 		this.eventSemaphore.release( );
 	}
 
@@ -386,8 +383,7 @@ public class Console extends Plugin// implements LogStreamDataListener
 	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess )
 	{
 		LOG( ).info( this.getPluginName( ) + " prepare to close LogStream." );
-		logStreamAccess.removeLogStreamDataListener( this.consoleUI );
-		this.logStreamAccess = null;
+		logStreamAccess.removeLogStreamDataListener( this );
 		this.lineBuffer.clear( );
 		this.eventSemaphore.release( );
 	}
@@ -426,11 +422,11 @@ public class Console extends Plugin// implements LogStreamDataListener
 
 	private void updateDisplayValues( )
 	{
-		if ( this.nextUpdateOfDisplayValues <= System.currentTimeMillis( ) )
+		/*if ( this.nextUpdateOfDisplayValues <= System.currentTimeMillis( ) )
 		{
 			this.nextUpdateOfDisplayValues = System.currentTimeMillis( ) + UPDATE_DISPLAY_VALUES_INTERVAL;
 			this.l_statusline.setText( "Lines: " + this.tableModel.getRowCount( ) + "/" + this.tableModel.getMaxNumberOfConsoleEntries( ) );
-		}// if ( this.nextUpdateOfDisplayValues <= System.currentTimeMillis( ) ) .
+		}// if ( this.nextUpdateOfDisplayValues <= System.currentTimeMillis( ) ) .*/
 	}
 
 	@Override
@@ -468,7 +464,7 @@ public class Console extends Plugin// implements LogStreamDataListener
 			// Add the block if we have collected some lines
 			if ( !block.isEmpty( ) )
 			{
-				this.tableModel.addBlock( block );
+				this.fireNewBlockOfLogLines( block );
 			}// if ( !block.isEmpty( ) ).
 
 			try
@@ -480,6 +476,17 @@ public class Console extends Plugin// implements LogStreamDataListener
 				LOG( ).severe( "Exception caught in console-plugin main-loop: " + e.getLocalizedMessage( ) );
 			}
 		}// while ( !this.isQuitRequested( ) ).
+	}
+
+	private void fireNewBlockOfLogLines( List<LogLine> block )
+	{
+		synchronized ( this.consoleDataListeners )
+		{
+			for ( ConsoleDataListener cdl : this.consoleDataListeners )
+			{
+				cdl.onNewData( block );
+			}
+		}// synchronized ( this.consoleDataListeners )
 	}
 
 	private void processEvents( )
@@ -540,7 +547,7 @@ public class Console extends Plugin// implements LogStreamDataListener
 		}
 	}
 
-	/*@Override
+	@Override
 	public void onNewLine( LogLine line )
 	{
 		this.lineBuffer.add( line );
@@ -548,10 +555,10 @@ public class Console extends Plugin// implements LogStreamDataListener
 	}
 
 	@Override
-	public String getLineFilter( )
+	public Pattern getLineFilter( )
 	{
-		return ".*";
-	}*/
+		return this.pattern;
+	}
 
 	@Override
 	public long getCurrentMemory( )
@@ -566,12 +573,12 @@ public class Console extends Plugin// implements LogStreamDataListener
 		return 0;
 	}
 
-	/*@Override
+	@Override
 	public void onNewBlockOfLines( List<LogLine> blockOfLines )
 	{
 		this.lineBuffer.addAll( blockOfLines );
 		this.eventSemaphore.release( );
-	}*/
+	}
 
 	public void setAutoScrollingEnabled( boolean autoScrollingEnabled )
 	{
@@ -588,48 +595,5 @@ public class Console extends Plugin// implements LogStreamDataListener
 			this.lineBuffer.clear( );
 		}
 		this.eventSemaphore.release( );
-	}
-
-	@SuppressWarnings ( "serial")
-	private class ConsoleFilterCellRenderer extends DefaultTableCellRenderer
-	{
-		private ConsoleTableModel	tableModel;
-		private Pattern				pattern;
-
-		public ConsoleFilterCellRenderer( ConsoleTableModel tableModel )
-		{
-			this.pattern = null;
-			this.tableModel = tableModel;
-		}
-
-		public void setFilterRegex( String filterRegex )
-		{
-			try
-			{
-				this.pattern = Pattern.compile( filterRegex );
-			}
-			catch ( PatternSyntaxException e )
-			{}
-		}
-
-		@Override
-		public Component getTableCellRendererComponent( JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column )
-		{
-			Component result = super.getTableCellRendererComponent( table, value, isSelected, hasFocus, row, column );
-
-			if ( !isSelected )
-			{
-				if ( this.tableModel.matches( row, this.pattern ) )
-				{
-					result.setBackground( Color.orange );
-				}
-				else
-				{
-					result.setBackground( ta_logTable.getBackground( ) );
-
-				}
-			}
-			return result;
-		}
 	}
 }

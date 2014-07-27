@@ -26,6 +26,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -49,7 +50,6 @@ import thobe.logfileviewer.kernel.plugin.console.events.CEvt_ScrollToLast;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_SetAutoScrollMode;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
 import thobe.logfileviewer.kernel.source.LogLine;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.widgets.buttons.SmallButton;
 import thobe.widgets.textfield.RestrictedTextFieldAdapter;
 
@@ -62,7 +62,7 @@ import com.jgoodies.forms.layout.FormLayout;
  * @date Jul 24, 2014
  */
 @SuppressWarnings ( "serial")
-public class ConsoleUI extends Thread implements LogStreamDataListener
+public class SubConsole extends Thread implements ConsoleDataListener
 {
 	/**
 	 * Max time spent waiting for completion of the next block of {@link LogLine}s (in MS)
@@ -122,6 +122,7 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 	private SmallButton					bu_clear;
 	private SmallButton					bu_settings;
 	private SmallButton					bu_enableAutoScroll;
+	private SmallButton					bu_createFilter;
 
 	private JLabel						l_statusline;
 
@@ -137,7 +138,7 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 	 */
 	private RestrictedTextFieldRegexp	rtf_filter;
 
-	private Console						parentConsolePlugin;
+	private ISubConsoleFactoryAccess	subConsoleFactoryAccess;
 
 	private Logger						log;
 
@@ -145,10 +146,17 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 
 	private AtomicBoolean				quitRequested;
 
-	public ConsoleUI( Pattern linePattern, Console parentConsolePlugin, Logger log )
+	private String						parentConsolePattern;
+
+	public SubConsole( String parentConsolePattern, String pattern, ISubConsoleFactoryAccess subConsoleFactoryAccess, Logger log )
 	{
-		this.linePattern = linePattern;
-		this.parentConsolePlugin = parentConsolePlugin;
+		this.linePattern = Pattern.compile( pattern );
+		this.parentConsolePattern = parentConsolePattern;
+
+		// create and set the thread-name
+		this.setName( "SubConsole {pattern='" + this.getFullPattern( ) + "'}" );
+
+		this.subConsoleFactoryAccess = subConsoleFactoryAccess;
 		this.quitRequested = new AtomicBoolean( false );
 		this.log = log;
 		this.eventSemaphore = new Semaphore( 1, true );
@@ -158,6 +166,15 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 		this.autoScrollingEnabled = true;
 		this.nextUpdateOfDisplayValues = 0;
 		this.buildGUI( );
+	}
+
+	protected String getFullPattern( )
+	{
+		String pattern = "";
+		if ( this.parentConsolePattern != null )
+			pattern += this.parentConsolePattern + " AND ";
+		pattern += this.linePattern;
+		return pattern;
 	}
 
 	public JPanel getLogPanel( )
@@ -211,6 +228,9 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 			@Override
 			public void valueChangeCommitted( )
 			{
+				String value = rtf_filter.getValue( );
+				bu_createFilter.setEnabled( ( value != null ) && ( !value.trim( ).isEmpty( ) ) );
+
 				rowFilter.setFilterRegex( rtf_filter.getValue( ) );
 				// repaint/ filter the whole log on commit
 				tableModel.fireTableDataChanged( );
@@ -219,20 +239,24 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 			@Override
 			public void valueChanged( )
 			{
-				rowFilter.setFilterRegex( rtf_filter.getValue( ) );
+				String value = rtf_filter.getValue( );
+				rowFilter.setFilterRegex( value );
+				bu_createFilter.setEnabled( ( value != null ) && ( !value.trim( ).isEmpty( ) ) );
 			};
 		} );
 
-		SmallButton bu_createFilter = new SmallButton( ">" );
+		this.bu_createFilter = new SmallButton( ">" );
 		pa_settings.add( bu_createFilter, cc_settings.xy( 8, 2 ) );
-		bu_createFilter.addActionListener( new ActionListener( )
+		this.bu_createFilter.addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				parentConsolePlugin.registerNewSubConsoleUI( rtf_filter.getValue( ) );
+				SubConsole consoleUI = subConsoleFactoryAccess.createNewSubConsole( getFullPattern( ), rtf_filter.getValue( ) );
+				subConsoleFactoryAccess.registerSubConsole( consoleUI, true );
 			}
 		} );
+		this.bu_createFilter.setEnabled( false );
 
 		JPanel pa_buttons = new JPanel( new FlowLayout( FlowLayout.RIGHT, 0, 0 ) );
 		pa_settings.add( pa_buttons, cc_settings.xy( 10, 2 ) );
@@ -369,7 +393,11 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 				while ( ( !this.lineBuffer.isEmpty( ) ) && !timeThresholdHurt && !blockSizeThresholdHurt )
 				{
 					LogLine ll = this.lineBuffer.pollFirst( );
-					block.add( ll );
+					// add only matching lines
+					if ( matches( this.linePattern, ll.getData( ) ) )
+					{
+						block.add( ll );
+					}
 					blockSizeThresholdHurt = block.size( ) > MAX_LINES_PER_BLOCK;
 					timeThresholdHurt = ( System.currentTimeMillis( ) - startTime ) > MAX_TIME_PER_BLOCK_IN_MS;
 				}// while ( ( !this.lineBuffer.isEmpty( ) ) && !timeThresholdHurt && !blockSizeThresholdHurt ).
@@ -450,19 +478,6 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 		}
 	}
 
-	@Override
-	public void onNewLine( LogLine line )
-	{
-		this.lineBuffer.add( line );
-		this.eventSemaphore.release( );
-	}
-
-	@Override
-	public Pattern getLineFilter( )
-	{
-		return this.linePattern;
-	}
-
 	public long getCurrentMemory( )
 	{
 		long memInLineBuffer = 0;
@@ -472,13 +487,6 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 		memInEventQueue += SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
 
 		return memInLineBuffer + this.tableModel.getMem( ) + memInEventQueue;
-	}
-
-	@Override
-	public void onNewBlockOfLines( List<LogLine> blockOfLines )
-	{
-		this.lineBuffer.addAll( blockOfLines );
-		this.eventSemaphore.release( );
 	}
 
 	public void setAutoScrollingEnabled( boolean autoScrollingEnabled )
@@ -508,7 +516,7 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 	}
 
 	/**
-	 * {@link TableCellRenderer} for this {@link ConsoleUI}.
+	 * {@link TableCellRenderer} for this {@link SubConsole}.
 	 */
 	private class ConsoleFilterCellRenderer extends DefaultTableCellRenderer
 	{
@@ -550,5 +558,30 @@ public class ConsoleUI extends Thread implements LogStreamDataListener
 			}
 			return result;
 		}
+	}
+
+	@Override
+	public void onNewData( List<LogLine> blockOfLines )
+	{
+		this.lineBuffer.addAll( blockOfLines );
+		this.eventSemaphore.release( );
+	}
+
+	private static boolean matches( final Pattern pattern, final String line )
+	{
+		if ( pattern == null || pattern.pattern( ).trim( ).isEmpty( ) )
+			return false;
+
+		boolean result = false;
+
+		try
+		{
+			Matcher m = pattern.matcher( line );
+			result = m.find( );
+		}
+		catch ( PatternSyntaxException e )
+		{}
+
+		return result;
 	}
 }

@@ -17,19 +17,30 @@ import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.LogStream;
 
 /**
+ * Implement this interface and attach the instance to {@link LogStream} to get log-lines as they where read.
  * @author Thomas Obenaus
  * @source LogStreamDataListener.java
  * @date Jun 1, 2014
  */
 public interface LogStreamDataListener
 {
+	/**
+	 * Called whenever a new log-line matching the {@link Pattern} returned by {@link LogStreamDataListener#getLineFilter()} is available.
+	 * @param blockOfLines
+	 */
 	public void onNewLine( LogLine line );
 
+	/**
+	 * Called whenever a new list/block of log-lines matching the {@link Pattern} returned by {@link LogStreamDataListener#getLineFilter()}
+	 * is available.
+	 * @param blockOfLines
+	 */
 	public void onNewBlockOfLines( List<LogLine> blockOfLines );
 
 	/**
-	 * This method should return a regular expression. This regular expression is used to filter the lines of the {@link LogStream}
-	 * /log-file. Only for lines matching this expression the method {@link LogStreamDataListener#onNewLine(LogLine)} is called providing
+	 * This method should return a {@link Pattern}. This {@link Pattern} (regular expression) is used to filter the lines of the
+	 * {@link LogStream} /log-file. Only for lines matching this expression the method {@link LogStreamDataListener#onNewLine(LogLine)} or
+	 * {@link LogStreamDataListener#onNewBlockOfLines(List)} is called providing
 	 * the matching line of the log-file.
 	 * @return
 	 */
