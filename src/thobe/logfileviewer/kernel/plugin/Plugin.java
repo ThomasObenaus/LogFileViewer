@@ -61,7 +61,7 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	@Override
 	public boolean isVisible( )
 	{
-		JComponent vComp = this.getVisualComponent( );
+		JComponent vComp = this.getUIComponent( ).getVisualComponent( );
 		if ( vComp == null )
 		{
 			LOG( ).severe( "Plugin '" + this.getPluginName( ) + "' is invalid since its visual-component is null" );
@@ -73,7 +73,7 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	@Override
 	public void setVisible( boolean visible )
 	{
-		JComponent vComp = this.getVisualComponent( );
+		JComponent vComp = this.getUIComponent( ).getVisualComponent( );
 		if ( vComp == null )
 		{
 			LOG( ).severe( "Plugin '" + this.getPluginName( ) + "' is invalid since its visual-component is null" );
@@ -82,9 +82,9 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	}
 
 	@Override
-	public void setAttachedToGUI( )
+	public void setAttachedToGUI( boolean attached )
 	{
-		this.attachedToGUI.set( true );
+		this.attachedToGUI.set( attached );
 	}
 
 	@Override

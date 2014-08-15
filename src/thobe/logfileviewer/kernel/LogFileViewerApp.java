@@ -120,7 +120,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		pluginManager.registerPlugin( new Console( ) );
 
 		// register the performance-plugin
-		pluginManager.registerPlugin( new PerformanceMonitor( ) );
+//		pluginManager.registerPlugin( new PerformanceMonitor( ) );
 
 		// look for new plugins
 		pluginManager.findAndRegisterPlugins( );

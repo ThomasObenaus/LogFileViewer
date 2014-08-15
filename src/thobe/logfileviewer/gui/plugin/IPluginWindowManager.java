@@ -12,7 +12,6 @@ package thobe.logfileviewer.gui.plugin;
 
 import javax.swing.JPanel;
 
-import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.IPluginWindowManagerAccess;
 
 /**
@@ -23,6 +22,4 @@ import thobe.logfileviewer.kernel.plugin.IPluginWindowManagerAccess;
 public interface IPluginWindowManager extends IPluginWindowManagerAccess
 {
 	public JPanel getMainPanel( );
-
-	public void addPlugin( IPluginUI plugin );
 }

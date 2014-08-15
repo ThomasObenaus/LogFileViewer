@@ -10,8 +10,6 @@
 
 package thobe.logfileviewer.kernel.plugin;
 
-import javax.swing.JComponent;
-
 /**
  * @author Thomas Obenaus
  * @source IPluginUI.java
@@ -21,8 +19,10 @@ public interface IPluginUI extends IPluginBase
 {
 	/**
 	 * If the {@link IPluginUI} was attached to a gui-component/ container this method should be called to store the state of attachment.
+	 * Even so if it was removed.
+	 * @param attached - Attached to a gui component or not.
 	 */
-	public void setAttachedToGUI( );
+	public void setAttachedToGUI( boolean attached );
 
 	/**
 	 * Returns true if the {@link IPluginUI} is attached to a gui-component/ container, false otherwise.
@@ -43,14 +43,12 @@ public interface IPluginUI extends IPluginBase
 	public boolean isVisible( );
 
 	/**
-	 * Returns the visual-component of this {@link IPluginUI}, which can be attached to a gui-component/ container. On attaching it please
-	 * call {@link IPluginUI#setAttachedToGUI()}.
+	 * Returns the visual-component of this {@link IPluginUI}, which can be attached to a gui-component/ container.
 	 * @return
 	 */
-	public JComponent getVisualComponent( );
-	
-	
-	public IPluginWindowManagerAccess getPluginWindowManagerAccess();
-	
-	void setPluginWindowManagerAccess(IPluginWindowManagerAccess pWMA);	
+	public IPluginUIComponent getUIComponent( );
+
+	public IPluginWindowManagerAccess getPluginWindowManagerAccess( );
+
+	void setPluginWindowManagerAccess( IPluginWindowManagerAccess pWMA );
 }

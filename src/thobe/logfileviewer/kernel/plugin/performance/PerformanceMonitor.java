@@ -18,6 +18,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
@@ -41,10 +42,10 @@ public class PerformanceMonitor extends Plugin implements LogStreamDataListener
 	}
 
 	@Override
-	public JComponent getVisualComponent( )
+	public IPluginUIComponent getUIComponent( )
 	{
 		// TODO Auto-generated method stub
-		return new JButton( "Performance" );
+		return null;//new JButton( "Performance" );
 	}
 
 	@Override

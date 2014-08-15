@@ -10,7 +10,6 @@
 
 package thobe.logfileviewer.kernel.plugin;
 
-import javax.swing.JComponent;
 
 /**
  * @author Thomas Obenaus
@@ -19,7 +18,7 @@ import javax.swing.JComponent;
  */
 public interface IPluginWindowManagerAccess
 {
-	public void registerComponent( IPluginUI pluginUI, JComponent component );
+	public void registerVisualComponent( IPluginUI pluginUI, IPluginUIComponent pComponent );
 
-	public void unRegisterComponent( IPluginUI pluginUI, JComponent component );
+	public void unRegisterVisualComponent( IPluginUI pluginUI, IPluginUIComponent pComponent );
 }

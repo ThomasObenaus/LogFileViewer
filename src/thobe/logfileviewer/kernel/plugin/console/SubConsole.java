@@ -14,6 +14,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
@@ -30,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -42,6 +44,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
 import thobe.logfileviewer.gui.RestrictedTextFieldRegexp;
+import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvtClear;
@@ -50,6 +53,7 @@ import thobe.logfileviewer.kernel.plugin.console.events.CEvt_ScrollToLast;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_SetAutoScrollMode;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
 import thobe.logfileviewer.kernel.source.LogLine;
+import thobe.logfileviewer.kernel.util.FontHelper;
 import thobe.widgets.buttons.SmallButton;
 import thobe.widgets.textfield.RestrictedTextFieldAdapter;
 
@@ -62,7 +66,7 @@ import com.jgoodies.forms.layout.FormLayout;
  * @date Jul 24, 2014
  */
 @SuppressWarnings ( "serial")
-public class SubConsole extends Thread implements ConsoleDataListener
+public class SubConsole extends Thread implements ConsoleDataListener, IPluginUIComponent
 {
 	/**
 	 * Max time spent waiting for completion of the next block of {@link LogLine}s (in MS)
@@ -100,7 +104,7 @@ public class SubConsole extends Thread implements ConsoleDataListener
 	private ConsoleTableModel			tableModel;
 
 	/**
-	 * The plugin-panel (returned by {@link IPluginUI#getVisualComponent()}.
+	 * The plugin-panel (returned by {@link IPluginUI#getUIComponent()}.
 	 */
 	private JPanel						pa_logPanel;
 
@@ -148,8 +152,11 @@ public class SubConsole extends Thread implements ConsoleDataListener
 
 	private String						parentConsolePattern;
 
-	public SubConsole( String parentConsolePattern, String pattern, ISubConsoleFactoryAccess subConsoleFactoryAccess, Logger log )
+	private boolean						closeable;
+
+	public SubConsole( String parentConsolePattern, String pattern, ISubConsoleFactoryAccess subConsoleFactoryAccess, Logger log, boolean closeable )
 	{
+		this.closeable = closeable;
 		this.linePattern = Pattern.compile( pattern );
 		this.parentConsolePattern = parentConsolePattern;
 
@@ -175,11 +182,6 @@ public class SubConsole extends Thread implements ConsoleDataListener
 			pattern += this.parentConsolePattern + " AND ";
 		pattern += this.linePattern;
 		return pattern;
-	}
-
-	public JPanel getLogPanel( )
-	{
-		return pa_logPanel;
 	}
 
 	private void buildGUI( )
@@ -252,7 +254,7 @@ public class SubConsole extends Thread implements ConsoleDataListener
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				SubConsole consoleUI = subConsoleFactoryAccess.createNewSubConsole( getFullPattern( ), rtf_filter.getValue( ) );
+				SubConsole consoleUI = subConsoleFactoryAccess.createNewSubConsole( getFullPattern( ), rtf_filter.getValue( ), true );
 				subConsoleFactoryAccess.registerSubConsole( consoleUI, true );
 			}
 		} );
@@ -338,6 +340,10 @@ public class SubConsole extends Thread implements ConsoleDataListener
 		this.ta_logTable.getColumnModel( ).getColumn( 0 ).setCellRenderer( this.rowFilter );
 		this.ta_logTable.getColumnModel( ).getColumn( 1 ).setCellRenderer( this.rowFilter );
 		this.ta_logTable.getColumnModel( ).getColumn( 2 ).setCellRenderer( this.rowFilter );
+
+		Font consoleFont = FontHelper.getConsoleFont( );
+		LOG( ).info( "Setting console-font to " + consoleFont );
+		this.ta_logTable.setFont( consoleFont );
 	}
 
 	public void clear( )
@@ -581,7 +587,36 @@ public class SubConsole extends Thread implements ConsoleDataListener
 		}
 		catch ( PatternSyntaxException e )
 		{}
-
 		return result;
+	}
+
+	@Override
+	public JComponent getVisualComponent( )
+	{
+		return this.pa_logPanel;
+	}
+
+	@Override
+	public String getTitle( )
+	{
+		return this.getFullPattern( );
+	}
+
+	@Override
+	public void onClosed( )
+	{
+		LOG( ).info( "closed." );
+	}
+
+	@Override
+	public void onClosing( )
+	{
+		LOG( ).info( "closing." );
+	}
+
+	@Override
+	public boolean isCloseable( )
+	{
+		return this.closeable;
 	}
 }

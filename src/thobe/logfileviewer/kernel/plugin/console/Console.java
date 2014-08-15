@@ -20,11 +20,9 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-
 import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.SizeOf;
@@ -50,7 +48,7 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	/**
 	 * Max amount of {@link LogLine} waiting for completion of one block until the block will be drawn.
 	 */
-	private static long					MAX_LINES_PER_BLOCK			= 100;
+	private static long					MAX_LINES_PER_BLOCK			= 1000;
 
 	/**
 	 * Queue for misc console-events.
@@ -63,9 +61,9 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	private Deque<LogLine>				lineBuffer;
 
 	/**
-	 * The plugin-panel (returned by {@link IPluginUI#getVisualComponent()}.
+	 * The {@link IPluginUIComponent} (returned by {@link IPluginUI#getUIComponent()}.
 	 */
-	private JPanel						pa_logPanel;
+	private SubConsole					firstConsolePanel;
 
 	/**
 	 * Semaphore for the internal event-main-loop
@@ -88,12 +86,12 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	}
 
 	@Override
-	public SubConsole createNewSubConsole( String parentConsolePattern, String pattern )
+	public SubConsole createNewSubConsole( String parentConsolePattern, String pattern, boolean closeable )
 	{
 		LOG( ).info( "Create new console for filter '" + pattern + "'" );
 
 		// create a new instance of a sub-console
-		SubConsole newSubConsoleUI = new SubConsole( parentConsolePattern, pattern, this, LOG( ) );
+		SubConsole newSubConsoleUI = new SubConsole( parentConsolePattern, pattern, this, LOG( ), closeable );
 
 		return newSubConsoleUI;
 	}
@@ -106,7 +104,7 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 		if ( registerVisualComponent )
 		{
 			// register the window/panel of the new sub-console 
-			this.getPluginWindowManagerAccess( ).registerComponent( this, subConsole.getLogPanel( ) );
+			this.getPluginWindowManagerAccess( ).registerVisualComponent( this, subConsole );
 		}
 
 		// register the new console as listener -> enable retrieval of log-lines
@@ -124,15 +122,14 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	private void buildGUI( )
 	{
 		// create and regiter the first sub-console
-		SubConsole consoleUI = createNewSubConsole( null, ".*" );
-		this.registerSubConsole( consoleUI, false );
-		this.pa_logPanel = consoleUI.getLogPanel( );
+		this.firstConsolePanel = createNewSubConsole( null, ".*", false );
+		this.registerSubConsole( this.firstConsolePanel, false );
 	}
 
 	@Override
-	public JComponent getVisualComponent( )
+	public IPluginUIComponent getUIComponent( )
 	{
-		return this.pa_logPanel;
+		return this.firstConsolePanel;
 	}
 
 	@Override

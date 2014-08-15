@@ -26,7 +26,7 @@ public interface ISubConsoleFactoryAccess
 	 * @param pattern
 	 * @return
 	 */
-	public SubConsole createNewSubConsole( String parentConsolePattern, String pattern );
+	public SubConsole createNewSubConsole( String parentConsolePattern, String pattern, boolean closeable );
 
 	/**
 	 * Registers the given {@link SubConsole}. Additionally the {@link SubConsole}-Thread will be started and (in case
