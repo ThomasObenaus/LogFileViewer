@@ -80,7 +80,7 @@ public class IpLogStreamReader extends LogStreamReader
 			this.socket = new Socket( );
 			// connect to socket regarding timeout
 			this.socket.connect( new InetSocketAddress( this.host, this.port ), timeout );
-			this.reader = new BufferedReader( new InputStreamReader( this.socket.getInputStream( ) ) );
+			this.reader = new BufferedReader( new InputStreamReader( this.socket.getInputStream( ),"UTF-8" ) );
 		}
 		catch ( SocketTimeoutException e )
 		{

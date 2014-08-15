@@ -145,7 +145,7 @@ public abstract class LogStreamReader extends Thread
 
 			block = new ArrayList<>( this.lineBuffer );
 			this.lineBuffer.clear( );
-		}// synchronized ( this.lineBuffer ) .
+		}// synchronized ( this.lineBuffer ) .		
 		return block;
 	}
 
