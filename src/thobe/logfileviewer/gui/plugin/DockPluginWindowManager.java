@@ -85,9 +85,9 @@ public class DockPluginWindowManager implements IPluginWindowManager, CVetoClosi
 				// register for visibility, change-events
 				dockable.addVetoClosingListener( this );
 				dockable.setCloseable( pComponent.isCloseable( ) );
-				
+
 				dockable.setTitleText( pComponent.getTitle( ) );
-				
+				dockable.setTitleToolTip( pComponent.getTooltip( ) );
 
 				// now add the dockable to the main controller
 				this.dockableControl.addDockable( dockable );

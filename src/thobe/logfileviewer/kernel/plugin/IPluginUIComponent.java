@@ -35,6 +35,8 @@ public interface IPluginUIComponent
 
 	public String getTitle( );
 
+	public String getTooltip( );
+
 	/**
 	 * Should return true if the visual representation of this {@link IPluginUIComponent} should get a close-button, false otherwise.
 	 * @return

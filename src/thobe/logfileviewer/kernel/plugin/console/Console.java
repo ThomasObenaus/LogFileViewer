@@ -22,10 +22,11 @@ import java.util.regex.Pattern;
 
 import thobe.logfileviewer.kernel.plugin.IPlugin;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
-import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
+import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.SizeOf;
+import thobe.logfileviewer.kernel.plugin.console.events.CEvt_DestroySubConsole;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogLine;
@@ -94,6 +95,15 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 		SubConsole newSubConsoleUI = new SubConsole( parentConsolePattern, pattern, this, LOG( ), closeable );
 
 		return newSubConsoleUI;
+	}
+
+	@Override
+	public void unRegisterSubConsole( final SubConsole subConsole )
+	{
+		LOG( ).info( "Unregister console for filter '" + subConsole + "'" );
+
+		this.eventQueue.add( new CEvt_DestroySubConsole( subConsole ) );
+		this.eventSemaphore.release( );
 	}
 
 	@Override
@@ -259,12 +269,28 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 			{
 				switch ( evt.getType( ) )
 				{
+				case DESTROY_SUBCONSOLE:
+					destroySubConsole( ( ( CEvt_DestroySubConsole ) evt ).getSubConsole( ) );
+					break;
 				default:
 					LOG( ).warning( "Unknown event: " + evt );
 					break;
 				}// switch ( evt.getType( ) ) .
 			}// while ( ( evt = this.eventQueue.poll( ) ) != null ) .
 		}// synchronized ( this.eventQueue ) .
+	}
+
+	private void destroySubConsole( final SubConsole subConsole )
+	{
+		// unregister the console as listener -> disable retrieval of log-lines
+		synchronized ( this.consoleDataListeners )
+		{
+			this.consoleDataListeners.remove( subConsole );
+		}// synchronized ( this.consoleDataListeners )
+
+		// start a thread that destroys the subconsole
+		SubConsoleDestroyer destroyer = new SubConsoleDestroyer( subConsole );
+		destroyer.start( );
 	}
 
 	@Override
@@ -323,4 +349,56 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 
 		this.eventSemaphore.release( );
 	}
+
+	@Override
+	public String createTitle( SubConsole subConsole )
+	{
+		return "Console {" + subConsole.getFullPattern( ) + "}";
+	}
+
+	@Override
+	public String createDescription( SubConsole subConsole )
+	{
+		return "Console window " + this.getPluginDescription( ) + ", filter={" + subConsole.getFullPattern( ) + "}";
+	}
+
+	private class SubConsoleDestroyer extends Thread
+	{
+		private static final int	limit		= 3000;
+		private static final int	maxRetries	= 20;
+
+		private SubConsole			subConsole;
+
+		public SubConsoleDestroyer( SubConsole subConsole )
+		{
+			super( "Destroyer for subConsole '" + subConsole + "'" );
+			this.subConsole = subConsole;
+		}
+
+		@Override
+		public void run( )
+		{
+
+			boolean success = false;
+
+			// try to destroy the tread
+			for ( int i = 0; ( i < maxRetries ) && ( !success ); ++i )
+			{
+				try
+				{
+					subConsole.quit( );
+					subConsole.join( limit );
+					success = !subConsole.isAlive( );
+					if ( success )
+						LOG( ).info( "Console '" + subConsole + "' is now unregistered and stopped." );
+					else LOG( ).severe( "Unable to stop/interrupt the console for filter '" + subConsole + "' within " + limit + " ms. Retry ... " + ( i + 1 ) + "/" + maxRetries );
+				}
+				catch ( InterruptedException e )
+				{
+					e.printStackTrace( );
+				}
+			}
+		}
+	}
+
 }

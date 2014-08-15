@@ -17,5 +17,5 @@ package thobe.logfileviewer.kernel.plugin.console.events;
  */
 public enum ConsoleEventType
 {
-	SCROLL_TO_LAST, CLEAR, SET_AUTOSCROLL_MODE;
+	SCROLL_TO_LAST, CLEAR, SET_AUTOSCROLL_MODE, CLOSING, DESTROY_SUBCONSOLE;
 }

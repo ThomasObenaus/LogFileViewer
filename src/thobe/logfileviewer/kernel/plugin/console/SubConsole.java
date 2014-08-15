@@ -44,8 +44,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
 import thobe.logfileviewer.gui.RestrictedTextFieldRegexp;
-import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
+import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvtClear;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_Scroll;
@@ -154,6 +154,10 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 
 	private boolean						closeable;
 
+	private String						title;
+
+	private String						description;
+
 	public SubConsole( String parentConsolePattern, String pattern, ISubConsoleFactoryAccess subConsoleFactoryAccess, Logger log, boolean closeable )
 	{
 		this.closeable = closeable;
@@ -172,6 +176,8 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 		this.eventQueue = new ConcurrentLinkedDeque<>( );
 		this.autoScrollingEnabled = true;
 		this.nextUpdateOfDisplayValues = 0;
+		this.title = this.subConsoleFactoryAccess.createTitle( this );
+		this.description = this.subConsoleFactoryAccess.createDescription( this );
 		this.buildGUI( );
 	}
 
@@ -423,7 +429,10 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 			{
 				LOG( ).severe( "Exception caught in console-plugin main-loop: " + e.getLocalizedMessage( ) );
 			}
+
 		}// while ( !this.isQuitRequested( ) ).
+
+		LOG( ).info( this + ": Leaving main-loop." );
 	}
 
 	private void processEvents( )
@@ -438,6 +447,10 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 				{
 				case CLEAR:
 					this.tableModel.clear( );
+					break;
+				case CLOSING:
+					this.tableModel.clear( );
+					this.subConsoleFactoryAccess.unRegisterSubConsole( this );
 					break;
 				default:
 					LOG( ).warning( "Unknown event: " + evt );
@@ -599,24 +612,37 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 	@Override
 	public String getTitle( )
 	{
-		return this.getFullPattern( );
+		return this.title;
 	}
 
 	@Override
 	public void onClosed( )
 	{
-		LOG( ).info( "closed." );
+		LOG( ).info( this.title + ": closed." );
 	}
 
 	@Override
 	public void onClosing( )
 	{
-		LOG( ).info( "closing." );
+		LOG( ).info( this.title + ": closing --> unregister" );
+		this.subConsoleFactoryAccess.unRegisterSubConsole( this );
 	}
 
 	@Override
 	public boolean isCloseable( )
 	{
 		return this.closeable;
+	}
+
+	@Override
+	public String getTooltip( )
+	{
+		return this.description;
+	}
+
+	public void quit( )
+	{
+		this.quitRequested.set( true );
+		this.eventSemaphore.release( );
 	}
 }

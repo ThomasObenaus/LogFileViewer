@@ -35,4 +35,10 @@ public interface ISubConsoleFactoryAccess
 	 * @param registerVisualComponent - If true, the visual component of the {@link SubConsole} will be added to the main-frame.
 	 */
 	public void registerSubConsole( SubConsole subConsole, boolean registerVisualComponent );
+
+	public void unRegisterSubConsole( SubConsole subConsole );
+
+	public String createTitle( SubConsole subConsole );
+
+	public String createDescription( SubConsole subConsole );
 }
