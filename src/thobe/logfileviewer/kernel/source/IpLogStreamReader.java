@@ -80,7 +80,7 @@ public class IpLogStreamReader extends LogStreamReader
 			this.socket = new Socket( );
 			// connect to socket regarding timeout
 			this.socket.connect( new InetSocketAddress( this.host, this.port ), timeout );
-			this.reader = new BufferedReader( new InputStreamReader( this.socket.getInputStream( ),"UTF-8" ) );
+			this.reader = new BufferedReader( new InputStreamReader( this.socket.getInputStream( ), "UTF-8" ) );
 		}
 		catch ( SocketTimeoutException e )
 		{
@@ -150,7 +150,14 @@ public class IpLogStreamReader extends LogStreamReader
 
 			while ( ( elapsedTime < maxBlockTime ) && ( block.size( ) < maxBlockSize ) )
 			{
-				block.add( this.reader.readLine( ) );
+				String line = this.reader.readLine( );
+				if ( line == null )
+				{
+					// eof reached
+					break;
+				}
+
+				block.add( line );
 				elapsedTime = System.currentTimeMillis( ) - startTime;
 
 				minBlockTimeExceeded = elapsedTime >= minBlockTime;

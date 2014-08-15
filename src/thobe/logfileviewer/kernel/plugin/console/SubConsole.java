@@ -448,10 +448,6 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 				case CLEAR:
 					this.tableModel.clear( );
 					break;
-				case CLOSING:
-					this.tableModel.clear( );
-					this.subConsoleFactoryAccess.unRegisterSubConsole( this );
-					break;
 				default:
 					LOG( ).warning( "Unknown event: " + evt );
 					break;
