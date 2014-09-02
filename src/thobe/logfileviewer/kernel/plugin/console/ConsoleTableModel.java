@@ -41,6 +41,7 @@ public class ConsoleTableModel extends AbstractTableModel
 	private long			memory;
 	private int				maxNumberOfConsoleEntries;
 	private int				linesToRemoveOnReachingMaxNumberOfConsoleEntries;
+	private Timer			bufferOverflowWatcherTimer;
 
 	public ConsoleTableModel( )
 	{
@@ -49,8 +50,8 @@ public class ConsoleTableModel extends AbstractTableModel
 		this.maxNumberOfConsoleEntries = 100000;
 		this.linesToRemoveOnReachingMaxNumberOfConsoleEntries = ( int ) ( this.maxNumberOfConsoleEntries * 0.4 );
 
-		Timer timer = new Timer( );
-		timer.schedule( new BufferOverFlowWatcher( this ), 4000, 4000 );
+		bufferOverflowWatcherTimer = new Timer( "ConsoleTableModel.BufferOverFlowWatcher.Timer" );
+		bufferOverflowWatcherTimer.schedule( new BufferOverFlowWatcher( this ), 4000, 4000 );
 	}
 
 	private synchronized void removeEntriesIfMaxNumberOfConsoleEntriesWasReached( )
@@ -188,6 +189,11 @@ public class ConsoleTableModel extends AbstractTableModel
 		return maxNumberOfConsoleEntries;
 	}
 
+	public void quit()
+	{
+		this.bufferOverflowWatcherTimer.cancel( );
+	}
+	
 	/**
 	 * Task that removes all lines from the console that exceed the max number of lines.
 	 */

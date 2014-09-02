@@ -37,6 +37,7 @@ public class IpLogStreamReader extends LogStreamReader
 
 	public IpLogStreamReader( String host, int port )
 	{
+		super( "IpLogStreamReader" );
 		this.host = host;
 		this.port = port;
 	}

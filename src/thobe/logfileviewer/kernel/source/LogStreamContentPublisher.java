@@ -41,6 +41,7 @@ public class LogStreamContentPublisher extends Thread
 
 	public LogStreamContentPublisher( )
 	{
+		super( "thobe.logfileviewer.source.LogStreamContentPublisher" );
 		this.quitRequested = new AtomicBoolean( false );
 		this.log = Logger.getLogger( "thobe.logfileviewer.source.LogStreamContentPublisher" );
 		this.sleepTime = new AtomicInteger( 100 );

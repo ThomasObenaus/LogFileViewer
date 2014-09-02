@@ -38,7 +38,7 @@ public class PluginManager implements IPluginAccess
 		this.log = Logger.getLogger( "thobe.logfileviewer.kernel.PluginManager" );
 		this.plugins = new HashMap<>( );
 
-		Timer memWDTimer = new Timer( );
+		Timer memWDTimer = new Timer( "PluginManager.MemoryWatchDog.Timer" );
 		memWDTimer.schedule( new MemoryWatchDog( this ), 2000, 1000 );
 	}
 

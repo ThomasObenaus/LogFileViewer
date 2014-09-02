@@ -138,7 +138,7 @@ public class EthSource extends Thread
 
 		this.startTime.set( System.currentTimeMillis( ) );
 
-		Timer timer = new Timer( );
+		Timer timer = new Timer( "ClientConnectionChecker.LPSPrinter.Timer" );
 		timer.schedule( new LPSPrinter( this ), 5000, 5000 );
 
 		BufferedReader reader = null;

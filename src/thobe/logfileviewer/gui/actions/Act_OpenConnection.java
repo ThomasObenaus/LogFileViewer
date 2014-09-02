@@ -12,13 +12,10 @@ package thobe.logfileviewer.gui.actions;
 
 import java.awt.event.ActionEvent;
 
-import javax.swing.JOptionPane;
-
 import thobe.logfileviewer.gui.MainFrame;
+import thobe.logfileviewer.gui.dialogs.Dlg_OpenIpConnection;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.source.LogStream;
-import thobe.logfileviewer.kernel.source.IpLogStreamReader;
-import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 import thobe.widgets.action.AbstrAction;
 import thobe.widgets.action.ActionRegistry;
@@ -46,18 +43,10 @@ public class Act_OpenConnection extends AbstrAction implements LogStreamStateLis
 	@Override
 	public void actionPerformed( ActionEvent arg0 )
 	{
-		try
-		{
-			LogFileViewerApp app = this.mainframe.getApp( );
-			LogStream logStream = app.getLogStream( );
-			logStream.open( new IpLogStreamReader( "127.0.0.1", 15000 ) );
-			//logStream.open( new IpLogStreamReader( "192.168.1.4", 15361 ) );
+		LogFileViewerApp app = this.mainframe.getApp( );
 
-		}
-		catch ( LogStreamException e )
-		{
-			JOptionPane.showMessageDialog( this.mainframe, "Unable to connect: " + e.getLocalizedMessage( ), "Connection failed", JOptionPane.ERROR_MESSAGE );
-		}
+		Dlg_OpenIpConnection dlg = new Dlg_OpenIpConnection( this.mainframe, app.getLogStreamConnector( ) );
+		dlg.setVisible( true );
 	}
 
 	@Override

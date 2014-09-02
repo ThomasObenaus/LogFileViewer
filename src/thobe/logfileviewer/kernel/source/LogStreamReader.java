@@ -92,8 +92,9 @@ public abstract class LogStreamReader extends Thread
 	/**
 	 * Ctor
 	 */
-	public LogStreamReader( )
+	public LogStreamReader( String name )
 	{
+		super( name );
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
 		this.quitRequested = new AtomicBoolean( false );
 		this.opened = new AtomicBoolean( false );
@@ -193,10 +194,10 @@ public abstract class LogStreamReader extends Thread
 				{
 					// delegate the reading to the specific source-implementation
 					List<String> block = readBlockImpl( 200, this.maxBlockTime, 10, this.maxBlockSize );
-
 					if ( !block.isEmpty( ) )
 					{
 						somethingAdded = true;
+
 						// add the lines to the buffer
 						this.lineBuffer.addAll( block );
 						this.numLinesRead += block.size( );

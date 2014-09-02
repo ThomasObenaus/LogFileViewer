@@ -19,9 +19,9 @@ import thobe.logfileviewer.kernel.plugin.SizeOf;
  */
 public class LogLine
 {
-	private String	data;
-	private long	id;
-	private long	timeStamp;
+	private String		data;
+	private long		id;
+	private long		timeStamp;
 
 	public LogLine( long id, long timeStamp, String data )
 	{

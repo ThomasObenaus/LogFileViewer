@@ -26,6 +26,7 @@ import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.logfileviewer.kernel.plugin.performance.PerformanceMonitor;
 import thobe.logfileviewer.kernel.source.LogStream;
+import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 import thobe.logfileviewer.kernel.util.StatsPrinter;
 
@@ -66,6 +67,11 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 	 */
 	private Semaphore						eventSem;
 
+	/**
+	 * Thread responsible for opening and keeping connections alive.
+	 */
+	private LogStreamConnector				logStreamConnector;
+
 	private StatsPrinter					statsPrinter;
 
 	public LogFileViewerApp( )
@@ -82,6 +88,15 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		// starting background task, that prints out some statistics
 		this.statsPrinter = new StatsPrinter( this.pluginManager, this.logStream );
 		this.statsPrinter.start( );
+
+		// starting background task, that opens and keeps connetcions alive
+		this.logStreamConnector = new LogStreamConnector( this.logStream );
+		this.logStreamConnector.start( );
+	}
+
+	public LogStreamConnector getLogStreamConnector( )
+	{
+		return logStreamConnector;
 	}
 
 	public void removeListener( LogFileViewerAppListener l )
@@ -120,7 +135,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		pluginManager.registerPlugin( new Console( ) );
 
 		// register the performance-plugin
-//		pluginManager.registerPlugin( new PerformanceMonitor( ) );
+		//		pluginManager.registerPlugin( new PerformanceMonitor( ) );
 
 		// look for new plugins
 		pluginManager.findAndRegisterPlugins( );
@@ -262,6 +277,21 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 				LOG( ).severe( "Exception while closing StatsPrinter: " + e.getLocalizedMessage( ) );
 			}
 		}// if ( this.statsPrinter != null ).
+
+		// quit the LogStreamConnector
+		if ( this.logStreamConnector != null )
+		{
+			this.logStreamConnector.quit( );
+			try
+			{
+				this.logStreamConnector.interrupt( );
+				this.logStreamConnector.join( );
+			}
+			catch ( InterruptedException e )
+			{
+				LOG( ).severe( "Exception while closing LogStreamConnector: " + e.getLocalizedMessage( ) );
+			}
+		}// if ( this.logStreamConnector != null ).
 	}
 
 	private void onLogStreamClosed( )

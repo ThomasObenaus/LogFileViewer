@@ -33,7 +33,10 @@ import thobe.logfileviewer.kernel.LogFileViewerAppListener;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.console.Console;
+import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
 import thobe.widgets.action.ActionRegistry;
+import thobe.widgets.statusbar.StatusBar;
+import thobe.widgets.statusbar.StatusBarMessageType;
 
 /**
  * @author Thomas Obenaus
@@ -41,7 +44,7 @@ import thobe.widgets.action.ActionRegistry;
  * @date May 15, 2014
  */
 @SuppressWarnings ( "serial")
-public class MainFrame extends JFrame implements LogFileViewerAppListener
+public class MainFrame extends JFrame implements LogFileViewerAppListener, LogStreamStateListener
 {
 	private Logger					log;
 	private LogFileViewerApp		app;
@@ -57,6 +60,8 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 
 		this.app = app;
 		this.app.addListener( this );
+
+		this.app.getLogStream( ).addLogStreamStateListener( this );
 
 		this.registerActions( );
 
@@ -113,6 +118,18 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 
 		// add the main-panel
 		this.add( this.pluginWindowManager.getMainPanel( ), BorderLayout.CENTER );
+
+		try
+		{
+			// add the statusbar
+			StatusBar.createStatusBar( this );
+			this.add( StatusBar.get( ), BorderLayout.SOUTH );
+			StatusBar.get( ).setMessage( "Not connected", StatusBarMessageType.WARNING );
+		}
+		catch ( Exception e )
+		{
+			e.printStackTrace( );
+		}
 	}
 
 	public void exit( )
@@ -174,5 +191,29 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener
 	private Logger LOG( )
 	{
 		return this.log;
+	}
+
+	@Override
+	public String getLogStreamListenerName( )
+	{
+		return "MainFrame";
+	}
+
+	@Override
+	public void onEOFReached( )
+	{
+		StatusBar.get( ).setMessage( "Not connected", StatusBarMessageType.WARNING );
+	}
+
+	@Override
+	public void onOpened( )
+	{
+		StatusBar.get( ).setMessage( "Connected", StatusBarMessageType.INFO );
+	}
+
+	@Override
+	public void onClosed( )
+	{
+		StatusBar.get( ).setMessage( "Not connected", StatusBarMessageType.WARNING );
 	}
 }

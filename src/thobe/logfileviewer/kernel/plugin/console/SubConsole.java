@@ -432,6 +432,7 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 
 		}// while ( !this.isQuitRequested( ) ).
 
+		this.tableModel.quit( );
 		LOG( ).info( this + ": Leaving main-loop." );
 	}
 
