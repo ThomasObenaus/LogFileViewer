@@ -486,7 +486,11 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 					hasScrollToLast = true;
 					break;
 				case SET_AUTOSCROLL_MODE:
+					boolean prefAutoScrollValue = this.autoScrollingEnabled;
 					this.autoScrollingEnabled = ( ( CEvt_SetAutoScrollMode ) evt ).isEnable( );
+
+					// scroll to last only if the autoscrolling was toggled to true
+					hasScrollToLast = ( this.autoScrollingEnabled && ( prefAutoScrollValue != this.autoScrollingEnabled ) );
 					break;
 				default:
 					LOG( ).warning( "Unknown event: " + evt );
