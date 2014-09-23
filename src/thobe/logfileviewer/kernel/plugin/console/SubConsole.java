@@ -19,6 +19,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
@@ -318,6 +320,20 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 			}
 		} );
 
+		// Listener that disables autoscrolling if the user scrolls upwards
+		scrpa_main.addMouseWheelListener( new MouseWheelListener( )
+		{
+			@Override
+			public void mouseWheelMoved( MouseWheelEvent evt )
+			{
+				// disable autoscrolling if the wheel rotates up
+				if ( evt.getWheelRotation( ) == -1 )
+				{
+					addScrollEvent( new CEvt_SetAutoScrollMode( false ) );
+				}// if ( evt.getWheelRotation( ) == -1 ).
+			}
+		} );
+
 		// listener keeping track of disabling/enabling autoscrolling
 		scrpa_main.getVerticalScrollBar( ).addAdjustmentListener( new AdjustmentListener( )
 		{
@@ -336,7 +352,7 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 				if ( ( evt.getValueIsAdjusting( ) == true ) && ( evt.getAdjustmentType( ) == AdjustmentEvent.TRACK ) && ( autoScrollingEnabled != bottomReached ) )
 				{
 					addScrollEvent( new CEvt_SetAutoScrollMode( bottomReached ) );
-				}
+				}// if ( ( evt.getValueIsAdjusting( ) == true ) && ( evt.getAdjustmentType( ) == ..
 			}
 		} );
 
@@ -361,7 +377,6 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 	public void toggleAutoScroll( )
 	{
 		this.addScrollEvent( new CEvt_SetAutoScrollMode( !this.autoScrollingEnabled ) );
-		this.eventSemaphore.release( );
 	}
 
 	private void addScrollEvent( CEvt_Scroll evt )
