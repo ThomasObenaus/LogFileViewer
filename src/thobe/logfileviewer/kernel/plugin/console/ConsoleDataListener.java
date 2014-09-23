@@ -12,7 +12,7 @@ package thobe.logfileviewer.kernel.plugin.console;
 
 import java.util.List;
 
-import thobe.logfileviewer.kernel.source.LogLine;
+import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**
  * @author Thomas Obenaus

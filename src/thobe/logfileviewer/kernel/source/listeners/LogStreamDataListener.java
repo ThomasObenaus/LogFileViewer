@@ -13,8 +13,8 @@ package thobe.logfileviewer.kernel.source.listeners;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.LogStream;
+import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**
  * Implement this interface and attach the instance to {@link LogStream} to get log-lines as they where read.

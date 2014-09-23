@@ -8,26 +8,42 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source;
+package thobe.logfileviewer.kernel.source.logline;
 
-import thobe.logfileviewer.kernel.plugin.SizeOf;
+import thobe.logfileviewer.kernel.util.SizeOf;
 
 /**
+ * Class representing one log-line.
  * @author Thomas Obenaus
  * @source LogLine.java
  * @date Jun 1, 2014
  */
-public class LogLine
+public class LogLine implements ILogLine
 {
-	private String		data;
-	private long		id;
-	private long		timeStamp;
+	private final long		id;
+	private final long		timeStamp;
+	private static long		instances	= 0;
 
-	public LogLine( long id, long timeStamp, String data )
+	private final String	data;
+
+	public LogLine( long id, long timeStamp, LogLineDat data )
 	{
 		this.id = id;
 		this.timeStamp = timeStamp;
-		this.data = data;
+		this.data = data.getData( );
+		instances++;
+	}
+
+	@Override
+	protected void finalize( ) throws Throwable
+	{
+		instances--;
+		super.finalize( );
+	}
+
+	public static long getNumberOfInstances( )
+	{
+		return instances;
 	}
 
 	public long getTimeStamp( )

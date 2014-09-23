@@ -46,14 +46,14 @@ import javax.swing.table.TableModel;
 import thobe.logfileviewer.gui.RestrictedTextFieldRegexp;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
-import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvtClear;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_Scroll;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_ScrollToLast;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_SetAutoScrollMode;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
-import thobe.logfileviewer.kernel.source.LogLine;
+import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.util.FontHelper;
+import thobe.logfileviewer.kernel.util.SizeOf;
 import thobe.widgets.buttons.SmallButton;
 import thobe.widgets.textfield.RestrictedTextFieldAdapter;
 

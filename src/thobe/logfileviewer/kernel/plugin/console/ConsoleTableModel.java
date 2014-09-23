@@ -20,8 +20,8 @@ import java.util.regex.PatternSyntaxException;
 
 import javax.swing.table.AbstractTableModel;
 
-import thobe.logfileviewer.kernel.plugin.SizeOf;
-import thobe.logfileviewer.kernel.source.LogLine;
+import thobe.logfileviewer.kernel.source.logline.LogLine;
+import thobe.logfileviewer.kernel.util.SizeOf;
 
 /**
  * @author Thomas Obenaus
@@ -64,7 +64,9 @@ public class ConsoleTableModel extends AbstractTableModel
 			// for memory only
 			for ( int i = 0; i < linesToRemove; ++i )
 				this.memory -= ( this.entries.get( i ).getMem( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY );
-			this.entries = this.entries.subList( ( linesToRemove - 1 ), this.entries.size( ) - 1 );
+
+			// remove the entries from 0 to (linesToRemove-1)
+			this.entries.subList( 0, linesToRemove ).clear( );
 
 			this.fireTableRowsDeleted( 0, linesToRemove - 1 );
 		}// if ( this.entries.size( ) >= this.maxNumberOfConsoleEntries ) .
@@ -189,11 +191,11 @@ public class ConsoleTableModel extends AbstractTableModel
 		return maxNumberOfConsoleEntries;
 	}
 
-	public void quit()
+	public void quit( )
 	{
 		this.bufferOverflowWatcherTimer.cancel( );
 	}
-	
+
 	/**
 	 * Task that removes all lines from the console that exceed the max number of lines.
 	 */

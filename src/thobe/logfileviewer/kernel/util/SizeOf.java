@@ -8,7 +8,7 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.plugin;
+package thobe.logfileviewer.kernel.util;
 
 /**
  * @author Thomas Obenaus
@@ -79,7 +79,8 @@ public class SizeOf
 	 */
 	public static long STRING( String str )
 	{
-		return str.length( ) * CHAR + HOUSE_KEEPING_ARRAY + REFERENCE;
+		long sizeCharArray = ( 8 * ( HOUSE_KEEPING_ARRAY + ( str.length( ) * CHAR ) ) / 8 );
+		return REFERENCE + HOUSE_KEEPING + HOUSE_KEEPING_ARRAY + sizeCharArray;
 	}
 
 }

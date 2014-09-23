@@ -25,12 +25,12 @@ import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
-import thobe.logfileviewer.kernel.plugin.SizeOf;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_DestroySubConsole;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
-import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
+import thobe.logfileviewer.kernel.source.logline.LogLine;
+import thobe.logfileviewer.kernel.util.SizeOf;
 
 /**
  * Implementation of the {@link Console} {@link IPlugin}.

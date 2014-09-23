@@ -21,8 +21,8 @@ import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
-import thobe.logfileviewer.kernel.source.LogLine;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
+import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**
  * @author Thomas Obenaus

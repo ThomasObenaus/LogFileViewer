@@ -21,10 +21,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import thobe.logfileviewer.kernel.memory.MemoryWatchDog;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
-import thobe.logfileviewer.kernel.plugin.performance.PerformanceMonitor;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
@@ -72,7 +72,15 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 	 */
 	private LogStreamConnector				logStreamConnector;
 
+	/**
+	 * Backgroundtask that porints out some statistics
+	 */
 	private StatsPrinter					statsPrinter;
+
+	/**
+	 * Thread responsible for watching and clearing memory of (e.g. of plungins)
+	 */
+	private MemoryWatchDog					memoryWatchDog;
 
 	public LogFileViewerApp( )
 	{
@@ -89,9 +97,13 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		this.statsPrinter = new StatsPrinter( this.pluginManager, this.logStream );
 		this.statsPrinter.start( );
 
-		// starting background task, that opens and keeps connetcions alive
+		// starting background task, that opens and keeps connections alive
 		this.logStreamConnector = new LogStreamConnector( this.logStream );
 		this.logStreamConnector.start( );
+
+		// starting background task, that watches and clears memory
+		this.memoryWatchDog = new MemoryWatchDog( pluginManager, this.logStream );
+		this.memoryWatchDog.start( );
 	}
 
 	public LogStreamConnector getLogStreamConnector( )
@@ -290,6 +302,21 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 			catch ( InterruptedException e )
 			{
 				LOG( ).severe( "Exception while closing LogStreamConnector: " + e.getLocalizedMessage( ) );
+			}
+		}// if ( this.logStreamConnector != null ).
+
+		// quit the memorywatchdog
+		if ( this.memoryWatchDog != null )
+		{
+			this.memoryWatchDog.quit( );
+			try
+			{
+				this.memoryWatchDog.interrupt( );
+				this.memoryWatchDog.join( );
+			}
+			catch ( InterruptedException e )
+			{
+				LOG( ).severe( "Exception while closing MemoryWatchDog: " + e.getLocalizedMessage( ) );
 			}
 		}// if ( this.logStreamConnector != null ).
 	}

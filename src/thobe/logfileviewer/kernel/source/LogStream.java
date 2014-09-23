@@ -26,8 +26,9 @@ import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamContentPublisherListener;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
-import thobe.logfileviewer.kernel.source.timestamp.LineAndTime;
-import thobe.logfileviewer.kernel.source.timestamp.TimeStampExtractor;
+import thobe.logfileviewer.kernel.source.logline.ILogLineFactoryAccess;
+import thobe.logfileviewer.kernel.source.logline.LogLine;
+import thobe.logfileviewer.kernel.source.logline.LogLineFactory;
 import thobe.tools.log.ILoggable;
 
 /**
@@ -38,6 +39,7 @@ import thobe.tools.log.ILoggable;
  */
 public class LogStream extends ILoggable implements LogStreamContentPublisherListener, ILogStreamAccess
 {
+	private static final int								LOG_LINE_CACHE_SIZE	= 100000;
 	/**
 	 * {@link Thread} that reads the log-file asynchronously.
 	 */
@@ -60,16 +62,14 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	private Map<Pattern, Set<LogStreamDataListener>>		logStreamDataListeners;
 
 	/**
-	 * Id of the {@link LogLine}s;
-	 */
-	private int												logLineId;
-
-	/**
 	 * Mapping for a block of {@link LogLine}s to the registered {@link LogStreamDataListener}s having the same filter.
 	 */
 	private Map<Pattern, LogLineBlockToLogStreamListener>	logLineBlockToLSDLMap;
 
-	private TimeStampExtractor								timeStampExtractor;
+	/**
+	 * Factory responsible for the creation (and caching) of loglines.
+	 */
+	private LogLineFactory									logLineFactory;
 
 	/**
 	 * Ctor
@@ -77,13 +77,13 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	public LogStream( )
 	{
 		this.logLineBlockToLSDLMap = new HashMap<>( );
-		this.timeStampExtractor = new TimeStampExtractor( );
 		this.logStreamStateListeners = new ArrayList<>( );
 		this.logStreamDataListeners = new HashMap<>( );
 		this.logStreamReader = null;
 		this.publishThread = new LogStreamContentPublisher( );
 		this.publishThread.start( );
 		this.publishThread.addListener( this );
+		this.logLineFactory = new LogLineFactory( LOG_LINE_CACHE_SIZE );
 	}
 
 	/**
@@ -184,7 +184,6 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 			this.close( );
 		}
 
-		this.logLineId = 0;
 		this.logStreamReader = source;
 		this.logStreamReader.open( );
 		this.logStreamReader.start( );
@@ -295,9 +294,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 
 	private LogLine buildLogLine( String newLine )
 	{
-		LineAndTime lineAndTime = this.timeStampExtractor.splitLineAndTimeStamp( newLine );
-		LogLine logLine = new LogLine( this.logLineId, lineAndTime.getTimeStamp( ), lineAndTime.getLineWithoutTimeStamp( ) );
-		this.logLineId++;
+		LogLine logLine = ( LogLine ) this.logLineFactory.buildLogLine( newLine );
 		return logLine;
 	}
 
@@ -444,6 +441,11 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 		if ( this.logStreamReader == null )
 			return 0;
 		return this.logStreamReader.getLinesPerSecond( );
+	}
+
+	public ILogLineFactoryAccess getLogLineFactory( )
+	{
+		return this.logLineFactory;
 	}
 
 	final class LogLineBlockToLogStreamListener implements Map.Entry<List<LogLine>, Set<LogStreamDataListener>>

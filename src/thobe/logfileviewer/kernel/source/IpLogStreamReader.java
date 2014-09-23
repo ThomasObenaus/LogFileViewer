@@ -13,6 +13,7 @@ package thobe.logfileviewer.kernel.source;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -86,7 +87,12 @@ public class IpLogStreamReader extends LogStreamReader
 		catch ( SocketTimeoutException e )
 		{
 			// could not open connection within 
-			throw new LogStreamException( "Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
+			throw new LogStreamException( "(SocketTimeoutEx) Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
+		}
+		catch ( ConnectException e )
+		{
+			// could not open connection within 
+			throw new LogStreamException( "(ConnectException) Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
 		}
 		catch ( IOException e )
 		{
@@ -103,7 +109,7 @@ public class IpLogStreamReader extends LogStreamReader
 				LOG( ).severe( "Error while closing the ressources: " + e1.getLocalizedMessage( ) );
 			}
 
-			throw new LogStreamException( "Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
+			throw new LogStreamException( "(IOException) Unable to open connection to " + this.host + ":" + this.port + ". " + e.getLocalizedMessage( ) );
 		}
 	}
 
