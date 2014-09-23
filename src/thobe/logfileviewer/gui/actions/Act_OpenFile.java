@@ -41,7 +41,11 @@ public class Act_OpenFile extends AbstrAction implements LogStreamStateListener
 
 	@Override
 	public void actionPerformed( ActionEvent arg0 )
-	{}
+	{
+		long elapsed = System.currentTimeMillis( );
+		System.gc( );
+		System.out.println( "Time For GC: " + ( ( System.currentTimeMillis( ) - elapsed ) / 1000.0 ) + "s" );
+	}
 
 	@Override
 	public String getActionKey( )
@@ -62,13 +66,13 @@ public class Act_OpenFile extends AbstrAction implements LogStreamStateListener
 	@Override
 	public void onOpened( )
 	{
-		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( false );
+		//		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( false );
 	}
 
 	@Override
 	public void onClosed( )
 	{
-		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( true );
+		//		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( true );
 	}
 
 }
