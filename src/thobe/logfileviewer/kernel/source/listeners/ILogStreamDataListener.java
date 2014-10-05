@@ -22,16 +22,16 @@ import thobe.logfileviewer.kernel.source.logline.LogLine;
  * @source LogStreamDataListener.java
  * @date Jun 1, 2014
  */
-public interface LogStreamDataListener
+public interface ILogStreamDataListener
 {
 	/**
-	 * Called whenever a new log-line matching the {@link Pattern} returned by {@link LogStreamDataListener#getLineFilter()} is available.
+	 * Called whenever a new log-line matching the {@link Pattern} returned by {@link ILogStreamDataListener#getLineFilter()} is available.
 	 * @param blockOfLines
 	 */
 	public void onNewLine( LogLine line );
 
 	/**
-	 * Called whenever a new list/block of log-lines matching the {@link Pattern} returned by {@link LogStreamDataListener#getLineFilter()}
+	 * Called whenever a new list/block of log-lines matching the {@link Pattern} returned by {@link ILogStreamDataListener#getLineFilter()}
 	 * is available.
 	 * @param blockOfLines
 	 */
@@ -39,8 +39,8 @@ public interface LogStreamDataListener
 
 	/**
 	 * This method should return a {@link Pattern}. This {@link Pattern} (regular expression) is used to filter the lines of the
-	 * {@link LogStream} /log-file. Only for lines matching this expression the method {@link LogStreamDataListener#onNewLine(LogLine)} or
-	 * {@link LogStreamDataListener#onNewBlockOfLines(List)} is called providing
+	 * {@link LogStream} /log-file. Only for lines matching this expression the method {@link ILogStreamDataListener#onNewLine(LogLine)} or
+	 * {@link ILogStreamDataListener#onNewBlockOfLines(List)} is called providing
 	 * the matching line of the log-file.
 	 * @return
 	 */

@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamContentPublisherListener;
+import thobe.logfileviewer.kernel.source.reader.LogStreamReader;
 
 /**
  * Class that is responsible to publish the contents that where read from the log via {@link LogStreamReader}.
@@ -27,17 +28,35 @@ import thobe.logfileviewer.kernel.source.listeners.ILogStreamContentPublisherLis
  */
 public class LogStreamContentPublisher extends Thread
 {
-	private LogStreamReader							traceSource;
-	private AtomicBoolean							quitRequested;
-	private Logger									log;
+	/**
+	 * Reference to an open stream-reader.
+	 */
+	private LogStreamReader								traceSource;
+	
+	/**
+	 * Flag for requesting to quit this thread
+	 */
+	private AtomicBoolean								quitRequested;
+	
+	/**
+	 * Logger
+	 */
+	private Logger										log;
 
+	/**
+	 * Listeners registered for data from logstream.
+	 */
 	private List<ILogStreamContentPublisherListener>	listeners;
-	private LogStreamState							stateOfLogStream;
+	
+	/**
+	 * Current state of the logstream
+	 */
+	private LogStreamState								stateOfLogStream;
 
 	/**
 	 * The time to sleep between two lines that where read from the source (in ms).
 	 */
-	private AtomicInteger							sleepTime;
+	private AtomicInteger								sleepTime;
 
 	public LogStreamContentPublisher( )
 	{

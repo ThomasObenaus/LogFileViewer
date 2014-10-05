@@ -10,7 +10,7 @@
 
 package thobe.logfileviewer.kernel.source;
 
-import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 
 /**
@@ -21,16 +21,16 @@ import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 public interface ILogStreamAccess
 {
 	/**
-	 * Add a new {@link LogStreamDataListener}.
+	 * Add a new {@link ILogStreamDataListener}.
 	 * @param l
 	 */
-	public void addLogStreamDataListener( LogStreamDataListener l );
+	public void addLogStreamDataListener( ILogStreamDataListener l );
 
 	/**
-	 * Remove a {@link LogStreamDataListener}.
+	 * Remove a {@link ILogStreamDataListener}.
 	 * @param l
 	 */
-	public void removeLogStreamDataListener( LogStreamDataListener l );
+	public void removeLogStreamDataListener( ILogStreamDataListener l );
 
 	/**
 	 * Add a new {@link ILogStreamStateListener}.

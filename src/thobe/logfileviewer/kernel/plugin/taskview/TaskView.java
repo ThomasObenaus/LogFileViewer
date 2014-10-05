@@ -14,15 +14,10 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**
@@ -30,7 +25,7 @@ import thobe.logfileviewer.kernel.source.logline.LogLine;
  * @source TaskView.java
  * @date Jul 7, 2014
  */
-public class TaskView extends Plugin implements LogStreamDataListener
+public class TaskView extends Plugin
 {
 	public static final String	FULL_PLUGIN_NAME	= "thobe.logfileviewer.plugin.TaskView";
 
@@ -66,18 +61,11 @@ public class TaskView extends Plugin implements LogStreamDataListener
 
 	@Override
 	public void onLogStreamOpened( ILogStreamAccess logStreamAccess )
-	{
-		// TODO Auto-generated method stub
-		logStreamAccess.addLogStreamDataListener( this );
-
-	}
+	{}
 
 	@Override
 	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess )
-	{
-		logStreamAccess.removeLogStreamDataListener( this );
-
-	}
+	{}
 
 	@Override
 	public void onLogStreamClosed( )
@@ -122,8 +110,8 @@ public class TaskView extends Plugin implements LogStreamDataListener
 	public void onNewBlockOfLines( List<LogLine> blockOfLines )
 	{
 		// TODO Auto-generated method stub
-		for ( LogLine ll : blockOfLines )
-			System.out.println( ll.getData( ) );
+		//for ( LogLine ll : blockOfLines )
+		//System.out.println( ll.getData( ) );
 	}
 
 	@Override
@@ -143,7 +131,7 @@ public class TaskView extends Plugin implements LogStreamDataListener
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
+
 	@Override
 	public String getNameOfMemoryWatchable( )
 	{

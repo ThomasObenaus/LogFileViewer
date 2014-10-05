@@ -8,7 +8,7 @@
  *  Project:    EthTrace
  */
 
-package thobe.logfileviewer.kernel.source;
+package thobe.logfileviewer.kernel.source.reader;
 
 import java.io.BufferedReader;
 import java.io.IOException;

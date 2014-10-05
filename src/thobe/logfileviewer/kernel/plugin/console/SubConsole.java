@@ -517,7 +517,7 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 	{
 		long memInLineBuffer = 0;
 		for ( LogLine ll : this.lineBuffer )
-			memInLineBuffer += ll.getMem( ) + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
+			memInLineBuffer += ll.getMemory( ) + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
 		long memInEventQueue = this.scrollEventQueue.size( ) * SizeOf.REFERENCE * SizeOf.HOUSE_KEEPING;
 		memInEventQueue += SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
 

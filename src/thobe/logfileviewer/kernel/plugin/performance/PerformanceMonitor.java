@@ -14,14 +14,10 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**
@@ -29,7 +25,7 @@ import thobe.logfileviewer.kernel.source.logline.LogLine;
  * @source PerformanceMonitor.java
  * @date Jul 7, 2014
  */
-public class PerformanceMonitor extends Plugin implements LogStreamDataListener
+public class PerformanceMonitor extends Plugin
 {
 	public static final String	FULL_PLUGIN_NAME	= "thobe.logfileviewer.performance.Performance";
 

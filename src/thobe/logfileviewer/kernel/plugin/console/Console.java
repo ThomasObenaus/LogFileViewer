@@ -28,7 +28,6 @@ import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_DestroySubConsole;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.util.SizeOf;
 
@@ -38,7 +37,7 @@ import thobe.logfileviewer.kernel.util.SizeOf;
  * @source Console.java
  * @date May 29, 2014
  */
-public class Console extends Plugin implements LogStreamDataListener, ISubConsoleFactoryAccess
+public class Console extends Plugin implements ISubConsoleFactoryAccess
 {
 	public static final String			FULL_PLUGIN_NAME			= "thobe.logfileviewer.plugin.Console";
 	/**
@@ -160,7 +159,6 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	public void onLogStreamOpened( ILogStreamAccess logStreamAccess )
 	{
 		LOG( ).info( this.getPluginName( ) + " LogStream opened." );
-		logStreamAccess.addLogStreamDataListener( this );
 		this.eventSemaphore.release( );
 	}
 
@@ -168,7 +166,6 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess )
 	{
 		LOG( ).info( this.getPluginName( ) + " prepare to close LogStream." );
-		logStreamAccess.removeLogStreamDataListener( this );
 		this.lineBuffer.clear( );
 		this.eventSemaphore.release( );
 	}
@@ -349,7 +346,7 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	{
 		long memInLineBuffer = 0;
 		for ( LogLine ll : this.lineBuffer )
-			memInLineBuffer += ll.getMem( ) + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
+			memInLineBuffer += ll.getMemory( ) + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
 		long memInEventQueue = this.eventQueue.size( ) * SizeOf.REFERENCE * SizeOf.HOUSE_KEEPING;
 
 		long memoryOfAttachedDataListeners = 0;

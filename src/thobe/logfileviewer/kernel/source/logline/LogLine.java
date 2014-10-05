@@ -20,17 +20,17 @@ import thobe.logfileviewer.kernel.util.SizeOf;
  */
 public class LogLine implements ILogLine
 {
-	private final long		id;
-	private final long		timeStamp;
-	private static long		instances	= 0;
+	private final long			id;
+	private final long			timeStamp;
+	private static long			instances	= 0;
 
-	private final String	data;
+	private final LogLineDat	data;
 
 	public LogLine( long id, long timeStamp, LogLineDat data )
 	{
 		this.id = id;
 		this.timeStamp = timeStamp;
-		this.data = data.getData( );
+		this.data = data;
 		instances++;
 	}
 
@@ -58,7 +58,7 @@ public class LogLine implements ILogLine
 
 	public String getData( )
 	{
-		return data;
+		return data.getData( );
 	}
 
 	public String getTimeStampStr( )
@@ -69,11 +69,11 @@ public class LogLine implements ILogLine
 	@Override
 	public String toString( )
 	{
-		return String.format( "{%5d|%s} - %s", this.id, this.getTimeStampStr( ), this.data );
+		return String.format( "{%5d|%s} - %s", this.id, this.getTimeStampStr( ), this.data.getData( ) );
 	}
 
-	public long getMem( )
+	public long getMemory( )
 	{
-		return ( SizeOf.LONG * 2 ) + SizeOf.STRING( this.data );
+		return ( SizeOf.LONG * 2 ) + SizeOf.STRING( this.data.getData( ) );
 	}
 }

@@ -13,7 +13,7 @@ package thobe.logfileviewer.kernel.plugin;
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogStream;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 
 /**
@@ -21,7 +21,7 @@ import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
  * @source IPlugin.java
  * @date Jun 2, 2014
  */
-public interface IPlugin extends IPluginBase, IMemoryWatchable
+public interface IPlugin extends IPluginBase, IMemoryWatchable, ILogStreamDataListener
 {
 	/**
 	 * Returns true if previously the method {@link IPlugin#quit()} was called.
@@ -53,8 +53,8 @@ public interface IPlugin extends IPluginBase, IMemoryWatchable
 	/**
 	 * Life-cycle of {@link Plugin}: <b>##### Step 2a <u>OPEN LS</u> #####</b><br>
 	 * A new {@link LogStream} was opened
-	 * @param logStreamAccess - the object that can be used to access the {@link LogStream} by registering a {@link LogStreamDataListener}
-	 *            via {@link ILogStreamAccess#addLogStreamDataListener(LogStreamDataListener)}.
+	 * @param logStreamAccess - the object that can be used to access the {@link LogStream} by registering a {@link ILogStreamDataListener}
+	 *            via {@link ILogStreamAccess#addLogStreamDataListener(ILogStreamDataListener)}.
 	 */
 	public void onLogStreamOpened( ILogStreamAccess logStreamAccess );
 
