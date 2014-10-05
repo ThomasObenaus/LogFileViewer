@@ -21,14 +21,14 @@ import java.util.logging.Logger;
 import thobe.logfileviewer.kernel.source.IpLogStreamReader;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 
 /**
  * @author Thomas Obenaus
  * @source LogStreamConnector.java
  * @date Aug 16, 2014
  */
-public class LogStreamConnector extends Thread implements LogStreamStateListener
+public class LogStreamConnector extends Thread implements ILogStreamStateListener
 {
 	private static final long		RESEND_DELAY_IN_MS	= 500;
 

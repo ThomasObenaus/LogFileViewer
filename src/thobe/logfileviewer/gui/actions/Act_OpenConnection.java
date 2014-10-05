@@ -16,7 +16,7 @@ import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.gui.dialogs.Dlg_OpenIpConnection;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.source.LogStream;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 import thobe.widgets.action.AbstrAction;
 import thobe.widgets.action.ActionRegistry;
 
@@ -26,7 +26,7 @@ import thobe.widgets.action.ActionRegistry;
  * @date May 15, 2014
  */
 @SuppressWarnings ( "serial")
-public class Act_OpenConnection extends AbstrAction implements LogStreamStateListener
+public class Act_OpenConnection extends AbstrAction implements ILogStreamStateListener
 {
 	public static final String	KEY	= "OPEN_CONNECTION";
 	private MainFrame			mainframe;

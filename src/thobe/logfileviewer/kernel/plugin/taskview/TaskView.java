@@ -8,7 +8,7 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.plugin.performance;
+package thobe.logfileviewer.kernel.plugin.taskview;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
@@ -26,53 +27,55 @@ import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**
  * @author Thomas Obenaus
- * @source PerformanceMonitor.java
+ * @source TaskView.java
  * @date Jul 7, 2014
  */
-public class PerformanceMonitor extends Plugin implements LogStreamDataListener
+public class TaskView extends Plugin implements LogStreamDataListener
 {
-	public static final String	FULL_PLUGIN_NAME	= "thobe.logfileviewer.performance.Performance";
+	public static final String	FULL_PLUGIN_NAME	= "thobe.logfileviewer.plugin.TaskView";
 
 	private Logger				log;
+	private TaskViewUI			uiComponent;
 
-	public PerformanceMonitor( )
+	public TaskView( )
 	{
 		super( FULL_PLUGIN_NAME, FULL_PLUGIN_NAME );
 		this.log = Logger.getLogger( FULL_PLUGIN_NAME );
+		this.uiComponent = new TaskViewUI( );
 	}
 
 	@Override
 	public IPluginUIComponent getUIComponent( )
 	{
-		// TODO Auto-generated method stub
-		return null;//new JButton( "Performance" );
+		return this.uiComponent;
 	}
 
 	@Override
 	public boolean onStarted( )
 	{
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean onRegistered( IPluginAccess pluginAccess )
 	{
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
 	public void onLogStreamOpened( ILogStreamAccess logStreamAccess )
 	{
 		// TODO Auto-generated method stub
+		logStreamAccess.addLogStreamDataListener( this );
 
 	}
 
 	@Override
 	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess )
 	{
-		// TODO Auto-generated method stub
+		logStreamAccess.removeLogStreamDataListener( this );
 
 	}
 
@@ -113,22 +116,20 @@ public class PerformanceMonitor extends Plugin implements LogStreamDataListener
 
 	@Override
 	public void onNewLine( LogLine line )
-	{
-		// TODO Auto-generated method stub
-
-	}
+	{}
 
 	@Override
 	public void onNewBlockOfLines( List<LogLine> blockOfLines )
 	{
 		// TODO Auto-generated method stub
-
+		for ( LogLine ll : blockOfLines )
+			System.out.println( ll.getData( ) );
 	}
 
 	@Override
 	public Pattern getLineFilter( )
 	{
-		return Pattern.compile( ".*" );
+		return Pattern.compile( ".*_TSK\\].*" );
 	}
 
 	protected Logger LOG( )
@@ -142,10 +143,11 @@ public class PerformanceMonitor extends Plugin implements LogStreamDataListener
 		// TODO Auto-generated method stub
 		return 0;
 	}
-
+	
 	@Override
 	public String getNameOfMemoryWatchable( )
 	{
 		return FULL_PLUGIN_NAME;
 	}
+
 }

@@ -8,18 +8,16 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source.listeners;
+package thobe.logfileviewer.kernel;
+
+import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 
 /**
  * @author Thomas Obenaus
- * @source LogStreamListener.java
+ * @source LogFileViewerAppListener.java
  * @date Jun 1, 2014
  */
-public interface LogStreamListener
+public interface ILogFileViewerAppListener
 {
-	/**
-	 * Implement this method to identify the name of the {@link LogStreamListener}.
-	 * @return
-	 */
-	public String getLogStreamListenerName( );
+	public void newPluginsAvailable( IPluginAccess pluginAccess );
 }

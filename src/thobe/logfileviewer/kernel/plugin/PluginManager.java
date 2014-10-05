@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 
 /**
@@ -24,15 +25,16 @@ import thobe.logfileviewer.kernel.plugin.console.Console;
  * @source PluginManager.java
  * @date May 31, 2014
  */
-public class PluginManager implements IPluginAccess
+public class PluginManager implements IPluginAccess, IMemoryWatchable
 {
+	private static final String	NAME	= "thobe.logfileviewer.kernel.PluginManager";
 
 	private Map<String, Plugin>	plugins;
 	private Logger				log;
 
 	public PluginManager( )
 	{
-		this.log = Logger.getLogger( "thobe.logfileviewer.kernel.PluginManager" );
+		this.log = Logger.getLogger( NAME );
 		this.plugins = new HashMap<>( );
 	}
 
@@ -80,10 +82,10 @@ public class PluginManager implements IPluginAccess
 			for ( Entry<String, Plugin> entry : this.plugins.entrySet( ) )
 			{
 				Plugin plugin = entry.getValue( );
-				long memBeforeFree = plugin.getCurrentMemory( );
+				long memBeforeFree = plugin.getMemory( );
 				entry.getValue( ).freeMemory( );
 
-				long memAfterFree = plugin.getCurrentMemory( );
+				long memAfterFree = plugin.getMemory( );
 				if ( ( memBeforeFree != 0 ) && ( memBeforeFree <= memAfterFree ) )
 				{
 					LOG( ).warning( "Plugin '" + plugin.getName( ) + "' failed to free memory (remaining: " + ( memAfterFree / 1024f / 1024f ) + "MB)" );
@@ -123,5 +125,23 @@ public class PluginManager implements IPluginAccess
 		}// for ( Map.Entry<String, Plugin> entry : this.plugins.entrySet( ) )
 
 		return result;
+	}
+
+	@Override
+	public long getMemory( )
+	{
+		long completeMemory = 0;
+		for ( Entry<String, Plugin> entry : this.getPlugins( ).entrySet( ) )
+		{
+			Plugin plugin = entry.getValue( );
+			completeMemory += plugin.getMemory( );
+		}// for ( Entry<String, Plugin> entry : this.getPlugins( ).entrySet( ) ) .
+		return completeMemory;
+	}
+
+	@Override
+	public String getNameOfMemoryWatchable( )
+	{
+		return NAME;
 	}
 }

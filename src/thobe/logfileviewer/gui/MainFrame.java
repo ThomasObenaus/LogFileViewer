@@ -29,11 +29,11 @@ import thobe.logfileviewer.gui.actions.Act_OpenFile;
 import thobe.logfileviewer.gui.plugin.DockPluginWindowManager;
 import thobe.logfileviewer.gui.plugin.IPluginWindowManager;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
-import thobe.logfileviewer.kernel.LogFileViewerAppListener;
+import thobe.logfileviewer.kernel.ILogFileViewerAppListener;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.console.Console;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 import thobe.widgets.action.ActionRegistry;
 import thobe.widgets.statusbar.StatusBar;
 import thobe.widgets.statusbar.StatusBarMessageType;
@@ -44,7 +44,7 @@ import thobe.widgets.statusbar.StatusBarMessageType;
  * @date May 15, 2014
  */
 @SuppressWarnings ( "serial")
-public class MainFrame extends JFrame implements LogFileViewerAppListener, LogStreamStateListener
+public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILogStreamStateListener
 {
 	private Logger					log;
 	private LogFileViewerApp		app;
@@ -175,7 +175,7 @@ public class MainFrame extends JFrame implements LogFileViewerAppListener, LogSt
 		for ( IPluginUI plugin : pluginAccess.getPluginsNotAttachedToGui( ) )
 		{
 			plugin.setPluginWindowManagerAccess( this.pluginWindowManager );
-			this.pluginWindowManager.registerVisualComponent( plugin, this.console.getUIComponent( ) );
+			this.pluginWindowManager.registerVisualComponent( plugin, plugin.getUIComponent( ) );
 
 			LOG( ).info( "IPlugin '" + plugin + "' found and added." );
 			repaintNeeded = true;

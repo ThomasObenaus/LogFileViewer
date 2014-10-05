@@ -18,7 +18,7 @@ import thobe.logfileviewer.kernel.source.LogStream;
  * @source LogStreamStateListener.java
  * @date Jun 1, 2014
  */
-public interface LogStreamStateListener extends LogStreamListener
+public interface ILogStreamStateListener extends ILogStreamListener
 {
 	/**
 	 * Called whenever the end of the {@link LogStream}/ log-file (EOF) was reached.

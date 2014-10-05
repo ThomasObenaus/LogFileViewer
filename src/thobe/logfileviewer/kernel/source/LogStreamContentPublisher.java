@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamContentPublisherListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamContentPublisherListener;
 
 /**
  * Class that is responsible to publish the contents that where read from the log via {@link LogStreamReader}.
@@ -31,7 +31,7 @@ public class LogStreamContentPublisher extends Thread
 	private AtomicBoolean							quitRequested;
 	private Logger									log;
 
-	private List<LogStreamContentPublisherListener>	listeners;
+	private List<ILogStreamContentPublisherListener>	listeners;
 	private LogStreamState							stateOfLogStream;
 
 	/**
@@ -53,7 +53,7 @@ public class LogStreamContentPublisher extends Thread
 	 * Adds a new listener (thread-safe)
 	 * @param listener
 	 */
-	public void addListener( LogStreamContentPublisherListener listener )
+	public void addListener( ILogStreamContentPublisherListener listener )
 	{
 		synchronized ( listeners )
 		{
@@ -65,7 +65,7 @@ public class LogStreamContentPublisher extends Thread
 	 * Removes the given listener (thread-safe)
 	 * @param listener
 	 */
-	public void removeListener( LogStreamContentPublisherListener listener )
+	public void removeListener( ILogStreamContentPublisherListener listener )
 	{
 		synchronized ( listeners )
 		{
@@ -210,7 +210,7 @@ public class LogStreamContentPublisher extends Thread
 	{
 		synchronized ( listeners )
 		{
-			for ( LogStreamContentPublisherListener l : this.listeners )
+			for ( ILogStreamContentPublisherListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onNewLine( newLine );
@@ -228,7 +228,7 @@ public class LogStreamContentPublisher extends Thread
 	{
 		synchronized ( listeners )
 		{
-			for ( LogStreamContentPublisherListener l : this.listeners )
+			for ( ILogStreamContentPublisherListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onNewBlock( newBlock );
@@ -247,7 +247,7 @@ public class LogStreamContentPublisher extends Thread
 		LOG( ).info( "LogStream eof reached" );
 		synchronized ( listeners )
 		{
-			for ( LogStreamContentPublisherListener l : this.listeners )
+			for ( ILogStreamContentPublisherListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onEOFReached( );
@@ -266,7 +266,7 @@ public class LogStreamContentPublisher extends Thread
 		LOG( ).info( "LogStream opened" );
 		synchronized ( listeners )
 		{
-			for ( LogStreamContentPublisherListener l : this.listeners )
+			for ( ILogStreamContentPublisherListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onOpened( );
@@ -285,7 +285,7 @@ public class LogStreamContentPublisher extends Thread
 		LOG( ).info( "LogStream closed" );
 		synchronized ( listeners )
 		{
-			for ( LogStreamContentPublisherListener l : this.listeners )
+			for ( ILogStreamContentPublisherListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onClosed( );

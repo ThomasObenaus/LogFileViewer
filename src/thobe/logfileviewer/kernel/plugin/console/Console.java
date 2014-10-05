@@ -307,24 +307,6 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	}
 
 	@Override
-	public long getCurrentMemory( )
-	{
-		long memInLineBuffer = 0;
-		for ( LogLine ll : this.lineBuffer )
-			memInLineBuffer += ll.getMem( ) + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
-		long memInEventQueue = this.eventQueue.size( ) * SizeOf.REFERENCE * SizeOf.HOUSE_KEEPING;
-
-		long memoryOfAttachedDataListeners = 0;
-		synchronized ( this.consoleDataListeners )
-		{
-			for ( ConsoleDataListener cdl : this.consoleDataListeners )
-				memoryOfAttachedDataListeners += cdl.getCurrentMemory( );
-		}
-
-		return memInLineBuffer + memInEventQueue + memoryOfAttachedDataListeners;
-	}
-
-	@Override
 	public void onNewBlockOfLines( List<LogLine> blockOfLines )
 	{
 		this.lineBuffer.addAll( blockOfLines );
@@ -360,6 +342,30 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 	public String createDescription( SubConsole subConsole )
 	{
 		return "Console window " + this.getPluginDescription( ) + ", filter={" + subConsole.getFullPattern( ) + "}";
+	}
+
+	@Override
+	public long getMemory( )
+	{
+		long memInLineBuffer = 0;
+		for ( LogLine ll : this.lineBuffer )
+			memInLineBuffer += ll.getMem( ) + SizeOf.REFERENCE + SizeOf.HOUSE_KEEPING_ARRAY;
+		long memInEventQueue = this.eventQueue.size( ) * SizeOf.REFERENCE * SizeOf.HOUSE_KEEPING;
+
+		long memoryOfAttachedDataListeners = 0;
+		synchronized ( this.consoleDataListeners )
+		{
+			for ( ConsoleDataListener cdl : this.consoleDataListeners )
+				memoryOfAttachedDataListeners += cdl.getCurrentMemory( );
+		}
+
+		return memInLineBuffer + memInEventQueue + memoryOfAttachedDataListeners;
+	}
+	
+	@Override
+	public String getNameOfMemoryWatchable( )
+	{
+		return FULL_PLUGIN_NAME;
 	}
 
 	private class SubConsoleDestroyer extends Thread
@@ -400,5 +406,4 @@ public class Console extends Plugin implements LogStreamDataListener, ISubConsol
 			}
 		}
 	}
-
 }

@@ -20,7 +20,7 @@ import thobe.logfileviewer.kernel.source.LogStreamContentPublisher;
  * @source LogStreamContentPublisherListener.java
  * @date May 31, 2014
  */
-public interface LogStreamContentPublisherListener extends LogStreamStateListener
+public interface ILogStreamContentPublisherListener extends ILogStreamStateListener
 {
 	public void onNewLine( String newLine );
 

@@ -22,10 +22,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamContentPublisherListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamContentPublisherListener;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 import thobe.logfileviewer.kernel.source.logline.ILogLineFactoryAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.source.logline.LogLineFactory;
@@ -37,8 +38,10 @@ import thobe.tools.log.ILoggable;
  * @source LogStream.java
  * @date May 29, 2014
  */
-public class LogStream extends ILoggable implements LogStreamContentPublisherListener, ILogStreamAccess
+public class LogStream extends ILoggable implements ILogStreamContentPublisherListener, ILogStreamAccess, IMemoryWatchable
 {
+	private static final String								NAME				= "thobe.logfileviewer.source.LogStream";
+
 	private static final int								LOG_LINE_CACHE_SIZE	= 100000;
 	/**
 	 * {@link Thread} that reads the log-file asynchronously.
@@ -53,7 +56,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	/**
 	 * List of listeners that are interested in state-changes of the log-file ({@link LogStream}) e.g. open, closed, eofReached.
 	 */
-	private List<LogStreamStateListener>					logStreamStateListeners;
+	private List<ILogStreamStateListener>					logStreamStateListeners;
 
 	/**
 	 * Map of listeners that are interested in data of the log-file ({@link LogStream}). Within this map the listeners are ordered by their
@@ -87,10 +90,10 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	}
 
 	/**
-	 * Add a new {@link LogStreamStateListener}.
+	 * Add a new {@link ILogStreamStateListener}.
 	 * @param l
 	 */
-	public void addLogStreamStateListener( LogStreamStateListener l )
+	public void addLogStreamStateListener( ILogStreamStateListener l )
 	{
 		synchronized ( this.logStreamStateListeners )
 		{
@@ -99,10 +102,10 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	}
 
 	/**
-	 * Remove a {@link LogStreamStateListener}.
+	 * Remove a {@link ILogStreamStateListener}.
 	 * @param l
 	 */
-	public void removeLogStreamStateListener( LogStreamStateListener l )
+	public void removeLogStreamStateListener( ILogStreamStateListener l )
 	{
 		synchronized ( this.logStreamStateListeners )
 		{
@@ -224,7 +227,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	@Override
 	protected String getLogChannelName( )
 	{
-		return "thobe.logfileviewer.source.LogStream";
+		return NAME;
 	}
 
 	@Override
@@ -326,7 +329,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	{
 		synchronized ( this.logStreamStateListeners )
 		{
-			for ( LogStreamStateListener l : this.logStreamStateListeners )
+			for ( ILogStreamStateListener l : this.logStreamStateListeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onClosed( );
@@ -344,7 +347,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	{
 		synchronized ( this.logStreamStateListeners )
 		{
-			for ( LogStreamStateListener l : this.logStreamStateListeners )
+			for ( ILogStreamStateListener l : this.logStreamStateListeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onOpened( );
@@ -362,7 +365,7 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 	{
 		synchronized ( this.logStreamStateListeners )
 		{
-			for ( LogStreamStateListener l : this.logStreamStateListeners )
+			for ( ILogStreamStateListener l : this.logStreamStateListeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onEOFReached( );
@@ -478,5 +481,23 @@ public class LogStream extends ILoggable implements LogStreamContentPublisherLis
 			this.value = value;
 			return old;
 		}
+	}
+
+	@Override
+	public long getMemory( )
+	{
+		return this.logLineFactory.getCacheMemory( );
+	}
+
+	@Override
+	public void freeMemory( )
+	{
+		this.logLineFactory.clearCache( );
+	}
+
+	@Override
+	public String getNameOfMemoryWatchable( )
+	{
+		return NAME;
 	}
 }

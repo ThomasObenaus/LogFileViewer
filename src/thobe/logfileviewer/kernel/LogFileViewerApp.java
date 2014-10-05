@@ -25,9 +25,10 @@ import thobe.logfileviewer.kernel.memory.MemoryWatchDog;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
+import thobe.logfileviewer.kernel.plugin.taskview.TaskView;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 import thobe.logfileviewer.kernel.util.StatsPrinter;
 
 /**
@@ -35,7 +36,7 @@ import thobe.logfileviewer.kernel.util.StatsPrinter;
  * @source LogFileViewerApp.java
  * @date May 15, 2014
  */
-public class LogFileViewerApp extends Thread implements LogStreamStateListener
+public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 {
 	/**
 	 * {@link Deque} holding all events for the app
@@ -55,7 +56,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 	/**
 	 * List of listeners that want to monitor the {@link LogFileViewerApp}.
 	 */
-	private List<LogFileViewerAppListener>	listeners;
+	private List<ILogFileViewerAppListener>	listeners;
 
 	/**
 	 * Manager responsible to find an manage {@link Plugin}s.
@@ -102,7 +103,9 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		this.logStreamConnector.start( );
 
 		// starting background task, that watches and clears memory
-		this.memoryWatchDog = new MemoryWatchDog( pluginManager, this.logStream );
+		this.memoryWatchDog = new MemoryWatchDog( );
+		this.memoryWatchDog.register( this.pluginManager );
+		this.memoryWatchDog.register( this.logStream );
 		this.memoryWatchDog.start( );
 	}
 
@@ -111,7 +114,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		return logStreamConnector;
 	}
 
-	public void removeListener( LogFileViewerAppListener l )
+	public void removeListener( ILogFileViewerAppListener l )
 	{
 		synchronized ( this.listeners )
 		{
@@ -119,7 +122,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		}
 	}
 
-	public void addListener( LogFileViewerAppListener l )
+	public void addListener( ILogFileViewerAppListener l )
 	{
 		synchronized ( this.listeners )
 		{
@@ -148,6 +151,9 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 
 		// register the performance-plugin
 		//		pluginManager.registerPlugin( new PerformanceMonitor( ) );
+
+		// register the task-view-plugin
+		pluginManager.registerPlugin( new TaskView( ) );
 
 		// look for new plugins
 		pluginManager.findAndRegisterPlugins( );
@@ -366,7 +372,7 @@ public class LogFileViewerApp extends Thread implements LogStreamStateListener
 		{
 			long elapsedTime = System.currentTimeMillis( );
 			LOG( ).info( "Publish: plugins are available (started and registered) ... " );
-			for ( LogFileViewerAppListener l : this.listeners )
+			for ( ILogFileViewerAppListener l : this.listeners )
 			{
 				l.newPluginsAvailable( this.pluginManager );
 			}// for ( LogFileViewerAppListener l : this.listeners ).

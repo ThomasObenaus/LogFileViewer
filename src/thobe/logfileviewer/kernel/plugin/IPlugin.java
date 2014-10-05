@@ -10,17 +10,18 @@
 
 package thobe.logfileviewer.kernel.plugin;
 
+import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamStateListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 
 /**
  * @author Thomas Obenaus
  * @source IPlugin.java
  * @date Jun 2, 2014
  */
-public interface IPlugin extends IPluginBase
+public interface IPlugin extends IPluginBase, IMemoryWatchable
 {
 	/**
 	 * Returns true if previously the method {@link IPlugin#quit()} was called.
@@ -61,7 +62,7 @@ public interface IPlugin extends IPluginBase
 	 * Life-cycle of {@link Plugin}: <b>##### Step 2b <u>PREPARE CLOSE LS</u> #####</b><br>
 	 * The currently open {@link LogStream} will be closed --> eac {@link Plugin} has to unregister from the {@link LogStream}
 	 * @param logStreamAccess - the object that can be used unregister from the {@link LogStream} via
-	 *            {@link ILogStreamAccess#removeLogStreamStateListener(LogStreamStateListener)}
+	 *            {@link ILogStreamAccess#removeLogStreamStateListener(ILogStreamStateListener)}
 	 */
 	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess );
 
@@ -88,14 +89,4 @@ public interface IPlugin extends IPluginBase
 	 */
 	public boolean onStopped( );
 
-	/**
-	 * This method should return the memory currently allocated by this plugin in byte.
-	 * @return
-	 */
-	public long getCurrentMemory( );
-
-	/**
-	 * If this method gets called the according {@link IPlugin} should free its internal memory (release all data).
-	 */
-	public void freeMemory( );
 }

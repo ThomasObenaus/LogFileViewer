@@ -10,15 +10,12 @@
 
 package thobe.logfileviewer.kernel.memory;
 
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
-
-import thobe.logfileviewer.kernel.plugin.Plugin;
-import thobe.logfileviewer.kernel.plugin.PluginManager;
-import thobe.logfileviewer.kernel.source.LogStream;
 
 /**
  * A watchdog keeping track of the current memory consumption.
@@ -28,37 +25,63 @@ import thobe.logfileviewer.kernel.source.LogStream;
  */
 public class MemoryWatchDog extends Thread
 {
-	private static final String	NAME	= "thobe.logfileviewer.kernel.memory.MemoryWatchDog";
+	private static final String		NAME	= "thobe.logfileviewer.kernel.memory.MemoryWatchDog";
 
-	private PluginManager		pluginManager;
-	private Logger				log;
-	private AtomicBoolean		quitRequested;
-	private AtomicInteger		intervalTime;
-	private AtomicLong			memoryThreshold;
+	/**
+	 * List of instances that should be monitored.
+	 */
+	private List<IMemoryWatchable>	toBeWatched;
 
-	private LogStream			logStream;
+	private Logger					log;
+	private AtomicBoolean			quitRequested;
+	private AtomicInteger			intervalTime;
+	private AtomicLong				memoryThreshold;
 
-	public MemoryWatchDog( PluginManager pluginManager, LogStream logStream )
+	public MemoryWatchDog( )
 	{
 		super( NAME );
-		this.logStream = logStream;
+		this.toBeWatched = new ArrayList<>( );
+
 		this.log = Logger.getLogger( NAME );
 		this.quitRequested = new AtomicBoolean( false );
 		this.intervalTime = new AtomicInteger( 1000 );
 		this.memoryThreshold = new AtomicLong( 1000 * 1024 * 1024 );
-		this.pluginManager = pluginManager;
 	}
 
+	/**
+	 * Register a {@link IMemoryWatchable}
+	 * @param memoryWatchable
+	 */
+	public void register( IMemoryWatchable memoryWatchable )
+	{
+		synchronized ( this.toBeWatched )
+		{
+			this.toBeWatched.add( memoryWatchable );
+			LOG( ).info( "'" + memoryWatchable.getNameOfMemoryWatchable( ) + "' registered ... will be monitored now." );
+		}// synchronized ( this.toBeWatched ).
+	}
+
+	/**
+	 * Quit this thread/ service
+	 */
 	public void quit( )
 	{
 		this.quitRequested.set( true );
 	}
 
+	/**
+	 * Set the sleep-time/ interval for next watches
+	 * @param intervalTime
+	 */
 	public void setIntervalTime( AtomicInteger intervalTime )
 	{
 		this.intervalTime = intervalTime;
 	}
 
+	/**
+	 * Sets the threshold at which a free of the memory should be called.
+	 * @param memoryThreshold
+	 */
 	public void setMemoryThreshold( long memoryThreshold )
 	{
 		this.memoryThreshold.set( memoryThreshold );
@@ -71,25 +94,31 @@ public class MemoryWatchDog extends Thread
 		while ( !this.quitRequested.get( ) )
 		{
 			long completeMemory = 0;
-			for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+
+			// collect the current memory-usage
+			synchronized ( this.toBeWatched )
 			{
-				Plugin plugin = entry.getValue( );
-				completeMemory += plugin.getCurrentMemory( );
-			}// for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
+				for ( IMemoryWatchable watchable : this.toBeWatched )
+				{
+					completeMemory += watchable.getMemory( );
+				}// for(IMemoryWatchable watchable : this.toBeWatched ).
+			}// synchronized ( this.toBeWatched ).
 
-			// add memory of logstream
-			completeMemory += this.logStream.getLogLineFactory( ).getCacheMemory( );
-
+			// check threshold
 			if ( completeMemory >= memoryThreshold.get( ) )
 			{
 				LOG( ).info( "Memorythreshold exceeded (threshold=" + ( memoryThreshold.get( ) / 1024f / 1024f ) + "MB, currentMemory=" + ( completeMemory / 1024f / 1024f ) + "MB)" );
-				for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
-				{
-					entry.getValue( ).freeMemory( );
-				}// for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ).
 
-				// free memory of LogStream too
-				this.logStream.getLogLineFactory( ).clearCache( );
+				// free memory
+				synchronized ( this.toBeWatched )
+				{
+					for ( IMemoryWatchable watchable : this.toBeWatched )
+					{
+						LOG( ).info( "Free memory of '" + watchable.getNameOfMemoryWatchable( ) + "'" );
+						watchable.freeMemory( );
+
+					}// for(IMemoryWatchable watchable : this.toBeWatched ).
+				}// synchronized ( this.toBeWatched ).
 
 			}// if ( completeMemory >= memoryThreshold.get( ) ).
 

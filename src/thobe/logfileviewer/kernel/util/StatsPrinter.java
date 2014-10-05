@@ -118,8 +118,8 @@ public class StatsPrinter extends Thread
 				for ( Entry<String, Plugin> entry : this.mngr.getPlugins( ).entrySet( ) )
 				{
 					Plugin plugin = entry.getValue( );
-					completeMemory += plugin.getCurrentMemory( );
-					strBuffer.append( "--|" + plugin.getName( ) + ": " + ( plugin.getCurrentMemory( ) / MB_DIVIDER ) + " MB\n" );
+					completeMemory += plugin.getMemory( );
+					strBuffer.append( "--|" + plugin.getName( ) + ": " + ( plugin.getMemory( ) / MB_DIVIDER ) + " MB\n" );
 				}// for ( Entry<String, Plugin> entry : this.mngr.getPlugins( ).entrySet( ) ) .
 
 				// add memory of the LogLineFactory
