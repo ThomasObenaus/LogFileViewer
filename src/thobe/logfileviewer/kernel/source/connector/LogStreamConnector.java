@@ -18,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
-import thobe.logfileviewer.kernel.source.IpLogStreamReader;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
+import thobe.logfileviewer.kernel.source.reader.IpLogStreamReader;
 
 /**
  * @author Thomas Obenaus

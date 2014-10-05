@@ -335,6 +335,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
 			Plugin plugin = entry.getValue( );
+			this.logStream.removeLogStreamDataListener( plugin );
 			plugin.onPrepareCloseLogStream( this.logStream );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
@@ -360,6 +361,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
 			Plugin plugin = entry.getValue( );
+			this.logStream.addLogStreamDataListener( plugin );
 			plugin.onLogStreamOpened( this.logStream );
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;

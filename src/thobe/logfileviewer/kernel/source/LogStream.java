@@ -25,11 +25,12 @@ import java.util.regex.PatternSyntaxException;
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamContentPublisherListener;
-import thobe.logfileviewer.kernel.source.listeners.LogStreamDataListener;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
 import thobe.logfileviewer.kernel.source.logline.ILogLineFactoryAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.source.logline.LogLineFactory;
+import thobe.logfileviewer.kernel.source.reader.LogStreamReader;
 import thobe.tools.log.ILoggable;
 
 /**
@@ -62,10 +63,10 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	 * Map of listeners that are interested in data of the log-file ({@link LogStream}). Within this map the listeners are ordered by their
 	 * line-filter. Map<line-filter,set of listeners>
 	 */
-	private Map<Pattern, Set<LogStreamDataListener>>		logStreamDataListeners;
+	private Map<Pattern, Set<ILogStreamDataListener>>		logStreamDataListeners;
 
 	/**
-	 * Mapping for a block of {@link LogLine}s to the registered {@link LogStreamDataListener}s having the same filter.
+	 * Mapping for a block of {@link LogLine}s to the registered {@link ILogStreamDataListener}s having the same filter.
 	 */
 	private Map<Pattern, LogLineBlockToLogStreamListener>	logLineBlockToLSDLMap;
 
@@ -114,14 +115,14 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	}
 
 	/**
-	 * Add a new {@link LogStreamDataListener}.
+	 * Add a new {@link ILogStreamDataListener}.
 	 * @param l
 	 */
-	public void addLogStreamDataListener( LogStreamDataListener l )
+	public void addLogStreamDataListener( ILogStreamDataListener l )
 	{
 		synchronized ( this.logStreamDataListeners )
 		{
-			Set<LogStreamDataListener> listeners = this.logStreamDataListeners.get( l.getLineFilter( ) );
+			Set<ILogStreamDataListener> listeners = this.logStreamDataListeners.get( l.getLineFilter( ) );
 			if ( listeners == null )
 			{
 				// create an empty set if no listeners with the given filter are available
@@ -137,7 +138,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 			LogLineBlockToLogStreamListener entry = this.logLineBlockToLSDLMap.get( l.getLineFilter( ) );
 			if ( entry == null )
 			{
-				entry = new LogLineBlockToLogStreamListener( new ArrayList<LogLine>( ), new HashSet<LogStreamDataListener>( ) );
+				entry = new LogLineBlockToLogStreamListener( new ArrayList<LogLine>( ), new HashSet<ILogStreamDataListener>( ) );
 				this.logLineBlockToLSDLMap.put( l.getLineFilter( ), entry );
 			}// if ( entry == null ) .
 			entry.value.add( l );
@@ -145,14 +146,14 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	}
 
 	/**
-	 * Remove a {@link LogStreamDataListener}.
+	 * Remove a {@link ILogStreamDataListener}.
 	 * @param l
 	 */
-	public void removeLogStreamDataListener( LogStreamDataListener l )
+	public void removeLogStreamDataListener( ILogStreamDataListener l )
 	{
 		synchronized ( this.logStreamDataListeners )
 		{
-			Set<LogStreamDataListener> listeners = this.logStreamDataListeners.get( l.getLineFilter( ) );
+			Set<ILogStreamDataListener> listeners = this.logStreamDataListeners.get( l.getLineFilter( ) );
 			if ( listeners != null )
 			{
 				listeners.remove( l );
@@ -245,7 +246,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 
 		synchronized ( this.logStreamDataListeners )
 		{
-			for ( Entry<Pattern, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) )
+			for ( Entry<Pattern, Set<ILogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) )
 			{
 				Pattern linePattern = entry.getKey( );
 
@@ -261,7 +262,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 						}// if ( line == null ).
 
 						// send the line to all registered listeners
-						for ( LogStreamDataListener l : entry.getValue( ) )
+						for ( ILogStreamDataListener l : entry.getValue( ) )
 						{
 							l.onNewLine( line );
 						}// for ( LogStreamDataListener l : entry.getValue( ) ).
@@ -287,7 +288,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 		try
 		{
 			Matcher m = pattern.matcher( line );
-			result = m.find( );
+			result = m.matches( );
 		}
 		catch ( PatternSyntaxException e )
 		{}
@@ -422,9 +423,9 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 			for ( Entry<Pattern, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
 			{
 				List<LogLine> logLines = entry.getValue( ).getKey( );
-				Set<LogStreamDataListener> listeners = entry.getValue( ).getValue( );
+				Set<ILogStreamDataListener> listeners = entry.getValue( ).getValue( );
 
-				for ( LogStreamDataListener listener : listeners )
+				for ( ILogStreamDataListener listener : listeners )
 				{
 					listener.onNewBlockOfLines( logLines );
 				}// for(LogStreamDataListener listener : listeners).
@@ -451,12 +452,12 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 		return this.logLineFactory;
 	}
 
-	final class LogLineBlockToLogStreamListener implements Map.Entry<List<LogLine>, Set<LogStreamDataListener>>
+	final class LogLineBlockToLogStreamListener implements Map.Entry<List<LogLine>, Set<ILogStreamDataListener>>
 	{
 		private final List<LogLine>			key;
-		private Set<LogStreamDataListener>	value;
+		private Set<ILogStreamDataListener>	value;
 
-		public LogLineBlockToLogStreamListener( List<LogLine> key, Set<LogStreamDataListener> value )
+		public LogLineBlockToLogStreamListener( List<LogLine> key, Set<ILogStreamDataListener> value )
 		{
 			this.key = key;
 			this.value = value;
@@ -469,15 +470,15 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 		}
 
 		@Override
-		public Set<LogStreamDataListener> getValue( )
+		public Set<ILogStreamDataListener> getValue( )
 		{
 			return value;
 		}
 
 		@Override
-		public Set<LogStreamDataListener> setValue( Set<LogStreamDataListener> value )
+		public Set<ILogStreamDataListener> setValue( Set<ILogStreamDataListener> value )
 		{
-			Set<LogStreamDataListener> old = this.value;
+			Set<ILogStreamDataListener> old = this.value;
 			this.value = value;
 			return old;
 		}

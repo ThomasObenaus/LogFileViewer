@@ -63,7 +63,7 @@ public class ConsoleTableModel extends AbstractTableModel
 
 			// for memory only
 			for ( int i = 0; i < linesToRemove; ++i )
-				this.memory -= ( this.entries.get( i ).getMem( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY );
+				this.memory -= ( this.entries.get( i ).getMemory( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY );
 
 			// remove the entries from 0 to (linesToRemove-1)
 			this.entries.subList( 0, linesToRemove ).clear( );
@@ -76,7 +76,7 @@ public class ConsoleTableModel extends AbstractTableModel
 	{
 		int rows = this.entries.size( );
 		this.entries.add( line );
-		this.memory += line.getMem( );
+		this.memory += line.getMemory( );
 		this.fireTableRowsInserted( rows, rows + 1 );
 	}
 
@@ -129,7 +129,7 @@ public class ConsoleTableModel extends AbstractTableModel
 
 			// collect mem-information
 			for ( LogLine l : block )
-				this.memory += l.getMem( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY;
+				this.memory += l.getMemory( ) + SizeOf.REFERENCE + BYTES_FOR_ONE_TABLE_ENTRY;
 		}// if ( !block.isEmpty( ) ) .
 	}
 

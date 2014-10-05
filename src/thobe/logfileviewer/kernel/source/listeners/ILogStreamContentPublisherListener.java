@@ -22,7 +22,15 @@ import thobe.logfileviewer.kernel.source.LogStreamContentPublisher;
  */
 public interface ILogStreamContentPublisherListener extends ILogStreamStateListener
 {
+	/**
+	 * Called whenever a new line is available (was read from the stream).
+	 * @param newLine
+	 */
 	public void onNewLine( String newLine );
 
+	/**
+	 * Called whenever a new block of lines is available (was read from the stream).
+	 * @param newLine
+	 */
 	public void onNewBlock( List<String> newBlock );
 }
