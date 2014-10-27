@@ -23,12 +23,16 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
+import thobe.logfileviewer.kernel.source.err.LogLineBufferException;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamContentPublisherListener;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
+import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
+import thobe.logfileviewer.kernel.source.logline.ILogLine;
+import thobe.logfileviewer.kernel.source.logline.ILogLineBuffer;
 import thobe.logfileviewer.kernel.source.logline.ILogLineFactoryAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
+import thobe.logfileviewer.kernel.source.logline.LogLineBuffer;
 import thobe.logfileviewer.kernel.source.logline.LogLineFactory;
 import thobe.logfileviewer.kernel.source.reader.LogStreamReader;
 import thobe.tools.log.ILoggable;
@@ -76,6 +80,11 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	private LogLineFactory									logLineFactory;
 
 	/**
+	 * Buffer for {@link ILogLine}s.
+	 */
+	private LogLineBuffer									logLineBuffer;
+
+	/**
 	 * Ctor
 	 */
 	public LogStream( )
@@ -88,6 +97,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 		this.publishThread.start( );
 		this.publishThread.addListener( this );
 		this.logLineFactory = new LogLineFactory( LOG_LINE_CACHE_SIZE );
+		this.logLineBuffer = new LogLineBuffer( );
 	}
 
 	/**
@@ -259,6 +269,16 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 						if ( line == null )
 						{
 							line = this.buildLogLine( newLine );
+
+							// add the line to the buffer
+							try
+							{
+								this.logLineBuffer.add( line );
+							}
+							catch ( LogLineBufferException e )
+							{
+								LOG( ).severe( "Error adding LogLine to LogStream.buffer: " + e.getLocalizedMessage( ) );
+							}
 						}// if ( line == null ).
 
 						// send the line to all registered listeners
@@ -383,6 +403,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	@Override
 	public void onNewBlock( List<String> newBlock )
 	{
+		List<ILogLine> newBlockForBuffer = new ArrayList<>( );
 		// for each line of the block
 		for ( String newLine : newBlock )
 		{
@@ -402,6 +423,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 							if ( logLine == null )
 							{
 								logLine = this.buildLogLine( newLine );
+								newBlockForBuffer.add( logLine );
 							}// if ( line == null ).
 
 							// add the logline
@@ -416,6 +438,16 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 				}// for ( Entry<String, LogLineBlockToLogStreamListener> entry : logLineBlockToLSDLMap.entrySet( ) ) .
 			}// synchronized ( this.logLineBlockToLSDLMap ) .
 		}// for ( String newLine : newBlock ) .
+
+		// add the lines to the buffer
+		try
+		{
+			this.logLineBuffer.addSorted( newBlockForBuffer );
+		}
+		catch ( LogLineBufferException e )
+		{
+			LOG( ).severe( "Error adding block of LogLines to LogStream.buffer: " + e.getLocalizedMessage( ) );
+		}
 
 		// now fire the blocks to the listeners
 		synchronized ( this.logLineBlockToLSDLMap )
@@ -450,6 +482,11 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	public ILogLineFactoryAccess getLogLineFactory( )
 	{
 		return this.logLineFactory;
+	}
+
+	public ILogLineBuffer getLogLineBuffer( )
+	{
+		return this.logLineBuffer;
 	}
 
 	final class LogLineBlockToLogStreamListener implements Map.Entry<List<LogLine>, Set<ILogStreamDataListener>>
@@ -487,13 +524,14 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	@Override
 	public long getMemory( )
 	{
-		return this.logLineFactory.getCacheMemory( );
+		return this.logLineFactory.getCacheMemory( ) + this.logLineBuffer.getMemory( );
 	}
 
 	@Override
 	public void freeMemory( )
 	{
 		this.logLineFactory.clearCache( );
+		this.logLineBuffer.freeMemory( );
 	}
 
 	@Override

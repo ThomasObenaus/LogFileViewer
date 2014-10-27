@@ -54,6 +54,14 @@ public class ConsoleTableModel extends AbstractTableModel
 		bufferOverflowWatcherTimer.schedule( new BufferOverFlowWatcher( this ), 4000, 4000 );
 	}
 
+	@Override
+	public boolean isCellEditable( int rowIndex, int columnIndex )
+	{
+		if ( columnIndex == 2 )
+			return true;
+		return false;
+	}
+
 	private synchronized void removeEntriesIfMaxNumberOfConsoleEntriesWasReached( )
 	{
 		if ( this.entries.size( ) >= this.maxNumberOfConsoleEntries )

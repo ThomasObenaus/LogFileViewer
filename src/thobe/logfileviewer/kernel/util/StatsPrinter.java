@@ -126,6 +126,10 @@ public class StatsPrinter extends Thread
 				strBuffer.append( "--|LogLineFactory: " + ( this.logStream.getLogLineFactory( ).getCacheMemory( ) / MB_DIVIDER ) + " MB\n" );
 				completeMemory += this.logStream.getLogLineFactory( ).getCacheMemory( );
 
+				// add memory of the LogLineBuffer
+				strBuffer.append( "--|LogLineBuffer: " + ( this.logStream.getLogLineBuffer( ).getMemory( ) / MB_DIVIDER ) + " MB\n" );
+				completeMemory += this.logStream.getLogLineBuffer( ).getMemory( );
+
 				// complete memory
 				strBuffer.append( "\n" );
 				strBuffer.append( "-OverAll: " + ( completeMemory / MB_DIVIDER ) + " MB\n" );
@@ -150,6 +154,14 @@ public class StatsPrinter extends Thread
 				strBuffer.append( ", ratio=" + this.logStream.getLogLineFactory( ).getCacheRatio( ) );
 				strBuffer.append( ", size=" + this.logStream.getLogLineFactory( ).getCacheSize( ) + "/" + this.logStream.getLogLineFactory( ).getMaxCacheSize( ) + "\n" );
 				strBuffer.append( "-#Instances: LogLine=" + LogLine.getNumberOfInstances( ) + ", LogLineDat=" + LogLineDat.getNumberOfInstances( ) + "\n" );
+				strBuffer.append( "---------------------------------------------\n" );
+
+				// LogLineBuffer statistics
+				strBuffer.append( "\n" );
+				strBuffer.append( "LogLineBuffer:\n" );
+				strBuffer.append( " -currentLoad=" + this.logStream.getLogLineBuffer( ).getCurrentLoad( ) + "\n" );
+				strBuffer.append( " -Settings: loadFactor=" + this.logStream.getLogLineBuffer( ).getLoadFactor( ) );
+				strBuffer.append( ", maxCapacity=" + this.logStream.getLogLineBuffer( ).getMaxCapacity( ) + "\n" );
 				strBuffer.append( "---------------------------------------------\n" );
 
 				LOG( ).info( strBuffer.toString( ) );

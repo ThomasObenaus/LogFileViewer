@@ -30,4 +30,6 @@ public interface ILogLine
 	public long getTimeStamp( );
 
 	public long getId( );
+
+	public long getMemory( );
 }

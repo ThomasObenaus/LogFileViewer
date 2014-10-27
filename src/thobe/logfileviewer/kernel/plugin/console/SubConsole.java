@@ -15,10 +15,15 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
@@ -28,11 +33,13 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import javax.swing.DefaultCellEditor;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -43,6 +50,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import thobe.logfileviewer.gui.RestrictedTextFieldRegexp;
@@ -70,6 +78,13 @@ import com.jgoodies.forms.layout.FormLayout;
 @SuppressWarnings ( "serial")
 public class SubConsole extends Thread implements ConsoleDataListener, IPluginUIComponent
 {
+	private static final int			DEFAULT_WIDTH_COLUMN_0			= 60;
+	private static final int			DEFAULT_WIDTH_COLUMN_1			= 110;
+
+	private static final int			LINE_NUMBER_COLUMN_IDX			= 0;
+	private static final int			TIME_STAMP_COLUMN_IDX			= 1;
+	private static final int			DATA_COLUMN_IDX					= 2;
+
 	/**
 	 * Max time spent waiting for completion of the next block of {@link LogLine}s (in MS)
 	 */
@@ -160,9 +175,17 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 
 	private String						description;
 
+	private JScrollPane					scrpa_main;
+
+	/**
+	 * Preferred with of the currently longest log-line
+	 */
+	private AtomicInteger				currentMaxPrefWidth;
+
 	public SubConsole( String parentConsolePattern, String pattern, ISubConsoleFactoryAccess subConsoleFactoryAccess, Logger log, boolean closeable )
 	{
 		this.closeable = closeable;
+		this.currentMaxPrefWidth = new AtomicInteger( 0 );
 		this.linePattern = Pattern.compile( pattern );
 		this.parentConsolePattern = parentConsolePattern;
 
@@ -198,9 +221,9 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 		this.tableModel = new ConsoleTableModel( );
 
 		this.ta_logTable = new JTable( this.tableModel );
-		final JScrollPane scrpa_main = new JScrollPane( ta_logTable );
-
+		this.scrpa_main = new JScrollPane( ta_logTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
 		this.pa_logPanel.add( scrpa_main, BorderLayout.CENTER );
+		this.ta_logTable.setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
 
 		CellConstraints cc_settings = new CellConstraints( );
 		JPanel pa_settings = new JPanel( new FormLayout( "3dlu,fill:default,10dlu,default,1dlu,default,0dlu,10dlu,default:grow,default,3dlu", "3dlu,pref,3dlu" ) );
@@ -297,16 +320,18 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 		pa_buttons.add( this.bu_settings );
 
 		// adjust column-sizes
+		ta_logTable.getColumnModel( ).getColumn( LINE_NUMBER_COLUMN_IDX ).setMinWidth( DEFAULT_WIDTH_COLUMN_0 );
+		ta_logTable.getColumnModel( ).getColumn( LINE_NUMBER_COLUMN_IDX ).setWidth( DEFAULT_WIDTH_COLUMN_0 );
+		ta_logTable.getColumnModel( ).getColumn( LINE_NUMBER_COLUMN_IDX ).setPreferredWidth( DEFAULT_WIDTH_COLUMN_0 );
+		ta_logTable.getColumnModel( ).getColumn( LINE_NUMBER_COLUMN_IDX ).setResizable( true );
+		ta_logTable.getColumnModel( ).getColumn( TIME_STAMP_COLUMN_IDX ).setMinWidth( DEFAULT_WIDTH_COLUMN_1 );
+		ta_logTable.getColumnModel( ).getColumn( TIME_STAMP_COLUMN_IDX ).setPreferredWidth( DEFAULT_WIDTH_COLUMN_1 );
+		ta_logTable.getColumnModel( ).getColumn( TIME_STAMP_COLUMN_IDX ).setWidth( DEFAULT_WIDTH_COLUMN_1 );
+		ta_logTable.getColumnModel( ).getColumn( TIME_STAMP_COLUMN_IDX ).setResizable( false );
 
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setMinWidth( 60 );
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setWidth( 60 );
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setMaxWidth( 60 );
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setPreferredWidth( 60 );
-		ta_logTable.getColumnModel( ).getColumn( 0 ).setResizable( true );
-		ta_logTable.getColumnModel( ).getColumn( 1 ).setMinWidth( 110 );
-		ta_logTable.getColumnModel( ).getColumn( 1 ).setMaxWidth( 110 );
-		ta_logTable.getColumnModel( ).getColumn( 1 ).setPreferredWidth( 110 );
-		ta_logTable.getColumnModel( ).getColumn( 1 ).setResizable( false );
+		// enable one-click cell-selection
+		( ( DefaultCellEditor ) ta_logTable.getDefaultEditor( ta_logTable.getColumnClass( DATA_COLUMN_IDX ) ) ).setClickCountToStart( 1 );
+
 		// listener that is responsible to scroll the table to the last entry 
 		this.tableModel.addTableModelListener( new TableModelListener( )
 		{
@@ -317,6 +342,33 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 				{
 					addScrollEvent( new CEvt_ScrollToLast( ) );
 				}
+			}
+		} );
+
+		this.ta_logTable.addMouseListener( new MouseAdapter( )
+		{
+			@Override
+			public void mouseClicked( MouseEvent e )
+			{
+				addScrollEvent( new CEvt_SetAutoScrollMode( false ) );
+			}
+		} );
+
+		this.ta_logTable.addComponentListener( new ComponentAdapter( )
+		{
+			@Override
+			public void componentShown( ComponentEvent e )
+			{
+				updateTableColumSize( currentMaxPrefWidth.get( ) );
+			}
+		} );
+
+		this.scrpa_main.addComponentListener( new ComponentAdapter( )
+		{
+			@Override
+			public void componentResized( ComponentEvent e )
+			{
+				updateTableColumSize( currentMaxPrefWidth.get( ) );
 			}
 		} );
 
@@ -361,7 +413,7 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 		// set the cell-renderer that should be used for filtering
 		this.ta_logTable.getColumnModel( ).getColumn( 0 ).setCellRenderer( this.rowFilter );
 		this.ta_logTable.getColumnModel( ).getColumn( 1 ).setCellRenderer( this.rowFilter );
-		this.ta_logTable.getColumnModel( ).getColumn( 2 ).setCellRenderer( this.rowFilter );
+		this.ta_logTable.getColumnModel( ).getColumn( DATA_COLUMN_IDX ).setCellRenderer( this.rowFilter );
 
 		Font consoleFont = FontHelper.getConsoleFont( );
 		LOG( ).info( "Setting console-font to " + consoleFont );
@@ -462,6 +514,8 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 				switch ( evt.getType( ) )
 				{
 				case CLEAR:
+					this.currentMaxPrefWidth.set( 0 );
+					updateTableColumSize( 0 );
 					this.tableModel.clear( );
 					break;
 				default:
@@ -507,7 +561,14 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 				public void run( )
 				{
 					int viewRow = ta_logTable.convertRowIndexToView( ta_logTable.getRowCount( ) - 1 );
-					ta_logTable.scrollRectToVisible( ta_logTable.getCellRect( viewRow, 0, true ) );
+					Rectangle visibleRect = ta_logTable.getVisibleRect( );
+					Rectangle rectWithLastRowVisible = ta_logTable.getCellRect( viewRow, 0, true );
+
+					// adjust height and y to show the last row, but keep x and width to keep current horizontal scrollbar position
+					visibleRect.y = rectWithLastRowVisible.y;
+					visibleRect.height = rectWithLastRowVisible.height;
+
+					ta_logTable.scrollRectToVisible( visibleRect );
 				}
 			} );
 		}
@@ -548,6 +609,27 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 	public boolean isQuitRequested( )
 	{
 		return quitRequested.get( );
+	}
+
+	private void updateTableColumSize( int newPreferredWidth )
+	{
+		// adjust the width the table size to enable horizotal scrolling
+		synchronized ( currentMaxPrefWidth )
+		{
+			TableColumn dataColumn = this.ta_logTable.getColumnModel( ).getColumn( DATA_COLUMN_IDX );
+
+			int parentWitdh = this.ta_logTable.getParent( ).getWidth( ) - DEFAULT_WIDTH_COLUMN_0 - DEFAULT_WIDTH_COLUMN_1 - ( this.ta_logTable.getIntercellSpacing( ).width * 2 );
+			this.currentMaxPrefWidth.set( Math.max( newPreferredWidth, currentMaxPrefWidth.get( ) ) );
+
+			int newWidth = 0;
+
+			// use parent width if parent is greater or if child is 0  
+			if ( currentMaxPrefWidth.get( ) == 0 || ( parentWitdh > currentMaxPrefWidth.get( ) ) )
+				newWidth = parentWitdh;
+			else newWidth = currentMaxPrefWidth.get( );
+
+			dataColumn.setPreferredWidth( newWidth );
+		}// synchronized ( currentMaxPrefWidth ).
 	}
 
 	/**
@@ -591,6 +673,9 @@ public class SubConsole extends Thread implements ConsoleDataListener, IPluginUI
 
 				}
 			}
+
+			// adjust the width the table size to enable horizotal scrolling
+			updateTableColumSize( result.getPreferredSize( ).width );
 			return result;
 		}
 	}
