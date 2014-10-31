@@ -100,7 +100,6 @@
 		<unzip src="${LFV.eclipse.lib.dir}/docking-frames-core.jar" dest="${LFV.jar.dir}" />
 
 		<!-- create jar-file -->
-
 		<echo message="Create jar-file /${LFV.jar.dir}/${LFV.jarName}." />
 		<echo message="Program-Version: ${LFV.Program-Version}" />
 		<jar destfile="${LFV.jar.dir}/${LFV.jarName}" basedir="${LFV.jar.dir}">
