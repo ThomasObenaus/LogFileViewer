@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+
+<project name="LogFileViewer" basedir="." default="create-jar">
+
+	<!-- [init] - task for setup of initial properties -->
+	<target name="init">
+		<echo message="Initial setup" />
+
+		<!-- set version here -->
+		<property name="LFV.Program-Version" value="1.2.5" />
+		<!-- set main-class here or uncomment line if u build a library -->
+		<property name="LFV.Main-Class" value="thobe.logfileviewer.kernel.MainClass" />
+		<!-- set licence here -->
+		<property name="LFV.License" value="Licensed under the New BSD License (3-clause lic)" />
+		<property name="LFV.Copyright" value="Copyright (C) 2014, Thomas Obenaus. All rights reserved." />
+		<property name="LFV.Author" value="Thomas Obenaus" />
+		<property name="LFV.Contact" value="obenaus.thomas@gmail.com" />
+
+		<!-- don't change these properties -->
+		<property name="LFV.eclipse.build.dir" value="bin" />
+		<property name="LFV.eclipse.src.dir" value="src" />
+		<property name="LFV.eclipse.lib.dir" value="libs" />
+
+		<property name="LFV.jar.dir" value="jar" />
+		<property name="LFV.apiDocZip" value="${ant.project.name}_doc.zip" />
+		<property name="LFV.sourceZip" value="${ant.project.name}_src.zip" />
+		<property name="LFV.sourceTemp" value="_src_tmp" />
+		<property name="LFV.jarName" value="${ant.project.name}.jar" />
+
+		<tstamp>
+			<format property="LFV.creation-date" pattern="YYYY-MM-DD zzz" locale="de,DE" />
+		</tstamp>
+	</target>
+
+	<!-- [create-doc] create api-doc, build/pack zip-file <project-name>_doc.zip -->
+	<target name="create-doc" depends="init">
+		<echo message="Create and zip API-Doc" />
+		<ant antfile="javadoc.xml" dir="" />
+		<zip destfile="${LFV.apiDocZip}" basedir="api" />
+	</target>
+
+	<!-- [create-src] zipps the source-code into a zip-file -->
+	<target name="create-src" depends="init">
+		<echo message="Copy source-files and zip them" />
+		<mkdir dir="${LFV.sourceTemp}" />
+		<!-- copy files -->
+		<copy toDir="${LFV.sourceTemp}/">
+			<fileset dir="${LFV.eclipse.src.dir}">
+				<include name="**/*.java" />
+				<include name="**/*.properties" />
+				<exclude name="playground/**" />
+				<exclude name="testing/**" />
+			</fileset>
+		</copy>
+		<zip destfile="${LFV.sourceZip}" basedir="${LFV.sourceTemp}" />
+		<delete dir="${LFV.sourceTemp}" />
+	</target>
+
+	<!-- [clean] delete temp folder "jar" -->
+	<target name="clean" depends="init">
+		<echo message="Deleting folder /${LFV.jar.dir}." />
+		<delete dir="${LFV.jar.dir}" />
+	</target>
+
+	<!-- [print-props-1] print property program-version and licence -->
+	<target name="print-props-1" depends="init">
+		<echo message="Building version '${LFV.Program-Version}'" />
+		<echo message="License is '${LFV.License}'" />
+	</target>
+
+	<!-- [print-props-2] print property main-class (if set) -->
+	<target name="print-props-2" depends="init" if="LFV.Main-Class">
+		<echo message="Using '${LFV.Main-Class}' as main-class" />
+	</target>
+
+
+	<!-- [create-jar] create jar file -->
+	<target name="create-jar" depends="clean,print-props-1,print-props-2">
+		<echo message="Copy files from build-directory /${LFV.eclipse.build.dir} to /${LFV.jar.dir}." />
+		<!-- copy files from build dir -->
+		<copy toDir="${LFV.jar.dir}/">
+			<fileset dir="${LFV.eclipse.build.dir}">
+				<include name="**/*.class" />
+				<include name="**/*.properties" />
+				<include name="**/*.gif" />
+				<include name="**/*.png" />
+				<exclude name="**/*.jar" />
+				<exclude name="playground/**" />
+				<exclude name="testing/**" />
+			</fileset>
+		</copy>
+
+		<echo message="Extract referenced libraries." />
+		<unzip src="${LFV.eclipse.lib.dir}/widgets.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/tools.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/commons-cli-1.2/commons-cli-1.2.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/jgoodies-forms-1.8.0/jgoodies-forms-1.8.0.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/jgoodies-common-1.8.0/jgoodies-common-1.8.0.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/docking-frames-common.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/docking-frames-core.jar" dest="${LFV.jar.dir}" />
+
+		<!-- create jar-file -->
+
+		<echo message="Create jar-file /${LFV.jar.dir}/${LFV.jarName}." />
+		<echo message="Program-Version: ${LFV.Program-Version}" />
+		<jar destfile="${LFV.jar.dir}/${LFV.jarName}" basedir="${LFV.jar.dir}">
+			<!-- write properties to manifest -->
+			<manifest>
+				<attribute name="Program-Version" value="${LFV.Program-Version}" />
+				<attribute name="Main-Class" value="${LFV.Main-Class}" />
+				<attribute name="Copyright" value="${LFV.Copyright}" />
+				<attribute name="Author" value="${LFV.Author}" />
+				<attribute name="Contact" value="${LFV.Contact}" />
+				<attribute name="Created" value="${LFV.creation-date}" />
+				<attribute name="Licence" value="${LFV.License}" />
+			</manifest>
+		</jar>
+
+		<!-- copy jar-file to projet dir -->
+		<echo message="copy ${LFV.jar.dir}/${LFV.jarName} into project-directory" />
+		<copy file="${LFV.jar.dir}/${LFV.jarName}" todir="." />
+
+		<!-- clean temp jar dir -->
+		<antcall target="clean">
+		</antcall>
+	</target>
+
+	<target name="create-all" depends="clean,create-src,create-doc,create-jar"/>
+</project>
