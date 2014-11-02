@@ -15,6 +15,7 @@ import java.awt.event.ActionEvent;
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.gui.dialogs.Dlg_OpenIpConnection;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
+import thobe.logfileviewer.kernel.preferences.SourcePrefs;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 import thobe.widgets.action.AbstrAction;
@@ -44,8 +45,9 @@ public class Act_OpenConnection extends AbstrAction implements ILogStreamStateLi
 	public void actionPerformed( ActionEvent arg0 )
 	{
 		LogFileViewerApp app = this.mainframe.getApp( );
+		SourcePrefs sourcePrefs = app.getPreferences( ).getSourcePreferences( );
 
-		Dlg_OpenIpConnection dlg = new Dlg_OpenIpConnection( this.mainframe, app.getLogStreamConnector( ) );
+		Dlg_OpenIpConnection dlg = new Dlg_OpenIpConnection( this.mainframe, sourcePrefs, app.getLogStreamConnector( ) );
 		dlg.setVisible( true );
 	}
 

@@ -20,9 +20,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import com.jgoodies.forms.layout.CellConstraints;
-import com.jgoodies.forms.layout.FormLayout;
-
+import thobe.logfileviewer.kernel.preferences.SourcePrefs;
 import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
 import thobe.widgets.editor.Editor;
 import thobe.widgets.messagePanel.Message;
@@ -30,7 +28,9 @@ import thobe.widgets.messagePanel.MessageCategory;
 import thobe.widgets.textfield.RestrictedTextFieldAdapter;
 import thobe.widgets.textfield.RestrictedTextFieldInteger;
 import thobe.widgets.textfield.RestrictedTextFieldString;
-import thobe.widgets.textfield.RestrictedTextfieldListener;
+
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.FormLayout;
 
 /**
  * @author Thomas Obenaus
@@ -51,9 +51,12 @@ public class Dlg_OpenIpConnection extends Editor
 
 	private RestrictedTextFieldInteger	tf_port;
 
-	public Dlg_OpenIpConnection( Window owner, LogStreamConnector connector )
+	private SourcePrefs					sourcePrefs;
+
+	public Dlg_OpenIpConnection( Window owner, SourcePrefs sourcePrefs, LogStreamConnector connector )
 	{
 		super( owner, "Open Connection", ModalityType.APPLICATION_MODAL );
+		this.sourcePrefs = sourcePrefs;
 		this.connector = connector;
 		this.buildGUI( );
 	}
@@ -70,7 +73,7 @@ public class Dlg_OpenIpConnection extends Editor
 		l_host.setToolTipText( tt );
 
 		this.tf_host = new RestrictedTextFieldString( true );
-		this.tf_host.setValue( "192.168.1.4" );
+		this.tf_host.setValue( this.sourcePrefs.getHost( ) );
 		this.add( this.tf_host, cc_main.xy( 4, 2 ) );
 		this.tf_host.setToolTipText( tt );
 		this.tf_host.addListener( new RestrictedTextFieldAdapter( )
@@ -94,10 +97,24 @@ public class Dlg_OpenIpConnection extends Editor
 		l_port.setToolTipText( tt );
 
 		this.tf_port = new RestrictedTextFieldInteger( true );
-		this.tf_port.setValue( 15361 );
+		this.tf_port.setValue( this.sourcePrefs.getPort( ) );
+		this.tf_port.addListener( new RestrictedTextFieldAdapter( )
+		{
+			@Override
+			public void valueChanged( )
+			{
+				checkValid( );
+			}
+
+			@Override
+			public void valueChangeCommitted( )
+			{
+				checkValid( );
+			}
+		} );
 		this.add( this.tf_port, cc_main.xy( 4, 4 ) );
 		this.tf_port.setToolTipText( tt );
-		
+
 		this.checkValid( );
 	}
 
@@ -105,12 +122,24 @@ public class Dlg_OpenIpConnection extends Editor
 	{
 		this.getMessagePanel( ).clearMessages( this.getClass( ) );
 		String hostname = this.tf_host.getValue( );
-		if ( hostname == null || hostname.isEmpty( ) )
-			this.getMessagePanel( ).registerMessage( this.getClass( ), new Message( 0, "Hostname empty", MessageCategory.ERROR ) );
-		int port = this.tf_port.getValue( );
 
+		// check host
+		boolean dataIsValid = true;
+		if ( hostname == null || hostname.isEmpty( ) )
+		{
+			dataIsValid = false;
+			this.getMessagePanel( ).registerMessage( this.getClass( ), new Message( 0, "Hostname empty", MessageCategory.ERROR ) );
+		}
+
+		// check port
+		int port = this.tf_port.getValue( );
 		if ( port < 2 )
+		{
+			dataIsValid = false;
 			this.getMessagePanel( ).registerMessage( this.getClass( ), new Message( 1, "Port invalid", MessageCategory.ERROR ) );
+		}
+
+		this.bu_connect.setEnabled( dataIsValid );
 	}
 
 	@Override
@@ -147,11 +176,17 @@ public class Dlg_OpenIpConnection extends Editor
 			}
 		} );
 
+		this.bu_connect.setEnabled( false );
 		return pa_buttons;
 	}
 
 	private void connect( )
 	{
+		// store connection settings
+		this.sourcePrefs.setIPSource( this.tf_host.getValue( ), this.tf_port.getValue( ) );
+
+		// try to connect
 		this.connector.connectToIP( this.tf_host.getValue( ), this.tf_port.getValue( ) );
 	}
+
 }

@@ -8,7 +8,6 @@
  *  Project:    LogFileViewer
  */
 
-
 package thobe.logfileviewer.kernel;
 
 import java.util.ArrayList;
@@ -27,10 +26,13 @@ import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.logfileviewer.kernel.plugin.taskview.TaskView;
+import thobe.logfileviewer.kernel.preferences.LogFileViewerPreferences;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 import thobe.logfileviewer.kernel.util.StatsPrinter;
+import thobe.tools.preferences.PreferenceManager;
+import thobe.tools.preferences.PrefsException;
 
 /**
  * @author Thomas Obenaus
@@ -84,6 +86,11 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 	 */
 	private MemoryWatchDog					memoryWatchDog;
 
+	/**
+	 * Preferences for the {@link LogFileViewerApp}.
+	 */
+	private LogFileViewerPreferences		preferences;
+
 	public LogFileViewerApp( )
 	{
 		super( "LogFileViewerApp" );
@@ -95,19 +102,22 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		this.pluginManager = new PluginManager( );
 		this.eventSem = new Semaphore( 0, true );
 
-		// starting background task, that prints out some statistics
+		// create/load preferences
+		LOG( ).info( "Create/Load preferences..." );
+		this.preferences = new LogFileViewerPreferences( );
+		PreferenceManager.createPrefs( preferences );
+		LOG( ).info( "Create/Load preferences...done" );
+
+		LOG( ).info( "Create background tasks..." );
+		// create background task, that prints out some statistics
 		this.statsPrinter = new StatsPrinter( this.pluginManager, this.logStream );
-		this.statsPrinter.start( );
 
-		// starting background task, that opens and keeps connections alive
+		// create background task, that opens and keeps connections alive
 		this.logStreamConnector = new LogStreamConnector( this.logStream );
-		this.logStreamConnector.start( );
 
-		// starting background task, that watches and clears memory
+		// create background task, that watches and clears memory
 		this.memoryWatchDog = new MemoryWatchDog( );
-		this.memoryWatchDog.register( this.pluginManager );
-		this.memoryWatchDog.register( this.logStream );
-		this.memoryWatchDog.start( );
+		LOG( ).info( "Create background tasks...done" );
 	}
 
 	public LogStreamConnector getLogStreamConnector( )
@@ -146,6 +156,21 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 	public void run( )
 	{
 		LOG( ).info( "Thread " + this.getLogStreamListenerName( ) + " started" );
+
+		// INITAL start bg-tasks ########################################## 
+		LOG( ).info( "Starting background tasks..." );
+		// starting background task, that prints out some statistics
+		this.statsPrinter.start( );
+
+		// starting background task, that opens and keeps connections alive
+		this.logStreamConnector.start( );
+
+		// starting background task, that watches and clears memory
+		this.memoryWatchDog.register( this.pluginManager );
+		this.memoryWatchDog.register( this.logStream );
+		this.memoryWatchDog.start( );
+		LOG( ).info( "Starting background tasks...done" );
+		// INITAL start bg-tasks ########################################## 
 
 		// register console-plugin
 		pluginManager.registerPlugin( new Console( ) );
@@ -326,6 +351,17 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 				LOG( ).severe( "Exception while closing MemoryWatchDog: " + e.getLocalizedMessage( ) );
 			}
 		}// if ( this.logStreamConnector != null ).
+
+		// save all preferences
+		try
+		{
+			LOG( ).info( "Save all preferences" );
+			PreferenceManager.get( ).save( );
+		}
+		catch ( PrefsException e )
+		{
+			LOG( ).severe( "Exception while saving the preferences: " + e.getLocalizedMessage( ) );
+		}
 	}
 
 	private void onLogStreamClosed( )
@@ -411,6 +447,11 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 	public String getLogStreamListenerName( )
 	{
 		return "LogFileViewerApp";
+	}
+
+	public LogFileViewerPreferences getPreferences( )
+	{
+		return preferences;
 	}
 
 	/**
