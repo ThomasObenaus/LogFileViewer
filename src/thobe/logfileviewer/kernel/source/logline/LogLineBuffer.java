@@ -28,7 +28,8 @@ import thobe.logfileviewer.kernel.util.SizeOf;
  */
 public class LogLineBuffer implements ILogLineBuffer
 {
-	private static final String	NAME	= "thobe.logfileviewer.kernel.source.logline.LogLineBuffer";
+	private static final int	DEFAULT_MAX_CAPACITY	= 100000;
+	private static final String	NAME					= "thobe.logfileviewer.kernel.source.logline.LogLineBuffer";
 	private List<ILogLine>		internalBuffer;
 	private int					maxCapacity;
 	private float				loadFactor;
@@ -41,7 +42,7 @@ public class LogLineBuffer implements ILogLineBuffer
 	 */
 	public LogLineBuffer( )
 	{
-		this( 1000000, 0.75f );
+		this( DEFAULT_MAX_CAPACITY, 0.75f );
 	}
 
 	/**

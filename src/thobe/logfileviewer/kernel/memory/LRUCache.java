@@ -12,6 +12,7 @@ package thobe.logfileviewer.kernel.memory;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -91,5 +92,29 @@ public class LRUCache<K, V>
 	public int getMaxCacheSize( )
 	{
 		return maxCacheSize;
+	}
+
+	/**
+	 * Removes the object connected with the given key from the cache.
+	 * @param key
+	 */
+	public void remove( K key )
+	{
+		this.dataMap.remove( key );
+	}
+
+	/**
+	 * Removes all objects that are connected with the given keys.
+	 * @param keys
+	 */
+	public void removeAll( List<K> keys )
+	{
+		synchronized ( this.dataMap )
+		{
+			for ( K key : keys )
+			{
+				this.dataMap.remove( key );
+			}
+		}// synchronized ( this.dataMap ).
 	}
 }

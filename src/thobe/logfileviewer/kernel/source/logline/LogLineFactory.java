@@ -169,5 +169,4 @@ public class LogLineFactory implements ILogLineFactoryAccess
 	{
 		return this.cache.getMaxCacheSize( );
 	}
-
 }
