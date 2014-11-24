@@ -25,12 +25,14 @@ public class LogLine implements ILogLine
 	private static long			instances	= 0;
 
 	private final LogLineDat	data;
+	private boolean				dataCached;
 
-	public LogLine( long id, long timeStamp, LogLineDat data )
+	public LogLine( long id, long timeStamp, LogLineDat data, boolean dataCached )
 	{
 		this.id = id;
 		this.timeStamp = timeStamp;
 		this.data = data;
+		this.dataCached = dataCached;
 		instances++;
 	}
 
@@ -74,6 +76,6 @@ public class LogLine implements ILogLine
 
 	public long getMemory( )
 	{
-		return ( SizeOf.LONG * 2 ) + SizeOf.STRING( this.getData( ) );
+		return ( SizeOf.LONG * 2 ) + SizeOf.BOOLEAN + ( dataCached ? SizeOf.STRING( this.getData( ) ) : 0 );
 	}
 }

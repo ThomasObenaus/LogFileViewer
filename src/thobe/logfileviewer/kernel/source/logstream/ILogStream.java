@@ -10,6 +10,10 @@
 
 package thobe.logfileviewer.kernel.source.logstream;
 
+import java.util.regex.Pattern;
+
+import thobe.logfileviewer.kernel.source.logline.LogLine;
+
 /**
  * @author Thomas Obenaus
  * @source ILogStream.java
@@ -17,7 +21,21 @@ package thobe.logfileviewer.kernel.source.logstream;
  */
 public interface ILogStream
 {
-	 
+	/**
+	 * Request a block of {@link LogLine}s from the current {@link LogStream}.
+	 * @param start - Id of the first {@link LogLine} (inclusive). -1 means from the beginning.
+	 * @param end - Id of the last {@link LogLine} (inclusive). -1 means till the end.
+	 * @param requester - the instance requesting the {@link LogLine}s.
+	 */
+	public int requestLogLines( long start, long end, ILogStreamRequester requester );
+
+	/**
+	 * Request a block of {@link LogLine}s from the current {@link LogStream}.
+	 * @param start - Id of the first {@link LogLine} (inclusive). -1 means from the beginning.
+	 * @param end - Id of the last {@link LogLine} (inclusive). -1 means till the end.
+	 * @param requester - the instance requesting the {@link LogLine}s.
+	 * @param filter - Filter that should be used to filter and return only the lines that are interesting for the
+	 *            {@link ILogStreamRequester}. *
+	 */
+	public int requestLogLines( long start, long end, ILogStreamRequester requester, Pattern filter );
 }
-
-

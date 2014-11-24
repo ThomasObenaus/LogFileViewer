@@ -41,4 +41,5 @@ public interface ISubConsoleFactoryAccess
 	public String createTitle( SubConsole subConsole );
 
 	public String createDescription( SubConsole subConsole );
+	
 }

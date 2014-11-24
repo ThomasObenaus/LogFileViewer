@@ -82,6 +82,7 @@ public class Console extends Plugin implements ISubConsoleFactoryAccess
 		this.eventQueue = new ConcurrentLinkedDeque<>( );
 		this.consoleDataListeners = new HashSet<>( );
 		this.buildGUI( );
+
 	}
 
 	@Override
@@ -402,5 +403,4 @@ public class Console extends Plugin implements ISubConsoleFactoryAccess
 			}
 		}
 	}
-
 }

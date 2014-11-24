@@ -10,11 +10,13 @@
 
 package thobe.logfileviewer.kernel.plugin;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 
+import thobe.logfileviewer.kernel.source.logline.ILogLine;
 import thobe.logfileviewer.kernel.source.logstream.ILogStream;
 import thobe.logfileviewer.kernel.source.logstream.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
@@ -212,5 +214,17 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 			}
 			this.logStreamAccess = null;
 		}// synchronized ( logStreamAccess )
+	}
+
+	@Override
+	public String getLSRequesterName( )
+	{
+		return this.getPluginName( );
+	}
+
+	@Override
+	public void response( int requestId, List<ILogLine> logLines, boolean valid )
+	{
+		throw new IllegalAccessError( "IlogStreamRequester.response() is not implemented. If you want to send a request to the LogStream you have to implement this method in your class." );
 	}
 }

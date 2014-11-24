@@ -11,13 +11,18 @@
 package thobe.logfileviewer.kernel.source.logstream;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -32,7 +37,6 @@ import thobe.logfileviewer.kernel.source.logline.ILogLineFactoryAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.source.logline.LogLineBuffer;
 import thobe.logfileviewer.kernel.source.logline.LogLineFactory;
-import thobe.tools.log.ILoggable;
 
 /**
  * The resource representing the log-file (access to the log-file). The contents of the logfile can be obtained through the
@@ -42,7 +46,7 @@ import thobe.tools.log.ILoggable;
  * @source LogStream.java
  * @date May 29, 2014
  */
-public class LogStream extends ILoggable implements IInternalLogStreamReaderListener, ILogStreamAccess, IMemoryWatchable
+public class LogStream extends Thread implements IInternalLogStreamReaderListener, ILogStreamAccess, IMemoryWatchable
 {
 	private static final String								NAME				= "thobe.logfileviewer.source.LogStream";
 
@@ -87,11 +91,34 @@ public class LogStream extends ILoggable implements IInternalLogStreamReaderList
 	 */
 	private LogLineBuffer									logLineBuffer;
 
+	private int												nextRequestId;
+
+	/**
+	 * Queue of requests.
+	 */
+	private Deque<Request>									requestQueue;
+
+	/**
+	 * Semaphore for the internal event-main-loop
+	 */
+	private Semaphore										eventSemaphore;
+
+	/**
+	 * The logger
+	 */
+	private Logger											log;
+
+	/**
+	 * Flag indicating if quitting this Thread is requested externally.
+	 */
+	private AtomicBoolean									quitRequested;
+
 	/**
 	 * Ctor
 	 */
 	public LogStream( )
 	{
+		super( NAME );
 		this.logLineBlockToLSDLMap = new HashMap<>( );
 		this.logStreamStateListeners = new ArrayList<>( );
 		this.logStreamDataListeners = new HashMap<>( );
@@ -101,6 +128,74 @@ public class LogStream extends ILoggable implements IInternalLogStreamReaderList
 		this.publishThread.addListener( this );
 		this.logLineFactory = new LogLineFactory( LOG_LINE_CACHE_SIZE );
 		this.logLineBuffer = new LogLineBuffer( );
+		this.nextRequestId = 0;
+		this.requestQueue = new ConcurrentLinkedDeque<LogStream.Request>( );
+		this.log = Logger.getLogger( NAME );
+		this.quitRequested = new AtomicBoolean( false );
+		this.eventSemaphore = new Semaphore( 0 );
+	}
+
+	@Override
+	public void run( )
+	{
+		LOG( ).info( "Thread " + this.getName( ) + " started" );
+		try
+		{
+			while ( !this.quitRequested.get( ) )
+			{
+				processRequests( );
+
+				this.eventSemaphore.acquire( );
+
+			}
+		}
+		catch ( InterruptedException e )
+		{
+			LOG( ).severe( "Thread interruped ... stopping." );
+		}
+
+		LOG( ).info( "Thread " + this.getName( ) + " stopped" );
+	}
+
+	private void processRequests( )
+	{
+		Request req = null;
+		synchronized ( this.requestQueue )
+		{
+			while ( ( req = this.requestQueue.poll( ) ) != null )
+			{
+				LOG( ).info( "Processing request: " + req );
+				ILogStreamRequester requester = req.getRequester( );
+				if ( requester != null )
+				{
+					List<ILogLine> logLines = this.logLineBuffer.getLines( req.getStart( ), req.getEnd( ) );
+					if ( req.getFilter( ) == null )
+					{
+						requester.response( req.getId( ), logLines, true );
+					}
+					else
+					{
+						Pattern pat = req.getFilter( );
+						List<ILogLine> filteredLines = new ArrayList<ILogLine>( );
+						for ( ILogLine l : logLines )
+						{
+							if ( matches( pat, l.getData( ) ) )
+							{
+								filteredLines.add( l );
+							}
+						}
+						requester.response( req.getId( ), filteredLines, true );
+					}
+				}// if ( requester != null )
+			}// while ( ( req = this.requestQueue.poll( ) ) != null ) .
+		}// synchronized ( this.requestQueue ) .
+
+	}
+
+	public void quit( )
+	{
+		this.quitRequested.set( true );
+		this.eventSemaphore.release( );
 	}
 
 	/**
@@ -239,12 +334,6 @@ public class LogStream extends ILoggable implements IInternalLogStreamReaderList
 	}
 
 	@Override
-	protected String getLogChannelName( )
-	{
-		return NAME;
-	}
-
-	@Override
 	public void onNewLine( String newLine )
 	{
 		final boolean logFine = LOG( ).isLoggable( Level.FINE );
@@ -346,7 +435,7 @@ public class LogStream extends ILoggable implements IInternalLogStreamReaderList
 	@Override
 	public String getLogStreamListenerName( )
 	{
-		return this.getLogChannelName( );
+		return NAME;
 	}
 
 	private void fireOnClosed( )
@@ -406,6 +495,8 @@ public class LogStream extends ILoggable implements IInternalLogStreamReaderList
 	@Override
 	public void onNewBlock( List<String> newBlock )
 	{
+		long elapsed = System.currentTimeMillis( );
+
 		List<ILogLine> newBlockForBuffer = new ArrayList<>( );
 		// for each line of the block
 		for ( String newLine : newBlock )
@@ -469,6 +560,9 @@ public class LogStream extends ILoggable implements IInternalLogStreamReaderList
 				entry.getValue( ).getKey( ).clear( );
 			}// for ( Entry<String, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) ).
 		}// synchronized ( this.logLineBlockToLSDLMap   ).
+
+		elapsed = System.currentTimeMillis( ) - elapsed;
+		//		System.out.println(elapsed / 1000f + " s");
 	}
 
 	/**
@@ -541,5 +635,88 @@ public class LogStream extends ILoggable implements IInternalLogStreamReaderList
 	public String getNameOfMemoryWatchable( )
 	{
 		return NAME;
+	}
+
+	protected Logger LOG( )
+	{
+		return this.log;
+	}
+
+	@Override
+	public int requestLogLines( long start, long end, ILogStreamRequester requester, Pattern filter )
+	{
+		int newId = -1;
+
+		if ( requester != null )
+		{
+			synchronized ( this.requestQueue )
+			{
+				newId = this.nextRequestId;
+				this.nextRequestId++;
+
+				// build and put the new request to the queue
+				this.requestQueue.push( new Request( newId, start, end, requester, filter ) );
+			}// synchronized ( this.requestQueue )
+
+			this.eventSemaphore.release( );
+		}// if ( requester != null ).
+
+		return newId;
+	}
+
+	@Override
+	public int requestLogLines( long start, long end, ILogStreamRequester requester )
+	{
+		return requestLogLines( start, end, requester, null );
+	}
+
+	private class Request
+	{
+		private int					id;
+		private long				start;
+		private long				end;
+		private ILogStreamRequester	requester;
+		private Pattern				filter;
+
+		public Request( int id, long start, long end, ILogStreamRequester requester, Pattern filter )
+		{
+			this.id = id;
+			this.start = start;
+			this.end = end;
+			this.requester = requester;
+			this.filter = filter;
+		}
+
+		public long getEnd( )
+		{
+			return end;
+		}
+
+		public int getId( )
+		{
+			return id;
+		}
+
+		public ILogStreamRequester getRequester( )
+		{
+			return requester;
+		}
+
+		public long getStart( )
+		{
+			return start;
+		}
+
+		public Pattern getFilter( )
+		{
+			return filter;
+		}
+
+		@Override
+		public String toString( )
+		{
+			return "[" + this.id + "] filter=" + ( ( this.filter != null ) ? this.filter.toString( ) : "n/a" ) + ", range=(" + this.start + "," + this.end + "), req=" + this.requester.getLSRequesterName( );
+		}
+
 	}
 }

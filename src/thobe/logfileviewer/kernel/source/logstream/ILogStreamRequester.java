@@ -10,6 +10,10 @@
 
 package thobe.logfileviewer.kernel.source.logstream;
 
+import java.util.List;
+
+import thobe.logfileviewer.kernel.source.logline.ILogLine;
+
 /**
  * @author Thomas Obenaus
  * @source ILogStreamRequester.java
@@ -17,7 +21,18 @@ package thobe.logfileviewer.kernel.source.logstream;
  */
 public interface ILogStreamRequester
 {
+	/**
+	 * Response to a previous request to the {@link LogStream} via {@link LogStream#requestLogLines(long, long, ILogStreamRequester)} or
+	 * {@link LogStream#requestLogLines(long, long, ILogStreamRequester, java.util.regex.Pattern)}.
+	 * @param requestId - the id of the request
+	 * @param logLines - the lines matching the filter
+	 * @param valid - if true, the response is valid
+	 */
+	public void response( int requestId, List<ILogLine> logLines, boolean valid );
 
+	/**
+	 * Returns the name of the requester.
+	 * @return
+	 */
+	public String getLSRequesterName( );
 }
-
-

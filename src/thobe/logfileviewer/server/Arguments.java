@@ -21,12 +21,14 @@ public final class Arguments
 	private Integer	port;
 	private String	filename;
 	private int		lps;
+	private boolean	infiniteMode;
 
-	public Arguments( String filename, Integer port, int lps )
+	public Arguments( String filename, Integer port, int lps, boolean infiniteMode )
 	{
 		this.filename = filename;
 		this.port = port;
 		this.lps = lps;
+		this.infiniteMode = infiniteMode;
 	}
 
 	public int getLps( )
@@ -42,5 +44,10 @@ public final class Arguments
 	public Integer getPort( )
 	{
 		return port;
+	}
+
+	public boolean isInfiniteMode( )
+	{
+		return infiniteMode;
 	}
 }

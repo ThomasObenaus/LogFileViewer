@@ -159,6 +159,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 
 		// INITAL start bg-tasks ########################################## 
 		LOG( ).info( "Starting background tasks..." );
+		// starting background task LogStream
+		this.logStream.start( );
+
 		// starting background task, that prints out some statistics
 		this.statsPrinter.start( );
 
@@ -368,10 +371,34 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
 		LOG( ).info( "5. Stopped --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 
+		// tell all threads to stop
+		if ( this.logStream != null )
+			this.logStream.quit( );
+		if ( this.statsPrinter != null )
+			this.statsPrinter.quit( );
+		if ( this.logStreamConnector != null )
+			this.logStreamConnector.quit( );
+		if ( this.memoryWatchDog != null )
+			this.memoryWatchDog.quit( );
+
+		// wait for all threads to finish stopping
+		// quit the logStream
+		if ( this.logStream != null )
+		{
+			try
+			{
+				this.logStream.interrupt( );
+				this.logStream.join( );
+			}
+			catch ( InterruptedException e )
+			{
+				LOG( ).severe( "Exception while closing LogStream: " + e.getLocalizedMessage( ) );
+			}
+		}// if ( this.logStream != null ).
+
 		// quit the StatsPrinter too
 		if ( this.statsPrinter != null )
 		{
-			this.statsPrinter.quit( );
 			try
 			{
 				this.statsPrinter.interrupt( );
@@ -386,7 +413,6 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// quit the LogStreamConnector
 		if ( this.logStreamConnector != null )
 		{
-			this.logStreamConnector.quit( );
 			try
 			{
 				this.logStreamConnector.interrupt( );
@@ -401,7 +427,6 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// quit the memorywatchdog
 		if ( this.memoryWatchDog != null )
 		{
-			this.memoryWatchDog.quit( );
 			try
 			{
 				this.memoryWatchDog.interrupt( );

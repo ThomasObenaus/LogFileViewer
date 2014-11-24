@@ -58,6 +58,8 @@ public class EthSource extends Thread
 	private AtomicLong					linesSend;
 	private AtomicLong					startTime;
 	private AtomicInteger				sleepTime;
+	private boolean						infiniteMode;
+	private Timer						lpsPrinter;
 
 	public EthSource( int port, File file ) throws IOException
 	{
@@ -68,6 +70,13 @@ public class EthSource extends Thread
 		this.linesSend = new AtomicLong( 0 );
 		this.startTime = new AtomicLong( 0 );
 		this.sleepTime = new AtomicInteger( 5 );
+		this.infiniteMode = false;
+		this.lpsPrinter = new Timer( "ClientConnectionChecker.LPSPrinter.Timer" );
+	}
+
+	public void setInfiniteMode( boolean infiniteMode )
+	{
+		this.infiniteMode = infiniteMode;
 	}
 
 	/**
@@ -138,8 +147,7 @@ public class EthSource extends Thread
 
 		this.startTime.set( System.currentTimeMillis( ) );
 
-		Timer timer = new Timer( "ClientConnectionChecker.LPSPrinter.Timer" );
-		timer.schedule( new LPSPrinter( this ), 5000, 5000 );
+		this.lpsPrinter.schedule( new LPSPrinter( this ), 5000, 5000 );
 
 		BufferedReader reader = null;
 		StringBuffer strBuffer = new StringBuffer( );
@@ -177,8 +185,16 @@ public class EthSource extends Thread
 
 				if ( line == null )
 				{
-					System.out.println( "EOF reached, reopeneing file" );
-					reader = null;
+					if ( this.infiniteMode )
+					{
+						System.out.println( "EOF reached, reopeneing file" );
+						reader = null;
+					}
+					else
+					{
+						System.out.println( "EOF reached, stopp!" );
+						break;
+					}
 				}
 			}
 			catch ( IOException e1 )
@@ -225,11 +241,15 @@ public class EthSource extends Thread
 		{
 			System.out.println( "Quit the client accepter" );
 			this.clientAccepter.quit( );
+			System.out.println( "Quit the client connection checker" );
+			this.clientConnectionChecker.quit( );
+
+			System.out.println( "Quit the LPSPrinter" );
+			this.lpsPrinter.cancel( );
+
 			this.clientAccepter.interrupt( );
 			this.clientAccepter.join( );
 
-			System.out.println( "Quit the client connection checker" );
-			this.clientConnectionChecker.quit( );
 			this.clientConnectionChecker.interrupt( );
 			this.clientConnectionChecker.join( );
 		}
@@ -337,11 +357,13 @@ public class EthSource extends Thread
 			{
 				try
 				{
+					this.serverSocket.setSoTimeout( CLIENT_CONNECTION_TIMEOUT );
 					Socket client = this.serverSocket.accept( );
-					client.setSoTimeout( CLIENT_CONNECTION_TIMEOUT );
+					
 					if ( client != null )
 					{
 						System.out.println( "New client " + client.getInetAddress( ) + " found" );
+						client.setSoTimeout( CLIENT_CONNECTION_TIMEOUT );
 						this.ethSource.addClient( client );
 					}
 				}
@@ -373,6 +395,7 @@ public class EthSource extends Thread
 		{
 			EthSource ethSource = new EthSource( parsedArgs.getPort( ), new File( parsedArgs.getFilename( ) ) );
 			ethSource.setLinesPerSecond( parsedArgs.getLps( ) );
+			ethSource.setInfiniteMode( parsedArgs.isInfiniteMode( ) );
 			ethSource.start( );
 
 			try
@@ -403,6 +426,7 @@ public class EthSource extends Thread
 		final String OPT_PORT = "p";
 		final String OPT_FILE = "f";
 		final String OPT_LPS = "l";
+		final String OPT_INFINITE = "i";
 
 		// create Options object
 		Options options = new Options( );
@@ -416,13 +440,18 @@ public class EthSource extends Thread
 		@SuppressWarnings ( "static-access")
 		Option optLPS = OptionBuilder.withArgName( "lines per second" ).hasArg( ).withLongOpt( "lps" ).withDescription( "The lines per second that should be published over eth by this source." ).create( OPT_LPS );
 
+		@SuppressWarnings ( "static-access")
+		Option optInfinite = OptionBuilder.withArgName( "infinite mode" ).hasArg( false ).withLongOpt( "inf" ).withDescription( "In infinite mode the file will be reopened after reaching eof." ).create( OPT_INFINITE );
+
 		options.addOption( optFilename );
 		options.addOption( optPort );
 		options.addOption( optLPS );
+		options.addOption( optInfinite );
 
 		String filename = null;
 		Integer port = null;
 		int lps = 9500;
+		boolean infiniteMode = false;
 		try
 		{
 			CommandLineParser parser = new GnuParser( );
@@ -468,6 +497,7 @@ public class EthSource extends Thread
 				}
 			}
 
+			infiniteMode = cmd.hasOption( OPT_INFINITE );
 		}
 		catch ( ParseException e )
 		{
@@ -476,7 +506,7 @@ public class EthSource extends Thread
 			System.exit( 2 );
 		}
 
-		return new Arguments( filename, port, lps );
+		return new Arguments( filename, port, lps, infiniteMode );
 	}
 
 	private class LPSPrinter extends TimerTask

@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+
+<project name="EthTraceServer" basedir="." default="create-jar">
+
+	<!-- [init] - task for setup of initial properties -->
+	<target name="init">
+		<echo message="Initial setup" />
+
+		<!-- set version here -->
+		<property name="ETS.Program-Version" value="1.0.0" />
+		<!-- set main-class here or uncomment line if u build a library -->
+		<property name="ETS.Main-Class" value="thobe.logfileviewer.server.EthSource" />
+		<!-- set licence here -->
+		<property name="ETS.License" value="Licensed under the New BSD License (3-clause lic)" />
+		<property name="ETS.Copyright" value="Copyright (C) 2014, Thomas Obenaus. All rights reserved." />
+		<property name="ETS.Author" value="Thomas Obenaus" />
+		<property name="ETS.Contact" value="obenaus.thomas@gmail.com" />
+
+		<!-- don't change these properties -->
+		<property name="ETS.eclipse.build.dir" value="bin" />
+		<property name="ETS.eclipse.src.dir" value="src" />
+		<property name="ETS.eclipse.lib.dir" value="libs" />
+
+		<property name="ETS.jar.dir" value="jar" />
+		<property name="ETS.jarName" value="${ant.project.name}.jar" />
+
+		<tstamp>
+			<format property="ETS.creation-date" pattern="YYYY-MM-DD zzz" locale="de,DE" />
+		</tstamp>
+	</target>
+
+	<!-- [clean] delete temp folder "jar" -->
+	<target name="clean" depends="init">
+		<echo message="Deleting folder /${ETS.jar.dir}." />
+		<delete dir="${ETS.jar.dir}" />
+	</target>
+
+	<!-- [print-props-1] print property program-version and licence -->
+	<target name="print-props-1" depends="init">
+		<echo message="Building version '${ETS.Program-Version}'" />
+		<echo message="License is '${ETS.License}'" />
+	</target>
+
+	<!-- [print-props-2] print property main-class (if set) -->
+	<target name="print-props-2" depends="init" if="ETS.Main-Class">
+		<echo message="Using '${ETS.Main-Class}' as main-class" />
+	</target>
+
+
+	<!-- [create-jar] create jar file -->
+	<target name="create-jar" depends="clean,print-props-1,print-props-2">
+		<echo message="Copy files from build-directory /${ETS.eclipse.build.dir} to /${LFV.jar.dir}." />
+		<!-- copy files from build dir -->
+		<copy toDir="${ETS.jar.dir}/">
+			<fileset dir="${ETS.eclipse.build.dir}">
+				<include name="**/*.class" />
+				<include name="**/*.properties" />
+				<include name="**/*.gif" />
+				<include name="**/*.png" />
+				<exclude name="**/*.jar" />
+				<exclude name="playground/**" />
+				<exclude name="testing/**" />
+				<exclude name="logfileviewer/**" />
+			</fileset>
+		</copy>
+
+		<echo message="Extract referenced libraries." />
+		<unzip src="${ETS.eclipse.lib.dir}/commons-cli-1.2/commons-cli-1.2.jar" dest="${ETS.jar.dir}" />
+		<!--<unzip src="${LFV.eclipse.lib.dir}/widgets.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/tools.jar" dest="${LFV.jar.dir}" />
+		
+		<unzip src="${LFV.eclipse.lib.dir}/jgoodies-forms-1.8.0/jgoodies-forms-1.8.0.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/jgoodies-common-1.8.0/jgoodies-common-1.8.0.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/docking-frames-common.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/docking-frames-core.jar" dest="${LFV.jar.dir}" />-->
+
+		<!-- create jar-file -->
+		<echo message="Create jar-file /${ETS.jar.dir}/${ETS.jarName}." />
+		<echo message="Program-Version: ${ETS.Program-Version}" />
+		<jar destfile="${ETS.jar.dir}/${ETS.jarName}" basedir="${ETS.jar.dir}">
+			<!-- write properties to manifest -->
+			<manifest>
+				<attribute name="Program-Version" value="${ETS.Program-Version}" />
+				<attribute name="Main-Class" value="${ETS.Main-Class}" />
+				<attribute name="Copyright" value="${ETS.Copyright}" />
+				<attribute name="Author" value="${ETS.Author}" />
+				<attribute name="Contact" value="${ETS.Contact}" />
+				<attribute name="Created" value="${ETS.creation-date}" />
+				<attribute name="Licence" value="${ETS.License}" />
+			</manifest>
+		</jar>
+
+		<!-- copy jar-file to projet dir -->
+		<echo message="copy ${ETS.jar.dir}/${ETS.jarName} into project-directory" />
+		<copy file="${ETS.jar.dir}/${ETS.jarName}" todir="." />
+
+		<!-- clean temp jar dir -->
+		<antcall target="clean">
+		</antcall>
+	</target>
+	
+</project>

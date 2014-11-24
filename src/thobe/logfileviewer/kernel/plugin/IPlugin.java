@@ -14,6 +14,7 @@ import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.source.logstream.ILogStream;
 import thobe.logfileviewer.kernel.source.logstream.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.logstream.ILogStreamDataListener;
+import thobe.logfileviewer.kernel.source.logstream.ILogStreamRequester;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
 
 /**
@@ -21,7 +22,7 @@ import thobe.logfileviewer.kernel.source.logstream.LogStream;
  * @source IPlugin.java
  * @date Jun 2, 2014
  */
-public interface IPlugin extends IPluginBase, IMemoryWatchable, ILogStreamDataListener
+public interface IPlugin extends IPluginBase, IMemoryWatchable, ILogStreamDataListener,ILogStreamRequester
 {
 	/**
 	 * Returns true if previously the method {@link IPlugin#quit()} was called.

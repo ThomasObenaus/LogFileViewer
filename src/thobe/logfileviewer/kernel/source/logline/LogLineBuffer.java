@@ -13,6 +13,7 @@ package thobe.logfileviewer.kernel.source.logline;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
@@ -32,38 +33,39 @@ public class LogLineBuffer implements ILogLineBuffer
 	 * Default initial capacity (#items)
 	 */
 	private static final int	DEFAULT_MAX_CAPACITY	= 100000;
-	
+
 	/**
-	 * Name of the logchannel 
+	 * Name of the logchannel
 	 */
 	private static final String	NAME					= "thobe.logfileviewer.kernel.source.logline.LogLineBuffer";
-	
+
 	/**
 	 * Internal list of buffered {@link LogLine}s
 	 */
 	private List<ILogLine>		internalBuffer;
-	
+
 	/**
 	 * Max capacity (#items)
 	 */
 	private int					maxCapacity;
-	
+
 	/**
-	 * Load factor ... number of items the buffer will contain after it has reached its max capacity (this factor is the percentage of the max capacity).
-	 * E.g. if max capacity is 100 and the load factor is 0.75 the buffer will contain 75 items after reaching its max capacity.  
+	 * Load factor ... number of items the buffer will contain after it has reached its max capacity (this factor is the percentage of the
+	 * max capacity).
+	 * E.g. if max capacity is 100 and the load factor is 0.75 the buffer will contain 75 items after reaching its max capacity.
 	 */
 	private float				loadFactor;
-	
+
 	/**
 	 * Logger
 	 */
 	private Logger				log;
-	
+
 	/**
-	 * Timer keeping track if this buffer has reached its maximum capacity.  
+	 * Timer keeping track if this buffer has reached its maximum capacity.
 	 */
 	private Timer				bufferOverflowWatcherTimer;
-	
+
 	/**
 	 * Current memory usage.
 	 */
@@ -154,6 +156,76 @@ public class LogLineBuffer implements ILogLineBuffer
 		}// synchronized ( this.internalBuffer ).
 
 		this.memory += SizeOf.STRING( entry.getData( ) );
+	}
+
+	public List<ILogLine> getLines( long start, long end )
+	{
+		List<ILogLine> lines = new ArrayList<ILogLine>( );
+
+		List<ILogLine> copyOfBuffer = null;
+		synchronized ( this.internalBuffer )
+		{
+			copyOfBuffer = new ArrayList<ILogLine>( this.internalBuffer );
+		}
+
+		if ( !copyOfBuffer.isEmpty( ) )
+		{
+			final long firstId = copyOfBuffer.get( 0 ).getId( );
+			final long lastId = copyOfBuffer.get( copyOfBuffer.size( ) - 1 ).getId( );
+			final boolean fromStart = ( start == -1 ) || ( firstId >= start );
+			final boolean tillEnd = ( end == -1 ) || ( lastId <= end );
+
+			int firstIdx = 0;
+			int lastIdx = copyOfBuffer.size( ) - 1;
+			if ( !fromStart )
+			{
+				// 1. obtain index for first 
+				// find the first id that matches start or is bigger than start
+				// e.g. 7,8,[10,11,12,30,31,32 : where start = 10 ==> take idx=2, which is 10
+				// e.g. 7,8,[10,11,12,30,31,32 : where start = 9 ==> take idx=2, which is 10
+
+				for ( int i = 0; i < copyOfBuffer.size( ); ++i )
+				{
+					// first found that is bigger than or matches start --> use it
+					if ( copyOfBuffer.get( i ).getId( ) >= start )
+					{
+						firstIdx = i;
+						break;
+					}
+				}// for(int i=0;i<copyOfBuffer.size( );++i)
+
+			}// if ( !fromStart )
+
+			if ( !tillEnd )
+			{
+				// 2. obtain index for last 
+				// find the first id that matches end or the last one that is smaller end
+				// e.g. 7,8,10,11,12],30,31,32 : where end = 12 ==> take idx=4, which is 12
+				// e.g. 7,8,10,11,12],30,31,32 : where end = 28 ==> take idx=4, which is 12
+
+				ListIterator<ILogLine> iter = copyOfBuffer.listIterator( copyOfBuffer.size( ) );
+				while ( iter.hasPrevious( ) )
+				{
+					final ILogLine ll = iter.previous( );
+					// last found that is smaller than or matches end --> use it
+					if ( ll.getId( ) <= end )
+					{
+						break;
+					}// if ( ll.getId( ) <= end )
+
+					lastIdx--;
+				}// while ( iter.hasPrevious( ) )
+			}// if ( !tillEnd )
+
+			// now copy the elements from firstIdx to lastIdx
+			for ( int i = firstIdx; i < ( lastIdx + 1 ); ++i )
+			{
+				lines.add( copyOfBuffer.get( i ) );
+			}// for(int i=firstIdx;i<(lastIdx+1);++i)
+
+		}// if ( !copyOfBuffer.isEmpty( ) ).
+		copyOfBuffer.clear( );
+		return lines;
 	}
 
 	@Override

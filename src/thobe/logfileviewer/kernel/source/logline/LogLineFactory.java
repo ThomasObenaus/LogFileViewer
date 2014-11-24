@@ -122,6 +122,7 @@ public class LogLineFactory implements ILogLineFactoryAccess
 
 		// ask the cache if the data is already there
 		LogLineDat logLineDat = this.cache.get( lineAndTime.getLineWithoutTimeStamp( ) );
+		boolean cached = false;
 		if ( logLineDat == null )
 		{
 			logLineDat = new LogLineDat( data );
@@ -137,11 +138,12 @@ public class LogLineFactory implements ILogLineFactoryAccess
 		}// if ( logLineDat == null ).
 		else
 		{
+			cached = true;
 			hits++;
 		}// if ( logLineDat == null ) ... else ...
 
 		// create the logline
-		LogLine logLine = new LogLine( this.logLineId, timeStamp, logLineDat );
+		LogLine logLine = new LogLine( this.logLineId, timeStamp, logLineDat, cached );
 		this.logLineId++;
 
 		return logLine;
