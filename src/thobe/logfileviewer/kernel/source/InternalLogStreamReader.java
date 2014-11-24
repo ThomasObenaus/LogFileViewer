@@ -17,52 +17,53 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamContentPublisherListener;
-import thobe.logfileviewer.kernel.source.reader.LogStreamReader;
+import thobe.logfileviewer.kernel.source.listeners.IInternalLogStreamReaderListener;
+import thobe.logfileviewer.kernel.source.reader.ExternalLogStreamReader;
 
 /**
- * Class that is responsible to publish the contents that where read from the log via {@link LogStreamReader}.
+ * Class that is responsible to obtain contents read from the log via {@link ExternalLogStreamReader} in a separate Thread. The data will
+ * published to all {@link IInternalLogStreamReaderListener}s.
  * @author Thomas Obenaus
- * @source LogStreamContentPublisher.java
+ * @source InternalLogStreamReader.java
  * @date May 29, 2014
  */
-public class LogStreamContentPublisher extends Thread
+public class InternalLogStreamReader extends Thread
 {
 	/**
 	 * Reference to an open stream-reader.
 	 */
-	private LogStreamReader								traceSource;
-	
+	private ExternalLogStreamReader					traceSource;
+
 	/**
 	 * Flag for requesting to quit this thread
 	 */
-	private AtomicBoolean								quitRequested;
-	
+	private AtomicBoolean							quitRequested;
+
 	/**
 	 * Logger
 	 */
-	private Logger										log;
+	private Logger									log;
 
 	/**
 	 * Listeners registered for data from logstream.
 	 */
-	private List<ILogStreamContentPublisherListener>	listeners;
-	
+	private List<IInternalLogStreamReaderListener>	listeners;
+
 	/**
 	 * Current state of the logstream
 	 */
-	private LogStreamState								stateOfLogStream;
+	private LogStreamState							stateOfLogStream;
 
 	/**
 	 * The time to sleep between two lines that where read from the source (in ms).
 	 */
-	private AtomicInteger								sleepTime;
+	private AtomicInteger							sleepTime;
 
-	public LogStreamContentPublisher( )
+	public InternalLogStreamReader( )
 	{
 		super( "thobe.logfileviewer.source.LogStreamContentPublisher" );
 		this.quitRequested = new AtomicBoolean( false );
-		this.log = Logger.getLogger( "thobe.logfileviewer.source.LogStreamContentPublisher" );
+		this.log = Logger.getLogger( "thobe.logfileviewer.source.InternalLogStreamReader" );
 		this.sleepTime = new AtomicInteger( 100 );
 		this.listeners = new ArrayList<>( );
 		this.stateOfLogStream = LogStreamState.CLOSED;
@@ -72,7 +73,7 @@ public class LogStreamContentPublisher extends Thread
 	 * Adds a new listener (thread-safe)
 	 * @param listener
 	 */
-	public void addListener( ILogStreamContentPublisherListener listener )
+	void addListener( IInternalLogStreamReaderListener listener )
 	{
 		synchronized ( listeners )
 		{
@@ -84,7 +85,7 @@ public class LogStreamContentPublisher extends Thread
 	 * Removes the given listener (thread-safe)
 	 * @param listener
 	 */
-	public void removeListener( ILogStreamContentPublisherListener listener )
+	void removeListener( IInternalLogStreamReaderListener listener )
 	{
 		synchronized ( listeners )
 		{
@@ -92,7 +93,7 @@ public class LogStreamContentPublisher extends Thread
 		}
 	}
 
-	public void startPublishing( LogStreamReader traceSource )
+	public void startPublishing( ExternalLogStreamReader traceSource )
 	{
 		synchronized ( this )
 		{
@@ -229,7 +230,7 @@ public class LogStreamContentPublisher extends Thread
 	{
 		synchronized ( listeners )
 		{
-			for ( ILogStreamContentPublisherListener l : this.listeners )
+			for ( IInternalLogStreamReaderListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onNewLine( newLine );
@@ -247,7 +248,7 @@ public class LogStreamContentPublisher extends Thread
 	{
 		synchronized ( listeners )
 		{
-			for ( ILogStreamContentPublisherListener l : this.listeners )
+			for ( IInternalLogStreamReaderListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onNewBlock( newBlock );
@@ -266,7 +267,7 @@ public class LogStreamContentPublisher extends Thread
 		LOG( ).info( "LogStream eof reached" );
 		synchronized ( listeners )
 		{
-			for ( ILogStreamContentPublisherListener l : this.listeners )
+			for ( IInternalLogStreamReaderListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onEOFReached( );
@@ -285,7 +286,7 @@ public class LogStreamContentPublisher extends Thread
 		LOG( ).info( "LogStream opened" );
 		synchronized ( listeners )
 		{
-			for ( ILogStreamContentPublisherListener l : this.listeners )
+			for ( IInternalLogStreamReaderListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onOpened( );
@@ -304,7 +305,7 @@ public class LogStreamContentPublisher extends Thread
 		LOG( ).info( "LogStream closed" );
 		synchronized ( listeners )
 		{
-			for ( ILogStreamContentPublisherListener l : this.listeners )
+			for ( IInternalLogStreamReaderListener l : this.listeners )
 			{
 				long elapsedTime = System.currentTimeMillis( );
 				l.onClosed( );

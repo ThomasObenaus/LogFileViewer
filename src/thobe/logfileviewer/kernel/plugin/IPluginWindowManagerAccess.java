@@ -10,7 +10,6 @@
 
 package thobe.logfileviewer.kernel.plugin;
 
-
 /**
  * @author Thomas Obenaus
  * @source IPluginWindowManagerAccess.java
@@ -18,7 +17,18 @@ package thobe.logfileviewer.kernel.plugin;
  */
 public interface IPluginWindowManagerAccess
 {
+	/**
+	 * Register a new visual component (visual representation {@link IPluginUIComponent}) for the given {@link IPlugin}. One {@link IPlugin}
+	 * can have multiple visual representations.
+	 * @param pluginUI
+	 * @param pComponent
+	 */
 	public void registerVisualComponent( IPluginUI pluginUI, IPluginUIComponent pComponent );
 
+	/**
+	 * Unregister a new visual component (visual representation {@link IPluginUIComponent}) for the given {@link IPlugin}.
+	 * @param pluginUI
+	 * @param pComponent
+	 */
 	public void unRegisterVisualComponent( IPluginUI pluginUI, IPluginUIComponent pComponent );
 }

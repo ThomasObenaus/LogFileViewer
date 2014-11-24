@@ -18,16 +18,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.err.LogStreamTimeoutException;
 
 /**
  * Abstract class representing a source that reads and offers contents of a log (file or over ip).
+ * A {@link Thread} that reads/takes the data from an external source. While reading this {@link Thread} might block/wait for some seconds.
+ * This class decouples the external source from the {@link LogFileViewerApp} (prevents blocking). While reading from external source this
+ * class fills its internal buffer. This raw data ({@link String}) can be obtained via {@link ExternalLogStreamReader#nextLines()} or
+ * {@link ExternalLogStreamReader#nextLine()}.
  * @author Thomas Obenaus
- * @source LogStreamReader.java
+ * @source ExternalLogStreamReader.java
  * @date May 15, 2014
  */
-public abstract class LogStreamReader extends Thread
+public abstract class ExternalLogStreamReader extends Thread
 {
 	/**
 	 * deque containing the contents of the log line by line.
@@ -92,7 +97,7 @@ public abstract class LogStreamReader extends Thread
 	/**
 	 * Ctor
 	 */
-	public LogStreamReader( String name )
+	public ExternalLogStreamReader( String name )
 	{
 		super( name );
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
@@ -101,7 +106,7 @@ public abstract class LogStreamReader extends Thread
 		this.EOFReached = new AtomicBoolean( false );
 		this.sleepTime = new AtomicInteger( 0 );
 		this.stopOnReachingEOF = true;
-		this.log = Logger.getLogger( "thobe.logfileviewer.source.LogStreamReader" );
+		this.log = Logger.getLogger( "thobe.logfileviewer.source.ExternalLogStreamReader" );
 		this.maxBlockSize = 100;
 		this.maxBlockTime = 2000;
 		this.blockModeEnabled = true;
@@ -113,7 +118,7 @@ public abstract class LogStreamReader extends Thread
 	 * Returns the next line that is available (was read from the log source). On accessing this method the line will be consumed, that
 	 * means further calls to this method will result in different results (the next line).
 	 * @return - the next line as {@link String}
-	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link LogStreamReader#hasNextLine()} to check if
+	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link ExternalLogStreamReader#hasNextLine()} to check if
 	 *             more
 	 *             lines are available.
 	 */
@@ -133,7 +138,7 @@ public abstract class LogStreamReader extends Thread
 	 * Returns the next lines that are available (was read from the log source). On accessing this method all lines will be consumed, that
 	 * means further calls to this method will result in different results (the next lines).
 	 * @return - the next lines as list of {@link String}'s
-	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link LogStreamReader#hasNextLine()} to check if more
+	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link ExternalLogStreamReader#hasNextLine()} to check if more
 	 *             lines are available.
 	 */
 	public List<String> nextLines( ) throws LogStreamException
@@ -160,8 +165,8 @@ public abstract class LogStreamReader extends Thread
 	}
 
 	/**
-	 * Setting this flag to false the {@link LogStreamReader} continues reading even if the end of file was reached, assuming more lines
-	 * will be added to the file soon (like tail -f <file>). Setting this flag to true the {@link LogStreamReader} will terminate
+	 * Setting this flag to false the {@link ExternalLogStreamReader} continues reading even if the end of file was reached, assuming more lines
+	 * will be added to the file soon (like tail -f <file>). Setting this flag to true the {@link ExternalLogStreamReader} will terminate
 	 * immediately if the end of the file is reached.
 	 * @param stopOnReachingEOF
 	 */
@@ -347,7 +352,7 @@ public abstract class LogStreamReader extends Thread
 	protected abstract void closeImpl( ) throws LogStreamException;
 
 	/**
-	 * Open the {@link LogStreamReader}.
+	 * Open the {@link ExternalLogStreamReader}.
 	 * @throws LogStreamException
 	 */
 	public void open( ) throws LogStreamException
@@ -375,7 +380,7 @@ public abstract class LogStreamReader extends Thread
 	}
 
 	/**
-	 * Returns true if the {@link LogStreamReader} is open, false otherwise.
+	 * Returns true if the {@link ExternalLogStreamReader} is open, false otherwise.
 	 * @return
 	 */
 	public boolean isOpen( )

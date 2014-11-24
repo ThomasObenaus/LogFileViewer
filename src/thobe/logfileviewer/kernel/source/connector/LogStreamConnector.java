@@ -190,7 +190,7 @@ public class LogStreamConnector extends Thread implements ILogStreamStateListene
 		this.tryReconnect( );
 	}
 
-	public Logger LOG( )
+	protected Logger LOG( )
 	{
 		return this.log;
 	}

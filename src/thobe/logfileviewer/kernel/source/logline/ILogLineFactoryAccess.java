@@ -11,6 +11,7 @@
 package thobe.logfileviewer.kernel.source.logline;
 
 /**
+ * Interface that generalizes the access to a {@link LogLineFactory}.
  * @author Thomas Obenaus
  * @source ILogLineFactoryAccess.java
  * @date 23.09.2014

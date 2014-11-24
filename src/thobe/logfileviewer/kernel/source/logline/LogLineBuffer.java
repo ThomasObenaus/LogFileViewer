@@ -28,13 +28,45 @@ import thobe.logfileviewer.kernel.util.SizeOf;
  */
 public class LogLineBuffer implements ILogLineBuffer
 {
+	/**
+	 * Default initial capacity (#items)
+	 */
 	private static final int	DEFAULT_MAX_CAPACITY	= 100000;
+	
+	/**
+	 * Name of the logchannel 
+	 */
 	private static final String	NAME					= "thobe.logfileviewer.kernel.source.logline.LogLineBuffer";
+	
+	/**
+	 * Internal list of buffered {@link LogLine}s
+	 */
 	private List<ILogLine>		internalBuffer;
+	
+	/**
+	 * Max capacity (#items)
+	 */
 	private int					maxCapacity;
+	
+	/**
+	 * Load factor ... number of items the buffer will contain after it has reached its max capacity (this factor is the percentage of the max capacity).
+	 * E.g. if max capacity is 100 and the load factor is 0.75 the buffer will contain 75 items after reaching its max capacity.  
+	 */
 	private float				loadFactor;
+	
+	/**
+	 * Logger
+	 */
 	private Logger				log;
+	
+	/**
+	 * Timer keeping track if this buffer has reached its maximum capacity.  
+	 */
 	private Timer				bufferOverflowWatcherTimer;
+	
+	/**
+	 * Current memory usage.
+	 */
 	private long				memory;
 
 	/**
@@ -73,7 +105,7 @@ public class LogLineBuffer implements ILogLineBuffer
 	 * @param entries
 	 * @throws LogLineBufferException if the block/the entries to be added overlaps the entries already in the internal buffer.
 	 */
-	public void addSorted( List<ILogLine> entries ) throws LogLineBufferException
+	public void add( List<ILogLine> entries ) throws LogLineBufferException
 	{
 		// nothing to do
 		if ( entries.isEmpty( ) )

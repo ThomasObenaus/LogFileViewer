@@ -33,10 +33,19 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	 */
 	private Logger						log;
 
+	/**
+	 * Name of the {@link Plugin}
+	 */
 	private String						pluginName;
 
+	/**
+	 * True if the {@link Plugin}s visual component is already attached to gui/mainframe
+	 */
 	private AtomicBoolean				attachedToGUI;
 
+	/**
+	 * Access to the window-management for {@link Plugin}s
+	 */
 	private IPluginWindowManagerAccess	pluginWindowMngAccess;
 
 	public Plugin( String pluginName, String logChannelName )

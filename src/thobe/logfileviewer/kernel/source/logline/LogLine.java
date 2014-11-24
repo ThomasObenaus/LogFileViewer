@@ -74,6 +74,6 @@ public class LogLine implements ILogLine
 
 	public long getMemory( )
 	{
-		return ( SizeOf.LONG * 2 ) + SizeOf.STRING( this.data.getData( ) );
+		return ( SizeOf.LONG * 2 ) + SizeOf.STRING( this.getData( ) );
 	}
 }

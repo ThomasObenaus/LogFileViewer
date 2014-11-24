@@ -14,6 +14,8 @@ import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 
 /**
+ * Interface that offers access to the LogStream in the way to register/unregister as listener.
+ * Supported listeners: {@link ILogStreamDataListener}, {@link ILogStreamStateListener}.
  * @author Thomas Obenaus
  * @source ILogStreamAccess.java
  * @date Jun 1, 2014

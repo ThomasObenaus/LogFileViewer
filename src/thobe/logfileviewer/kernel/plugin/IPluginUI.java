@@ -48,7 +48,15 @@ public interface IPluginUI extends IPluginBase
 	 */
 	public IPluginUIComponent getUIComponent( );
 
+	/**
+	 * Retrieve access to the window-management for the {@link IPlugin}s.
+	 * @return
+	 */
 	public IPluginWindowManagerAccess getPluginWindowManagerAccess( );
 
+	/**
+	 * Set the manager that grants access to the window-management for the {@link IPlugin}s.
+	 * @param pWMA
+	 */
 	void setPluginWindowManagerAccess( IPluginWindowManagerAccess pWMA );
 }

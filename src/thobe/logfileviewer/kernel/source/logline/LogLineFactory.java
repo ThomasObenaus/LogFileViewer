@@ -25,7 +25,7 @@ import thobe.logfileviewer.kernel.source.timestamp.TimeStampExtractor;
 public class LogLineFactory implements ILogLineFactoryAccess
 {
 	/**
-	 * Id of the {@link LogLine}s;
+	 * Id of the next {@link LogLine}
 	 */
 	private long							logLineId;
 

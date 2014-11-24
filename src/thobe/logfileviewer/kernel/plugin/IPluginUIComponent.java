@@ -35,8 +35,16 @@ public interface IPluginUIComponent
 	 */
 	public void onClosed( );
 
+	/**
+	 * Returns the string that should be presented in the title-line of the {@link IPluginUIComponent} window/frame.
+	 * @return
+	 */
 	public String getTitle( );
 
+	/**
+	 * Returns the string that should be used as tooltip for this {@link IPluginUIComponent}.
+	 * @return
+	 */
 	public String getTooltip( );
 
 	/**

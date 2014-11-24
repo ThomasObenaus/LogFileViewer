@@ -12,15 +12,15 @@ package thobe.logfileviewer.kernel.source.listeners;
 
 import java.util.List;
 
-import thobe.logfileviewer.kernel.source.LogStreamContentPublisher;
+import thobe.logfileviewer.kernel.source.InternalLogStreamReader;
 
 /**
- * Raw listener that is used to monitor the {@link LogStreamContentPublisher}.
+ * Raw listener that is used to monitor the {@link InternalLogStreamReader}.
  * @author Thomas Obenaus
  * @source LogStreamContentPublisherListener.java
  * @date May 31, 2014
  */
-public interface ILogStreamContentPublisherListener extends ILogStreamStateListener
+public interface IInternalLogStreamReaderListener extends ILogStreamStateListener
 {
 	/**
 	 * Called whenever a new line is available (was read from the stream).

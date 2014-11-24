@@ -24,12 +24,12 @@ import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.err.LogStreamTimeoutException;
 
 /**
- * {@link LogStreamReader} reading over ip (source is a socket).
+ * {@link ExternalLogStreamReader} reading over ip (source is a socket).
  * @author Thomas Obenaus
  * @source IpLogStreamReader.java
  * @date May 15, 2014
  */
-public class IpLogStreamReader extends LogStreamReader
+public class IpLogStreamReader extends ExternalLogStreamReader
 {
 	private int				port;
 	private String			host;

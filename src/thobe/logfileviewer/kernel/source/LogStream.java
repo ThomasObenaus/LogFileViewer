@@ -25,7 +25,7 @@ import java.util.regex.PatternSyntaxException;
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.source.err.LogLineBufferException;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamContentPublisherListener;
+import thobe.logfileviewer.kernel.source.listeners.IInternalLogStreamReaderListener;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 import thobe.logfileviewer.kernel.source.logline.ILogLine;
@@ -34,29 +34,35 @@ import thobe.logfileviewer.kernel.source.logline.ILogLineFactoryAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.source.logline.LogLineBuffer;
 import thobe.logfileviewer.kernel.source.logline.LogLineFactory;
-import thobe.logfileviewer.kernel.source.reader.LogStreamReader;
+import thobe.logfileviewer.kernel.source.reader.ExternalLogStreamReader;
 import thobe.tools.log.ILoggable;
 
 /**
- * The resource representing the log-file (access to the log-file).
+ * The resource representing the log-file (access to the log-file). The contents of the logfile can be obtained through the
+ * {@link ILogStreamDataListener}. The current states of the logfile (open, eof, closed, ..) can be obtained through the
+ * {@link ILogStreamStateListener}.
  * @author Thomas Obenaus
  * @source LogStream.java
  * @date May 29, 2014
  */
-public class LogStream extends ILoggable implements ILogStreamContentPublisherListener, ILogStreamAccess, IMemoryWatchable
+public class LogStream extends ILoggable implements IInternalLogStreamReaderListener, ILogStreamAccess, IMemoryWatchable
 {
 	private static final String								NAME				= "thobe.logfileviewer.source.LogStream";
 
+	/**
+	 * Default size of the cache
+	 */
 	private static final int								LOG_LINE_CACHE_SIZE	= 100000;
+
 	/**
 	 * {@link Thread} that reads the log-file asynchronously.
 	 */
-	private LogStreamReader									logStreamReader;
+	private ExternalLogStreamReader							logStreamReader;
 
 	/**
-	 * {@link Thread} that publishes events fired by the {@link LogStreamReader} (e.g. new line, opened, closed,...)
+	 * {@link Thread} that publishes events fired by the {@link ExternalLogStreamReader} (e.g. new line, opened, closed,...)
 	 */
-	private LogStreamContentPublisher						publishThread;
+	private InternalLogStreamReader							publishThread;
 
 	/**
 	 * List of listeners that are interested in state-changes of the log-file ({@link LogStream}) e.g. open, closed, eofReached.
@@ -93,7 +99,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 		this.logStreamStateListeners = new ArrayList<>( );
 		this.logStreamDataListeners = new HashMap<>( );
 		this.logStreamReader = null;
-		this.publishThread = new LogStreamContentPublisher( );
+		this.publishThread = new InternalLogStreamReader( );
 		this.publishThread.start( );
 		this.publishThread.addListener( this );
 		this.logLineFactory = new LogLineFactory( LOG_LINE_CACHE_SIZE );
@@ -187,11 +193,11 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	}
 
 	/**
-	 * Open/ start reading from a log-file represented by the given {@link LogStreamReader}.
+	 * Open/ start reading from a log-file represented by the given {@link ExternalLogStreamReader}.
 	 * @param source
 	 * @throws LogStreamException
 	 */
-	public void open( LogStreamReader source ) throws LogStreamException
+	public void open( ExternalLogStreamReader source ) throws LogStreamException
 	{
 		if ( this.logStreamReader != null && this.logStreamReader.isOpen( ) )
 		{
@@ -442,7 +448,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 		// add the lines to the buffer
 		try
 		{
-			this.logLineBuffer.addSorted( newBlockForBuffer );
+			this.logLineBuffer.add( newBlockForBuffer );
 		}
 		catch ( LogLineBufferException e )
 		{
@@ -469,7 +475,7 @@ public class LogStream extends ILoggable implements ILogStreamContentPublisherLi
 	}
 
 	/**
-	 * Returns the lines per second read by the reader ({@link LogStreamReader}).
+	 * Returns the lines per second read by the reader ({@link ExternalLogStreamReader}).
 	 * @return
 	 */
 	public double getLogStreamReaderLPS( )
