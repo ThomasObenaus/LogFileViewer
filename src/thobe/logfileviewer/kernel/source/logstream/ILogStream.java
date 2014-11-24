@@ -8,16 +8,16 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source.listeners;
+package thobe.logfileviewer.kernel.source.logstream;
 
 /**
  * @author Thomas Obenaus
- * @source ILogStreamRequester.java
+ * @source ILogStream.java
  * @date Nov 24, 2014
  */
-public interface ILogStreamRequester
+public interface ILogStream
 {
-
+	 
 }
 
 

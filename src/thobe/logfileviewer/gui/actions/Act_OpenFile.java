@@ -14,8 +14,8 @@ import java.awt.event.ActionEvent;
 
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
-import thobe.logfileviewer.kernel.source.LogStream;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
+import thobe.logfileviewer.kernel.source.logstream.ILogStreamStateListener;
+import thobe.logfileviewer.kernel.source.logstream.LogStream;
 import thobe.widgets.action.AbstrAction;
 import thobe.widgets.action.ActionRegistry;
 

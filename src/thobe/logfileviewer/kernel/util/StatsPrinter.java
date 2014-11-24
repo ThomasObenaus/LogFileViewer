@@ -17,9 +17,9 @@ import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
-import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.source.logline.LogLineDat;
+import thobe.logfileviewer.kernel.source.logstream.LogStream;
 
 /**
  * Simple class that prints statistics to log.

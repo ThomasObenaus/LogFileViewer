@@ -15,9 +15,9 @@ import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 
-import thobe.logfileviewer.kernel.source.ILogStream;
-import thobe.logfileviewer.kernel.source.ILogStreamAccess;
-import thobe.logfileviewer.kernel.source.LogStream;
+import thobe.logfileviewer.kernel.source.logstream.ILogStream;
+import thobe.logfileviewer.kernel.source.logstream.ILogStreamAccess;
+import thobe.logfileviewer.kernel.source.logstream.LogStream;
 
 /**
  * An abstract implementation of a {@link IPlugin} with a UI {@link IPluginUI}

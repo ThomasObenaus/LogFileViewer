@@ -33,7 +33,7 @@ import thobe.logfileviewer.kernel.ILogFileViewerAppListener;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUI;
 import thobe.logfileviewer.kernel.plugin.console.Console;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
+import thobe.logfileviewer.kernel.source.logstream.ILogStreamStateListener;
 import thobe.widgets.action.ActionRegistry;
 import thobe.widgets.statusbar.StatusBar;
 import thobe.widgets.statusbar.StatusBarMessageType;

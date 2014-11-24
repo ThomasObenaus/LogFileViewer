@@ -8,7 +8,7 @@
  *  Project:    EthTrace
  */
 
-package thobe.logfileviewer.kernel.source;
+package thobe.logfileviewer.kernel.source.logstream;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
-import thobe.logfileviewer.kernel.source.listeners.IInternalLogStreamReaderListener;
-import thobe.logfileviewer.kernel.source.reader.ExternalLogStreamReader;
+import thobe.logfileviewer.kernel.source.extreader.ExternalLogStreamReader;
 
 /**
  * Class that is responsible to obtain contents read from the log via {@link ExternalLogStreamReader} in a separate Thread. The data will

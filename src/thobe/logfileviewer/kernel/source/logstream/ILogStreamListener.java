@@ -8,7 +8,7 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source.listeners;
+package thobe.logfileviewer.kernel.source.logstream;
 
 /**
  * @author Thomas Obenaus

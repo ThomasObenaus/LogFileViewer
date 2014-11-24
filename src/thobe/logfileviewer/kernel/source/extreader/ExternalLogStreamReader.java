@@ -8,7 +8,7 @@
  *  Project:    EthTrace
  */
 
-package thobe.logfileviewer.kernel.source.reader;
+package thobe.logfileviewer.kernel.source.extreader;
 
 import java.util.ArrayList;
 import java.util.Deque;

@@ -8,10 +8,8 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source;
+package thobe.logfileviewer.kernel.source.logstream;
 
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 
 /**
  * Interface that offers access to the LogStream in the way to register/unregister as listener.

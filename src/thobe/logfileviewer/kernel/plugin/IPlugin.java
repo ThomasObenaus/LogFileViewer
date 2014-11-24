@@ -11,10 +11,10 @@
 package thobe.logfileviewer.kernel.plugin;
 
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
-import thobe.logfileviewer.kernel.source.ILogStream;
-import thobe.logfileviewer.kernel.source.ILogStreamAccess;
-import thobe.logfileviewer.kernel.source.LogStream;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
+import thobe.logfileviewer.kernel.source.logstream.ILogStream;
+import thobe.logfileviewer.kernel.source.logstream.ILogStreamAccess;
+import thobe.logfileviewer.kernel.source.logstream.ILogStreamDataListener;
+import thobe.logfileviewer.kernel.source.logstream.LogStream;
 
 /**
  * @author Thomas Obenaus

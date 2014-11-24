@@ -8,11 +8,9 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source.listeners;
+package thobe.logfileviewer.kernel.source.logstream;
 
 import java.util.List;
-
-import thobe.logfileviewer.kernel.source.InternalLogStreamReader;
 
 /**
  * Raw listener that is used to monitor the {@link InternalLogStreamReader}.

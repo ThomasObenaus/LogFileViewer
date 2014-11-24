@@ -8,9 +8,8 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source.listeners;
+package thobe.logfileviewer.kernel.source.logstream;
 
-import thobe.logfileviewer.kernel.source.LogStream;
 
 /**
  * Listener that can be used to monitor the states of a {@link LogStream}.

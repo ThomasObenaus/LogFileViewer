@@ -8,12 +8,11 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source.listeners;
+package thobe.logfileviewer.kernel.source.logstream;
 
 import java.util.List;
 import java.util.regex.Pattern;
 
-import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**

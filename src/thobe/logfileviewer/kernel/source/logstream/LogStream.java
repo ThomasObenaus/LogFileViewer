@@ -8,7 +8,7 @@
  *  Project:    EthTrace
  */
 
-package thobe.logfileviewer.kernel.source;
+package thobe.logfileviewer.kernel.source.logstream;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,16 +25,13 @@ import java.util.regex.PatternSyntaxException;
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.source.err.LogLineBufferException;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
-import thobe.logfileviewer.kernel.source.listeners.IInternalLogStreamReaderListener;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
+import thobe.logfileviewer.kernel.source.extreader.ExternalLogStreamReader;
 import thobe.logfileviewer.kernel.source.logline.ILogLine;
 import thobe.logfileviewer.kernel.source.logline.ILogLineBuffer;
 import thobe.logfileviewer.kernel.source.logline.ILogLineFactoryAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.source.logline.LogLineBuffer;
 import thobe.logfileviewer.kernel.source.logline.LogLineFactory;
-import thobe.logfileviewer.kernel.source.reader.ExternalLogStreamReader;
 import thobe.tools.log.ILoggable;
 
 /**

@@ -8,16 +8,16 @@
  *  Project:    LogFileViewer
  */
 
-package thobe.logfileviewer.kernel.source;
+package thobe.logfileviewer.kernel.source.logstream;
 
 /**
  * @author Thomas Obenaus
- * @source ILogStream.java
- * @date Nov 24, 2014
+ * @source LogStreamState.java
+ * @date May 31, 2014
  */
-public interface ILogStream
+public enum LogStreamState
 {
-	 
+	OPEN,CLOSED,EOF_REACHED;
 }
 
 
