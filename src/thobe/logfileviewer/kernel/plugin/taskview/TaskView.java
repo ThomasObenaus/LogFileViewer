@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
-import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**
@@ -60,11 +59,11 @@ public class TaskView extends Plugin
 	}
 
 	@Override
-	public void onLogStreamOpened( ILogStreamAccess logStreamAccess )
+	public void onLogStreamOpened( )
 	{}
 
 	@Override
-	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess )
+	public void onPrepareCloseLogStream( )
 	{}
 
 	@Override

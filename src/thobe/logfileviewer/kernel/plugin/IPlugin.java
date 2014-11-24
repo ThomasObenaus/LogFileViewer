@@ -11,10 +11,10 @@
 package thobe.logfileviewer.kernel.plugin;
 
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
+import thobe.logfileviewer.kernel.source.ILogStream;
 import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.LogStream;
 import thobe.logfileviewer.kernel.source.listeners.ILogStreamDataListener;
-import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
 
 /**
  * @author Thomas Obenaus
@@ -51,35 +51,52 @@ public interface IPlugin extends IPluginBase, IMemoryWatchable, ILogStreamDataLi
 	public boolean onRegistered( IPluginAccess pluginAccess );
 
 	/**
-	 * Life-cycle of {@link Plugin}: <b>##### Step 2a <u>OPEN LS</u> #####</b><br>
-	 * A new {@link LogStream} was opened
+	 * HIDDEN-Method: This method has not to be implemented by a specific {@link IPlugin}. The corresponding method for the {@link IPlugin}s
+	 * to be implemented is {@link IPlugin#onLogStreamOpened()}.
+	 * Life-cycle of {@link Plugin}: <b>##### Step 2a <u>LS AVAILABLE</u> #####</b><br>
+	 * A new {@link LogStream} is available plugins will gain access to this stream over {@link ILogStreamAccess} and will be registered as
+	 * {@link ILogStreamDataListener}.
 	 * @param logStreamAccess - the object that can be used to access the {@link LogStream} by registering a {@link ILogStreamDataListener}
 	 *            via {@link ILogStreamAccess#addLogStreamDataListener(ILogStreamDataListener)}.
 	 */
-	public void onLogStreamOpened( ILogStreamAccess logStreamAccess );
+	public void onLogStreamAvailable( ILogStreamAccess logStreamAccess );
 
 	/**
-	 * Life-cycle of {@link Plugin}: <b>##### Step 2b <u>PREPARE CLOSE LS</u> #####</b><br>
-	 * The currently open {@link LogStream} will be closed --> eac {@link Plugin} has to unregister from the {@link LogStream}
-	 * @param logStreamAccess - the object that can be used unregister from the {@link LogStream} via
-	 *            {@link ILogStreamAccess#removeLogStreamStateListener(ILogStreamStateListener)}
+	 * Life-cycle of {@link Plugin}: <b>##### Step 2b <u>OPEN LS</u> #####</b><br>
+	 * A new {@link LogStream} was opened. Now access to the {@link LogStream} over {@link IPlugin#getLogstreamAccess()} is granted/save.
 	 */
-	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess );
+	public void onLogStreamOpened( );
 
 	/**
-	 * Life-cycle of {@link Plugin}: <b>##### Step 2c <u>CLOSE LS</u> #####</b><br>
+	 * Life-cycle of {@link Plugin}: <b>##### Step 3a <u>PREPARE CLOSE LS</u> #####</b><br>
+	 * The currently open {@link LogStream} will be closed. The access to the {@link LogStream} over {@link IPlugin#getLogstreamAccess()} is
+	 * not longer granted and might return a null-pointer.
+	 */
+	public void onPrepareCloseLogStream( );
+
+	/**
+	 * HIDDEN-Method: This method has not to be implemented by a specific {@link IPlugin}. The corresponding method for the {@link IPlugin}s
+	 * to be implemented is {@link IPlugin#onPrepareCloseLogStream()}.
+	 * Life-cycle of {@link Plugin}: <b>##### Step 3b <u>LS LEAVING SCOPE</u> #####</b><br>
+	 * The currently open {@link LogStream} will be closed. The access to the {@link LogStream} over {@link IPlugin#getLogstreamAccess()} is
+	 * not longer granted and might return a null-pointer.
+	 */
+	public void onLogStreamLeavingScope( );
+
+	/**
+	 * Life-cycle of {@link Plugin}: <b>##### Step 3c <u>CLOSE LS</u> #####</b><br>
 	 * The {@link LogStream} was closed.
 	 */
 	public void onLogStreamClosed( );
 
 	/**
-	 * Life-cycle of {@link Plugin}: <b>##### Step 3 <u>UNREGISTER</u> #####</b><br>
+	 * Life-cycle of {@link Plugin}: <b>##### Step 4 <u>UNREGISTER</u> #####</b><br>
 	 * All {@link Plugin}s are unregistered (not available any more) but still running.
 	 */
 	public void onUnRegistered( );
 
 	/**
-	 * Life-cycle of {@link Plugin}: <b>##### Step 4 <u>STOP</u> #####</b><br>
+	 * Life-cycle of {@link Plugin}: <b>##### Step 5 <u>STOP</u> #####</b><br>
 	 * The {@link Plugin} is stopped --> it has to guarantee to leave its run-method as quick as possible:
 	 * <ol>
 	 * <li>Use {@link Plugin#isQuitRequested()} to check if the run-method should be left. Or</li>
@@ -89,4 +106,9 @@ public interface IPlugin extends IPluginBase, IMemoryWatchable, ILogStreamDataLi
 	 */
 	public boolean onStopped( );
 
+	/**
+	 * Returns a reference to the currently open {@link LogStream}. Might return a null-pointer.
+	 * @return
+	 */
+	public ILogStream getLogstream( );
 }

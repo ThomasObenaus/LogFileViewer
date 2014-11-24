@@ -20,7 +20,7 @@ import thobe.logfileviewer.kernel.source.listeners.ILogStreamStateListener;
  * @source ILogStreamAccess.java
  * @date Jun 1, 2014
  */
-public interface ILogStreamAccess
+public interface ILogStreamAccess extends ILogStream
 {
 	/**
 	 * Add a new {@link ILogStreamDataListener}.

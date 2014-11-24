@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 import thobe.logfileviewer.kernel.plugin.IPluginAccess;
 import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
-import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 
 /**
@@ -59,14 +58,14 @@ public class PerformanceMonitor extends Plugin
 	}
 
 	@Override
-	public void onLogStreamOpened( ILogStreamAccess logStreamAccess )
+	public void onLogStreamOpened( )
 	{
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess )
+	public void onPrepareCloseLogStream( )
 	{
 		// TODO Auto-generated method stub
 

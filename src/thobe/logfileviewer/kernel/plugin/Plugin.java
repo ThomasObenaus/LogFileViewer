@@ -15,6 +15,10 @@ import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 
+import thobe.logfileviewer.kernel.source.ILogStream;
+import thobe.logfileviewer.kernel.source.ILogStreamAccess;
+import thobe.logfileviewer.kernel.source.LogStream;
+
 /**
  * An abstract implementation of a {@link IPlugin} with a UI {@link IPluginUI}
  * @author Thomas Obenaus
@@ -48,6 +52,11 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	 */
 	private IPluginWindowManagerAccess	pluginWindowMngAccess;
 
+	/**
+	 * Access to the {@link LogStream}.
+	 */
+	private ILogStreamAccess			logStreamAccess;
+
 	public Plugin( String pluginName, String logChannelName )
 	{
 		super( logChannelName );
@@ -55,6 +64,7 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 		this.log = Logger.getLogger( logChannelName );
 		this.quitRequested = new AtomicBoolean( false );
 		this.attachedToGUI = new AtomicBoolean( false );
+		this.logStreamAccess = null;
 	}
 
 	protected Logger LOG( )
@@ -152,7 +162,7 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	}
 
 	@Override
-	public void setPluginWindowManagerAccess( IPluginWindowManagerAccess pWMA )
+	public final void setPluginWindowManagerAccess( IPluginWindowManagerAccess pWMA )
 	{
 		this.pluginWindowMngAccess = pWMA;
 	}
@@ -161,5 +171,46 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	public IPluginWindowManagerAccess getPluginWindowManagerAccess( )
 	{
 		return this.pluginWindowMngAccess;
+	}
+
+	@Override
+	public ILogStream getLogstream( )
+	{
+		ILogStream result = null;
+		synchronized ( this )
+		{
+			result = this.logStreamAccess;
+		}
+		return result;
+	}
+
+	@Override
+	public final void onLogStreamAvailable( ILogStreamAccess logStreamAccess )
+	{
+		synchronized ( this )
+		{
+			this.logStreamAccess = logStreamAccess;
+			if ( this.logStreamAccess == null )
+			{
+				LOG( ).severe( "Nullpointer as LogStream obtained, plugins will gain no data!" );
+			}
+			else
+			{
+				this.logStreamAccess.addLogStreamDataListener( this );
+			}
+		}// synchronized ( logStreamAccess )
+	}
+
+	@Override
+	public final void onLogStreamLeavingScope( )
+	{
+		synchronized ( this )
+		{
+			if ( this.logStreamAccess != null )
+			{
+				this.logStreamAccess.removeLogStreamDataListener( this );
+			}
+			this.logStreamAccess = null;
+		}// synchronized ( logStreamAccess )
 	}
 }

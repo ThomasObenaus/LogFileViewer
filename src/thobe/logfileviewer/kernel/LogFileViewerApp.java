@@ -259,6 +259,67 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		this.fireOnPluginsAvailable( );
 	}
 
+	private void onLogStreamOpened( )
+	{
+		// 2a. LogStream available
+		long elapsedTime = System.currentTimeMillis( );
+		LOG( ).info( "2a. LogStream available --> notify all plugins ... " );
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		{
+			Plugin plugin = entry.getValue( );
+			plugin.onLogStreamAvailable( this.logStream );
+		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
+		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
+		LOG( ).info( "2a. LogStream available --> notify all plugins ...; took " + ( elapsedTime / 1000.0f ) + "s" );
+
+		// 2b. opening the LogStream
+		elapsedTime = System.currentTimeMillis( );
+		LOG( ).info( "2b. LogStream opened --> notify all plugins ... " );
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		{
+			Plugin plugin = entry.getValue( );
+			plugin.onLogStreamOpened( );
+		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
+		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
+		LOG( ).info( "2b. LogStream opened --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+	}
+
+	private void onLogStreamClosed( )
+	{
+		// 3a. prepare closing the LogStream
+		long elapsedTime = System.currentTimeMillis( );
+		LOG( ).info( "3a. Prepare LogStream closed --> notify all plugins ... " );
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		{
+			Plugin plugin = entry.getValue( );
+			plugin.onPrepareCloseLogStream( );
+		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
+		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
+		LOG( ).info( "3a. Prepare LogStream closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+
+		// 3b. LogStream is leaving scope
+		elapsedTime = System.currentTimeMillis( );
+		LOG( ).info( "3b. LogStream is leaving scope --> notify all plugins ... " );
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		{
+			Plugin plugin = entry.getValue( );
+			plugin.onLogStreamLeavingScope( );
+		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
+		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
+		LOG( ).info( "3b. LogStream is leaving scope --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+
+		// 2c. closing the LogStream
+		elapsedTime = System.currentTimeMillis( );
+		LOG( ).info( "3c. LogStream closed --> notify all plugins ... " );
+		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		{
+			Plugin plugin = entry.getValue( );
+			plugin.onLogStreamClosed( );
+		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
+		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
+		LOG( ).info( "3c. LogStream closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+	}
+
 	private void onQuit( )
 	{
 		// detach all plugins from the LogStream
@@ -266,7 +327,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 
 		// 3. unregister all plugins
 		long elapsedTime = System.currentTimeMillis( );
-		LOG( ).info( "3. Unregister --> notify all plugins ... " );
+		LOG( ).info( "4. Unregister --> notify all plugins ... " );
 		Map<String, Plugin> tmpPlugins = new HashMap<>( this.pluginManager.getPlugins( ) );
 		for ( Entry<String, Plugin> entry : tmpPlugins.entrySet( ) )
 		{
@@ -277,11 +338,11 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		}// for (  Entry<String, IPlugin> entry : tmpPlugins.entrySet( ) ).
 
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-		LOG( ).info( "3. Unregister --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+		LOG( ).info( "4. Unregister --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 
 		// 4. stop all plugins
 		elapsedTime = System.currentTimeMillis( );
-		LOG( ).info( "4. Stopped--> notify all plugins ... " );
+		LOG( ).info( "5. Stopped--> notify all plugins ... " );
 		for ( Entry<String, Plugin> entry : tmpPlugins.entrySet( ) )
 		{
 			Plugin plugin = entry.getValue( );
@@ -305,7 +366,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 			}
 		}// for (  Entry<String, IPlugin> entry : tmpPlugins.entrySet( ) ).
 		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-		LOG( ).info( "4. Stopped --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
+		LOG( ).info( "5. Stopped --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 
 		// quit the StatsPrinter too
 		if ( this.statsPrinter != null )
@@ -362,47 +423,6 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		{
 			LOG( ).severe( "Exception while saving the preferences: " + e.getLocalizedMessage( ) );
 		}
-	}
-
-	private void onLogStreamClosed( )
-	{
-		// 2b. prepare closing the LogStream
-		long elapsedTime = System.currentTimeMillis( );
-		LOG( ).info( "2b. Prepare LogStream closed --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
-		{
-			Plugin plugin = entry.getValue( );
-			this.logStream.removeLogStreamDataListener( plugin );
-			plugin.onPrepareCloseLogStream( this.logStream );
-		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
-		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-		LOG( ).info( "2b. Prepare LogStream closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
-
-		// 2c. closing the LogStream
-		elapsedTime = System.currentTimeMillis( );
-		LOG( ).info( "2c. LogStream closed --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
-		{
-			Plugin plugin = entry.getValue( );
-			plugin.onLogStreamClosed( );
-		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
-		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-		LOG( ).info( "2c. LogStream closed --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
-	}
-
-	private void onLogStreamOpened( )
-	{
-		// 2a. opening the LogStream
-		long elapsedTime = System.currentTimeMillis( );
-		LOG( ).info( "2a. LogStream opened --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
-		{
-			Plugin plugin = entry.getValue( );
-			this.logStream.addLogStreamDataListener( plugin );
-			plugin.onLogStreamOpened( this.logStream );
-		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
-		elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-		LOG( ).info( "2a. LogStream opened --> notify all plugins ... done; took " + ( elapsedTime / 1000.0f ) + "s" );
 	}
 
 	private void fireOnPluginsAvailable( )

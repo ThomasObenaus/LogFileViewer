@@ -27,7 +27,6 @@ import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.console.events.CEvt_DestroySubConsole;
 import thobe.logfileviewer.kernel.plugin.console.events.ConsoleEvent;
-import thobe.logfileviewer.kernel.source.ILogStreamAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.util.SizeOf;
 
@@ -156,14 +155,14 @@ public class Console extends Plugin implements ISubConsoleFactoryAccess
 	}
 
 	@Override
-	public void onLogStreamOpened( ILogStreamAccess logStreamAccess )
+	public void onLogStreamOpened( )
 	{
 		LOG( ).info( this.getPluginName( ) + " LogStream opened." );
 		this.eventSemaphore.release( );
 	}
 
 	@Override
-	public void onPrepareCloseLogStream( ILogStreamAccess logStreamAccess )
+	public void onPrepareCloseLogStream( )
 	{
 		LOG( ).info( this.getPluginName( ) + " prepare to close LogStream." );
 		this.lineBuffer.clear( );
@@ -358,7 +357,7 @@ public class Console extends Plugin implements ISubConsoleFactoryAccess
 
 		return memInLineBuffer + memInEventQueue + memoryOfAttachedDataListeners;
 	}
-	
+
 	@Override
 	public String getNameOfMemoryWatchable( )
 	{
@@ -403,4 +402,5 @@ public class Console extends Plugin implements ISubConsoleFactoryAccess
 			}
 		}
 	}
+
 }
