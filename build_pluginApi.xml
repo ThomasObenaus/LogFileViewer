@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+
+<project name="thobe.logFileViewer.plugin.api" basedir="." default="create-jar">
+
+	<!-- [init] - task for setup of initial properties -->
+	<target name="init">
+		<echo message="Initial setup" />
+
+		<!-- set version here -->
+		<property name="LFVPA.Program-Version" value="1.0.0" />
+		<!-- set main-class here or uncomment line if u build a library -->		
+		<!-- set licence here -->
+		<property name="LFVPA.License" value="Licensed under the New BSD License (3-clause lic)" />
+		<property name="LFVPA.Copyright" value="Copyright (C) 2015, Thomas Obenaus. All rights reserved." />
+		<property name="LFVPA.Author" value="Thomas Obenaus" />
+		<property name="LFVPA.Contact" value="obenaus.thomas@gmail.com" />
+
+		<!-- don't change these properties -->
+		<property name="LFVPA.eclipse.build.dir" value="bin" />
+		<property name="LFVPA.eclipse.src.dir" value="src" />
+		<property name="LFVPA.eclipse.lib.dir" value="libs" />
+
+		<property name="LFVPA.jar.dir" value="jar" />
+		<property name="LFVPA.apiDocZip" value="${ant.project.name}_doc.zip" />
+		<property name="LFVPA.sourceZip" value="${ant.project.name}_src.zip" />
+		<property name="LFVPA.sourceTemp" value="_src_tmp" />
+		<property name="LFVPA.jarName" value="${ant.project.name}.jar" />
+
+		<tstamp>
+			<format property="LFVPA.creation-date" pattern="YYYY-MM-DD zzz" locale="de,DE" />
+		</tstamp>
+	</target>
+
+	<!-- [create-doc] create api-doc, build/pack zip-file <project-name>_doc.zip -->
+	<target name="create-doc" depends="init">
+		<echo message="Create and zip API-Doc" />
+		<ant antfile="javadocPluginApi.xml" dir="" />
+		<zip destfile="${LFVPA.apiDocZip}" basedir="plugin-api" />
+	</target>
+
+	<!-- [create-src] zipps the source-code into a zip-file -->
+	<target name="create-src" depends="init">
+		<echo message="Copy source-files and zip them" />
+		<mkdir dir="${LFVPA.sourceTemp}" />
+		<!-- copy files -->
+		<copy toDir="${LFVPA.sourceTemp}/">
+			<fileset dir="${LFVPA.eclipse.src.dir}">
+				<include name="thobe/logfileviewer/kernel/**/*.java" />
+				<include name="thobe/logfileviewer/kernel/**/*.properties" />								
+				<exclude name="playground/**" />
+				<exclude name="testing/**" />
+			</fileset>
+		</copy>
+		<zip destfile="${LFVPA.sourceZip}" basedir="${LFVPA.sourceTemp}" />
+		<delete dir="${LFVPA.sourceTemp}" />
+	</target>
+
+	<!-- [clean] delete temp folder "jar" -->
+	<target name="clean" depends="init">
+		<echo message="Deleting folder /${LFVPA.jar.dir}." />
+		<delete dir="${LFVPA.jar.dir}" />
+	</target>
+
+	<!-- [print-props-1] print property program-version and licence -->
+	<target name="print-props-1" depends="init">
+		<echo message="Building version '${LFVPA.Program-Version}'" />
+		<echo message="License is '${LFVPA.License}'" />
+	</target>
+
+	<!-- [create-jar] create jar file -->
+	<target name="create-jar" depends="clean,print-props-1">
+		<echo message="Copy files from build-directory /${LFVPA.eclipse.build.dir} to /${LFVPA.jar.dir}." />
+		<!-- copy files from build dir -->
+		<copy toDir="${LFVPA.jar.dir}/">
+			<fileset dir="${LFVPA.eclipse.build.dir}">
+				<include name="thobe/logfileviewer/kernel/**/*.class" />
+				<include name="thobe/logfileviewer/kernel/**/*.properties" />
+				<include name="thobe/logfileviewer/kernel/**/*.gif" />
+				<include name="thobe/logfileviewer/kernel/**/*.png" />						
+				<exclude name="**/*.jar" />
+				<exclude name="playground/**" />
+				<exclude name="testing/**" />
+			</fileset>
+		</copy>
+
+		<echo message="Extract referenced libraries." />		
+		<unzip src="${LFVPA.eclipse.lib.dir}/tools.jar" dest="${LFVPA.jar.dir}" />
+		<unzip src="${LFVPA.eclipse.lib.dir}/commons-cli-1.2/commons-cli-1.2.jar" dest="${LFVPA.jar.dir}" />
+		<unzip src="${LFVPA.eclipse.lib.dir}/jgoodies-forms-1.8.0/jgoodies-forms-1.8.0.jar" dest="${LFVPA.jar.dir}" />
+		<unzip src="${LFVPA.eclipse.lib.dir}/jgoodies-common-1.8.0/jgoodies-common-1.8.0.jar" dest="${LFVPA.jar.dir}" />
+		<unzip src="${LFVPA.eclipse.lib.dir}/docking-frames-common.jar" dest="${LFVPA.jar.dir}" />
+		<unzip src="${LFVPA.eclipse.lib.dir}/docking-frames-core.jar" dest="${LFVPA.jar.dir}" />
+
+		<!-- create jar-file -->
+		<echo message="Create jar-file /${LFVPA.jar.dir}/${LFVPA.jarName}." />
+		<echo message="Program-Version: ${LFVPA.Program-Version}" />
+		<jar destfile="${LFVPA.jar.dir}/${LFVPA.jarName}" basedir="${LFVPA.jar.dir}">
+			<!-- write properties to manifest -->
+			<manifest>
+				<attribute name="Program-Version" value="${LFVPA.Program-Version}" />
+				<attribute name="Copyright" value="${LFVPA.Copyright}" />
+				<attribute name="Author" value="${LFVPA.Author}" />
+				<attribute name="Contact" value="${LFVPA.Contact}" />
+				<attribute name="Created" value="${LFVPA.creation-date}" />
+				<attribute name="Licence" value="${LFVPA.License}" />
+			</manifest>
+		</jar>
+
+		<!-- copy jar-file to projet dir -->
+		<echo message="copy ${LFVPA.jar.dir}/${LFVPA.jarName} into project-directory" />
+		<copy file="${LFVPA.jar.dir}/${LFVPA.jarName}" todir="." />
+
+		<!-- clean temp jar dir -->
+		<antcall target="clean">
+		</antcall>
+	</target>
+
+	<target name="create-all" depends="clean,create-src,create-doc,create-jar"/>
+</project>

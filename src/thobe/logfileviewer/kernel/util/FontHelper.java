@@ -12,8 +12,7 @@ package thobe.logfileviewer.kernel.util;
 
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
-
-import thobe.logfileviewer.kernel.plugin.console.Console;
+import java.io.Console;
 
 /**
  * @author Thomas Obenaus

@@ -17,8 +17,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import thobe.logfileViewer.plugins.console.Console;
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
-import thobe.logfileviewer.kernel.plugin.console.Console;
 
 /**
  * @author Thomas Obenaus

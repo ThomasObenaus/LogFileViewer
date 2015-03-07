@@ -21,10 +21,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import thobe.logfileViewer.plugins.console.Console;
 import thobe.logfileviewer.kernel.memory.MemoryWatchDog;
 import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
-import thobe.logfileviewer.kernel.plugin.console.Console;
 import thobe.logfileviewer.kernel.plugin.taskview.TaskView;
 import thobe.logfileviewer.kernel.preferences.LogFileViewerPreferences;
 import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;

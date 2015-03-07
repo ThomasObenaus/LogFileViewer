@@ -28,4 +28,28 @@ public interface IPluginBase
 	 * @return
 	 */
 	public String getPluginDescription( );
+
+	/**
+	 * Returns the major version of this {@link IPlugin}.
+	 * @return
+	 */
+	public int getMajorVersion( );
+
+	/**
+	 * Returns the minor version of this {@link IPlugin}.
+	 * @return
+	 */
+	public int getMinorVersion( );
+
+	/**
+	 * Returns the bugfix version of this {@link IPlugin}.
+	 * @return
+	 */
+	public int getBugfixVersion( );
+
+	/**
+	 * Should return the version of the plugin-api that was used for this {@link IPlugin}.
+	 * @return
+	 */
+	public PluginApiVersion getPluginApiVersion( );
 }

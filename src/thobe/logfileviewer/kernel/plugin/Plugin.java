@@ -59,6 +59,11 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	 */
 	private ILogStreamAccess			logStreamAccess;
 
+	/**
+	 * The version of the plugin-api used for this plugin.
+	 */
+	private static PluginApiVersion		apiVersion	= new PluginApiVersion( );
+
 	public Plugin( String pluginName, String logChannelName )
 	{
 		super( logChannelName );
@@ -226,5 +231,15 @@ public abstract class Plugin extends Thread implements IPluginUI, IPlugin
 	public void response( int requestId, List<ILogLine> logLines, boolean valid )
 	{
 		throw new IllegalAccessError( "IlogStreamRequester.response() is not implemented. If you want to send a request to the LogStream you have to implement this method in your class." );
+	}
+
+	public String getVersion( )
+	{
+		return this.getMajorVersion( ) + "." + this.getMinorVersion( ) + "." + this.getBugfixVersion( );
+	}
+
+	public PluginApiVersion getPluginApiVersion( )
+	{
+		return apiVersion;
 	}
 }

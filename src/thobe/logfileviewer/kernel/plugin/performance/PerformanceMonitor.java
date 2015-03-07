@@ -143,4 +143,25 @@ public class PerformanceMonitor extends Plugin
 	{
 		return FULL_PLUGIN_NAME;
 	}
+
+	@Override
+	public int getMajorVersion( )
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int getMinorVersion( )
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int getBugfixVersion( )
+	{
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
