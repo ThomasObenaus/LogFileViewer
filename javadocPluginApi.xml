@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="javadoc">
-    <target name="javadoc">
-        <javadoc access="public" author="true" classpath="libs/docking-frames-core.jar:libs/widgets.jar:libs/docking-frames-common.jar:libs/jgoodies-common-1.8.0/jgoodies-common-1.8.0.jar:libs/commons-cli-1.2/commons-cli-1.2.jar:libs/tools.jar:libs/jgoodies-forms-1.8.0/jgoodies-forms-1.8.0.jar" destdir="plugin-api" doctitle="LogfileViewerPluginApi" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="thobe.logfileviewer.kernel.plugin" source="1.7" sourcepath="src" splitindex="true" use="true" version="true"/>
-    </target>
-</project>

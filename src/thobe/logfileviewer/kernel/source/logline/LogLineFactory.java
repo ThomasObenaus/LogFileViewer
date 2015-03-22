@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import thobe.logfileviewer.kernel.memory.LRUCache;
 import thobe.logfileviewer.kernel.source.timestamp.LineAndTime;
 import thobe.logfileviewer.kernel.source.timestamp.TimeStampExtractor;
+import thobe.logfileviewer.plugin.source.logline.ILogLine;
 
 /**
  * This class is responsible for creation of {@link ILogLine}s from given Strings.

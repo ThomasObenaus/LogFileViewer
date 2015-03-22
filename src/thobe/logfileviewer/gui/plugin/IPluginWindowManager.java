@@ -12,7 +12,7 @@ package thobe.logfileviewer.gui.plugin;
 
 import javax.swing.JPanel;
 
-import thobe.logfileviewer.kernel.plugin.IPluginWindowManagerAccess;
+import thobe.logfileviewer.plugin.api.IPluginWindowManagerAccess;
 
 /**
  * @author Thomas Obenaus

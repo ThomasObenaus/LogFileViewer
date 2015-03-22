@@ -21,15 +21,14 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import thobe.logfileViewer.plugins.console.Console;
 import thobe.logfileviewer.kernel.memory.MemoryWatchDog;
-import thobe.logfileviewer.kernel.plugin.Plugin;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.preferences.LogFileViewerPreferences;
 import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
-import thobe.logfileviewer.kernel.source.logstream.ILogStreamStateListener;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
 import thobe.logfileviewer.kernel.util.StatsPrinter;
+import thobe.logfileviewer.plugin.Plugin;
+import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
 import thobe.tools.preferences.PreferenceManager;
 import thobe.tools.preferences.PrefsException;
 
@@ -175,7 +174,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// INITAL start bg-tasks ########################################## 
 
 		// register console-plugin
-		pluginManager.registerPlugin( new Console( ) );
+		//pluginManager.registerPlugin( new Console( ) );
 
 		// register the performance-plugin
 		//		pluginManager.registerPlugin( new PerformanceMonitor( ) );

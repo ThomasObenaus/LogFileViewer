@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.extreader.ExternalLogStreamReader;
+import thobe.logfileviewer.plugin.source.logstream.IInternalLogStreamReaderListener;
 
 /**
  * Class that is responsible to obtain contents read from the log via {@link ExternalLogStreamReader} in a separate Thread. The data will

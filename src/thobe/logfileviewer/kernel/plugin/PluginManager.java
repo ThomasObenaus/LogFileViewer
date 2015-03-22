@@ -29,8 +29,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
-import thobe.logfileViewer.plugins.console.Console;
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
+import thobe.logfileviewer.plugin.Plugin;
+import thobe.logfileviewer.plugin.api.IPluginAccess;
+import thobe.logfileviewer.plugin.api.IPluginUI;
 
 /**
  * @author Thomas Obenaus
@@ -227,17 +229,17 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		return this.log;
 	}
 
-	@Override
-	public Console getConsole( )
-	{
-		Plugin plugin = this.plugins.get( Console.FULL_PLUGIN_NAME );
-		Console console = null;
-		if ( plugin instanceof Console )
-		{
-			console = ( Console ) plugin;
-		}
-		return console;
-	}
+//	@Override
+//	public Console getConsole( )
+//	{
+//		Plugin plugin = this.plugins.get( Console.FULL_PLUGIN_NAME );
+//		Console console = null;
+//		if ( plugin instanceof Console )
+//		{
+//			console = ( Console ) plugin;
+//		}
+//		return console;
+//	}
 
 	@Override
 	public Set<IPluginUI> getPluginsNotAttachedToGui( )

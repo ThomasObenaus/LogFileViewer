@@ -12,6 +12,8 @@ package thobe.logfileviewer.kernel.source.logline;
 
 import java.util.Comparator;
 
+import thobe.logfileviewer.plugin.source.logline.ILogLine;
+
 /**
  * @author Thomas Obenaus
  * @source SortByLogLineId.java

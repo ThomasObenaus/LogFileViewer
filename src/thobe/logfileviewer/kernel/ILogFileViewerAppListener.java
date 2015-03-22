@@ -10,7 +10,7 @@
 
 package thobe.logfileviewer.kernel;
 
-import thobe.logfileviewer.kernel.plugin.IPluginAccess;
+import thobe.logfileviewer.plugin.api.IPluginAccess;
 
 /**
  * @author Thomas Obenaus

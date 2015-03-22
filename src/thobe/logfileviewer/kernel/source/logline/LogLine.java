@@ -10,7 +10,8 @@
 
 package thobe.logfileviewer.kernel.source.logline;
 
-import thobe.logfileviewer.kernel.util.SizeOf;
+import thobe.logfileviewer.plugin.source.logline.ILogLine;
+import thobe.logfileviewer.plugin.util.SizeOf;
 
 /**
  * Class representing one log-line.

@@ -19,7 +19,8 @@ import java.util.TimerTask;
 import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.source.err.LogLineBufferException;
-import thobe.logfileviewer.kernel.util.SizeOf;
+import thobe.logfileviewer.plugin.source.logline.ILogLine;
+import thobe.logfileviewer.plugin.util.SizeOf;
 
 /**
  * Buffer for instances of {@link ILogLine}s with a max capacity.

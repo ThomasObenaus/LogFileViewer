@@ -19,8 +19,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import thobe.logfileviewer.kernel.plugin.IPluginUI;
-import thobe.logfileviewer.kernel.plugin.IPluginUIComponent;
+import thobe.logfileviewer.plugin.api.IPluginUI;
+import thobe.logfileviewer.plugin.api.IPluginUIComponent;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.event.CVetoClosingEvent;

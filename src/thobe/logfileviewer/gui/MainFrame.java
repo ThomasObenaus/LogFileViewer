@@ -21,7 +21,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 
-import thobe.logfileViewer.plugins.console.Console;
 import thobe.logfileviewer.LogFileViewerInfo;
 import thobe.logfileviewer.gui.actions.Act_Close;
 import thobe.logfileviewer.gui.actions.Act_Exit;
@@ -31,9 +30,9 @@ import thobe.logfileviewer.gui.plugin.DockPluginWindowManager;
 import thobe.logfileviewer.gui.plugin.IPluginWindowManager;
 import thobe.logfileviewer.kernel.ILogFileViewerAppListener;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
-import thobe.logfileviewer.kernel.plugin.IPluginAccess;
-import thobe.logfileviewer.kernel.plugin.IPluginUI;
-import thobe.logfileviewer.kernel.source.logstream.ILogStreamStateListener;
+import thobe.logfileviewer.plugin.api.IPluginAccess;
+import thobe.logfileviewer.plugin.api.IPluginUI;
+import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
 import thobe.widgets.action.ActionRegistry;
 import thobe.widgets.statusbar.StatusBar;
 import thobe.widgets.statusbar.StatusBarMessageType;
@@ -51,7 +50,7 @@ public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILog
 
 	private IPluginWindowManager	pluginWindowManager;
 
-	private Console					console;
+	//private Console					console;
 
 	public MainFrame( LogFileViewerApp app )
 	{
@@ -158,11 +157,11 @@ public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILog
 	{
 		LOG( ).info( "New plugins available" );
 
-		// we dont have the console --> look for it
-		if ( this.console == null )
-		{
-			this.console = pluginAccess.getConsole( );
-		}// if ( this.console == null ).
+//		// we dont have the console --> look for it
+//		if ( this.console == null )
+//		{
+//			this.console = pluginAccess.getConsole( );
+//		}// if ( this.console == null ).
 
 		// rebuilds the Gui (e.g. adds new plugins)
 		this.rebuildGUI( pluginAccess );

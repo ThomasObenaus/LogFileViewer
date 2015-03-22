@@ -31,12 +31,17 @@ import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.source.err.LogLineBufferException;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.extreader.ExternalLogStreamReader;
-import thobe.logfileviewer.kernel.source.logline.ILogLine;
 import thobe.logfileviewer.kernel.source.logline.ILogLineBuffer;
 import thobe.logfileviewer.kernel.source.logline.ILogLineFactoryAccess;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.source.logline.LogLineBuffer;
 import thobe.logfileviewer.kernel.source.logline.LogLineFactory;
+import thobe.logfileviewer.plugin.source.logline.ILogLine;
+import thobe.logfileviewer.plugin.source.logstream.IInternalLogStreamReaderListener;
+import thobe.logfileviewer.plugin.source.logstream.ILogStreamAccess;
+import thobe.logfileviewer.plugin.source.logstream.ILogStreamDataListener;
+import thobe.logfileviewer.plugin.source.logstream.ILogStreamRequester;
+import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
 
 /**
  * The resource representing the log-file (access to the log-file). The contents of the logfile can be obtained through the
@@ -246,7 +251,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 			LogLineBlockToLogStreamListener entry = this.logLineBlockToLSDLMap.get( l.getLineFilter( ) );
 			if ( entry == null )
 			{
-				entry = new LogLineBlockToLogStreamListener( new ArrayList<LogLine>( ), new HashSet<ILogStreamDataListener>( ) );
+				entry = new LogLineBlockToLogStreamListener( new ArrayList<ILogLine>( ), new HashSet<ILogStreamDataListener>( ) );
 				this.logLineBlockToLSDLMap.put( l.getLineFilter( ), entry );
 			}// if ( entry == null ) .
 			entry.value.add( l );
@@ -548,7 +553,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 		{
 			for ( Entry<Pattern, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
 			{
-				List<LogLine> logLines = entry.getValue( ).getKey( );
+				List<ILogLine> logLines = entry.getValue( ).getKey( );
 				Set<ILogStreamDataListener> listeners = entry.getValue( ).getValue( );
 
 				for ( ILogStreamDataListener listener : listeners )
@@ -586,19 +591,19 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 		return this.logLineBuffer;
 	}
 
-	final class LogLineBlockToLogStreamListener implements Map.Entry<List<LogLine>, Set<ILogStreamDataListener>>
+	final class LogLineBlockToLogStreamListener implements Map.Entry<List<ILogLine>, Set<ILogStreamDataListener>>
 	{
-		private final List<LogLine>			key;
+		private final List<ILogLine>			key;
 		private Set<ILogStreamDataListener>	value;
 
-		public LogLineBlockToLogStreamListener( List<LogLine> key, Set<ILogStreamDataListener> value )
+		public LogLineBlockToLogStreamListener( List<ILogLine> key, Set<ILogStreamDataListener> value )
 		{
 			this.key = key;
 			this.value = value;
 		}
 
 		@Override
-		public List<LogLine> getKey( )
+		public List<ILogLine> getKey( )
 		{
 			return key;
 		}

@@ -10,7 +10,7 @@
 
 package thobe.logfileviewer.kernel.source.logline;
 
-import thobe.logfileviewer.kernel.util.SizeOf;
+import thobe.logfileviewer.plugin.util.SizeOf;
 
 /**
  * @author Thomas Obenaus

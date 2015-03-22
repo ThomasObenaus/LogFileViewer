@@ -17,8 +17,8 @@ import javax.swing.JOptionPane;
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
-import thobe.logfileviewer.kernel.source.logstream.ILogStreamStateListener;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
+import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
 import thobe.widgets.action.AbstrAction;
 import thobe.widgets.action.ActionRegistry;
 
