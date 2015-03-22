@@ -33,6 +33,10 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/docking-frames-common_doc.zip!/docking-frames-common"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="libs/thobe.logfileviewer.plugin.api.jar"/>
+	<classpathentry kind="lib" path="libs/thobe.logfileviewer.plugin.api.jar" sourcepath="libs/thobe.logfileviewer.plugin.api_src.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/thobe.logfileviewer.plugin.api_doc.zip!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -50,8 +50,6 @@ public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILog
 
 	private IPluginWindowManager	pluginWindowManager;
 
-	//private Console					console;
-
 	public MainFrame( LogFileViewerApp app )
 	{
 		this.setTitle( LogFileViewerInfo.getAppName( ) + " [" + LogFileViewerInfo.getVersion( ) + "]" );
@@ -156,12 +154,6 @@ public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILog
 	public void newPluginsAvailable( IPluginAccess pluginAccess )
 	{
 		LOG( ).info( "New plugins available" );
-
-//		// we dont have the console --> look for it
-//		if ( this.console == null )
-//		{
-//			this.console = pluginAccess.getConsole( );
-//		}// if ( this.console == null ).
 
 		// rebuilds the Gui (e.g. adds new plugins)
 		this.rebuildGUI( pluginAccess );

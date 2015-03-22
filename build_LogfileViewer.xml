@@ -98,6 +98,7 @@
 		<unzip src="${LFV.eclipse.lib.dir}/jgoodies-common-1.8.0/jgoodies-common-1.8.0.jar" dest="${LFV.jar.dir}" />
 		<unzip src="${LFV.eclipse.lib.dir}/docking-frames-common.jar" dest="${LFV.jar.dir}" />
 		<unzip src="${LFV.eclipse.lib.dir}/docking-frames-core.jar" dest="${LFV.jar.dir}" />
+		<unzip src="${LFV.eclipse.lib.dir}/thobe.logfileviewer.plugin.api.jar" dest="${LFV.jar.dir}" />
 
 		<!-- create jar-file -->
 		<echo message="Create jar-file /${LFV.jar.dir}/${LFV.jarName}." />
