@@ -30,6 +30,7 @@ import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
+import thobe.logfileviewer.kernel.preferences.PluginManagerPrefs;
 import thobe.logfileviewer.plugin.Plugin;
 import thobe.logfileviewer.plugin.api.IPluginAccess;
 import thobe.logfileviewer.plugin.api.IPluginUI;
@@ -46,8 +47,11 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	private Map<String, Plugin>	plugins;
 	private Logger				log;
 
-	public PluginManager( )
+	private PluginManagerPrefs	prefs;
+
+	public PluginManager( PluginManagerPrefs prefs )
 	{
+		this.prefs = prefs;
 		this.log = Logger.getLogger( NAME );
 		this.plugins = new HashMap<>( );
 	}
@@ -55,9 +59,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	@SuppressWarnings ( "unchecked")
 	public void findAndRegisterPlugins( )
 	{
-		File pluginDir = new File( "plugins" );
-
-		File[] plugins = pluginDir.listFiles( new FilenameFilter( )
+		File[] plugins = prefs.getPluginDir( ).listFiles( new FilenameFilter( )
 		{
 
 			@Override
@@ -229,17 +231,17 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		return this.log;
 	}
 
-//	@Override
-//	public Console getConsole( )
-//	{
-//		Plugin plugin = this.plugins.get( Console.FULL_PLUGIN_NAME );
-//		Console console = null;
-//		if ( plugin instanceof Console )
-//		{
-//			console = ( Console ) plugin;
-//		}
-//		return console;
-//	}
+	//	@Override
+	//	public Console getConsole( )
+	//	{
+	//		Plugin plugin = this.plugins.get( Console.FULL_PLUGIN_NAME );
+	//		Console console = null;
+	//		if ( plugin instanceof Console )
+	//		{
+	//			console = ( Console ) plugin;
+	//		}
+	//		return console;
+	//	}
 
 	@Override
 	public Set<IPluginUI> getPluginsNotAttachedToGui( )

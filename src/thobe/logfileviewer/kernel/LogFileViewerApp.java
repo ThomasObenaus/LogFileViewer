@@ -97,7 +97,6 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		this.events = new ConcurrentLinkedDeque<>( );
 		this.logStream = new LogStream( );
 		this.logStream.addLogStreamStateListener( this );
-		this.pluginManager = new PluginManager( );
 		this.eventSem = new Semaphore( 0, true );
 
 		// create/load preferences
@@ -105,6 +104,11 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		this.preferences = new LogFileViewerPreferences( );
 		PreferenceManager.createPrefs( preferences );
 		LOG( ).info( "Create/Load preferences...done" );
+
+		// create the plugin-manager		
+		LOG( ).info( "Create the pluginmanager..." );
+		this.pluginManager = new PluginManager( this.preferences.getPluginManagerPreferences( ) );
+		LOG( ).info( "Create the pluginmanager...done" );
 
 		LOG( ).info( "Create background tasks..." );
 		// create background task, that prints out some statistics
