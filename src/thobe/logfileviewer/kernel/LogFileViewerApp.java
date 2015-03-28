@@ -121,6 +121,11 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		this.memoryWatchDog = new MemoryWatchDog( );
 		LOG( ).info( "Create background tasks...done" );
 	}
+	
+	public PluginManager getPluginManager( )
+	{
+		return pluginManager;
+	}
 
 	public LogStreamConnector getLogStreamConnector( )
 	{

@@ -26,6 +26,7 @@ import thobe.logfileviewer.gui.actions.Act_Close;
 import thobe.logfileviewer.gui.actions.Act_Exit;
 import thobe.logfileviewer.gui.actions.Act_OpenConnection;
 import thobe.logfileviewer.gui.actions.Act_OpenFile;
+import thobe.logfileviewer.gui.actions.Act_PluginManager;
 import thobe.logfileviewer.gui.plugin.DockPluginWindowManager;
 import thobe.logfileviewer.gui.plugin.IPluginWindowManager;
 import thobe.logfileviewer.kernel.ILogFileViewerAppListener;
@@ -94,6 +95,13 @@ public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILog
 		mu_file.add( new JSeparator( JSeparator.HORIZONTAL ) );
 		JMenuItem mi_exit = new JMenuItem( ActionRegistry.get( ).getAction( Act_Exit.KEY ) );
 		mu_file.add( mi_exit );
+
+		JMenu mu_extra = new JMenu( "Extra" );
+		mbar.add( mu_extra );
+
+		JMenuItem mi_pluginManager = new JMenuItem( ActionRegistry.get( ).getAction( Act_PluginManager.KEY ) );
+		mu_extra.add( mi_pluginManager );
+
 	}
 
 	private void registerActions( )
@@ -102,6 +110,7 @@ public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILog
 		ActionRegistry.get( ).registerAction( new Act_OpenFile( this ) );
 		ActionRegistry.get( ).registerAction( new Act_OpenConnection( this ) );
 		ActionRegistry.get( ).registerAction( new Act_Close( this ) );
+		ActionRegistry.get( ).registerAction( new Act_PluginManager( this, app.getPluginManager( ) ) );
 		ActionRegistry.get( ).getAction( Act_Close.KEY ).setEnabled( false );
 
 	}

@@ -59,55 +59,63 @@ public class DockPluginWindowManager implements IPluginWindowManager, CVetoClosi
 	@Override
 	public void registerVisualComponent( IPluginUI pluginUI, IPluginUIComponent pComponent )
 	{
-		synchronized ( this.pluginComponentMap )
+		if ( pComponent == null )
 		{
-
-			Map<IPluginUIComponent, DefaultSingleCDockable> registeredComponents = this.pluginComponentMap.get( pluginUI );
-
-			// create a new entry if no components are registered for the given plugin 
-			if ( registeredComponents == null )
+			LOG( ).severe( "Ignore plugins GUI '" + pluginUI.getPluginName( ) + "' since its IPluginUIComponent is NULL" );
+		}// if ( pComponent == null )
+		else
+		{
+			synchronized ( this.pluginComponentMap )
 			{
-				registeredComponents = new HashMap<>( );
-				this.pluginComponentMap.put( pluginUI, registeredComponents );
-			}
 
-			// only if not already registered
-			if ( !registeredComponents.containsKey( pComponent ) )
-			{
-				final String frameId = pluginUI.getPluginName( ) + "." + registeredComponents.size( );
+				Map<IPluginUIComponent, DefaultSingleCDockable> registeredComponents = this.pluginComponentMap.get( pluginUI );
 
-				LOG( ).info( "New component for plugin '" + pluginUI.getPluginName( ) + "' registered using (id=" + frameId + ")" );
-				final DefaultSingleCDockable dockable = new DefaultSingleCDockable( frameId, pComponent.getVisualComponent( ) );
-
-				// store the connection between the dockable and the plugin-component
-				registeredComponents.put( pComponent, dockable );
-
-				// register for visibility, change-events
-				dockable.addVetoClosingListener( this );
-				dockable.setCloseable( pComponent.isCloseable( ) );
-
-				dockable.setTitleText( pComponent.getTitle( ) );
-				dockable.setTitleToolTip( pComponent.getTooltip( ) );
-
-				// now add the dockable to the main controller
-				this.dockableControl.addDockable( dockable );
-
-				if ( !pluginUI.isAttachedToGUI( ) )
-					pluginUI.setAttachedToGUI( true );
-
-				// show the dockable
-				SwingUtilities.invokeLater( new Runnable( )
+				// create a new entry if no components are registered for the given plugin 
+				if ( registeredComponents == null )
 				{
-					@Override
-					public void run( )
-					{
-						dockable.setVisible( true );
-						LOG( ).info( "New component '" + frameId + "' is now visible" );
-					}
-				} );
+					registeredComponents = new HashMap<>( );
+					this.pluginComponentMap.put( pluginUI, registeredComponents );
+				}
 
-			}// if ( registeredComponents.add( component ) ).
-		}// synchronized ( this.pluginComponentMap ).
+				// only if not already registered
+				if ( !registeredComponents.containsKey( pComponent ) )
+				{
+					final String frameId = pluginUI.getPluginName( ) + "." + registeredComponents.size( );
+
+					LOG( ).info( "New component for plugin '" + pluginUI.getPluginName( ) + "' registered using (id=" + frameId + ")" );
+
+					final DefaultSingleCDockable dockable = new DefaultSingleCDockable( frameId, pComponent.getVisualComponent( ) );
+
+					// store the connection between the dockable and the plugin-component
+					registeredComponents.put( pComponent, dockable );
+
+					// register for visibility, change-events
+					dockable.addVetoClosingListener( this );
+					dockable.setCloseable( pComponent.isCloseable( ) );
+
+					dockable.setTitleText( pComponent.getTitle( ) );
+					dockable.setTitleToolTip( pComponent.getTooltip( ) );
+
+					// now add the dockable to the main controller
+					this.dockableControl.addDockable( dockable );
+
+					if ( !pluginUI.isAttachedToGUI( ) )
+						pluginUI.setAttachedToGUI( true );
+
+					// show the dockable
+					SwingUtilities.invokeLater( new Runnable( )
+					{
+						@Override
+						public void run( )
+						{
+							dockable.setVisible( true );
+							LOG( ).info( "New component '" + frameId + "' is now visible" );
+						}
+					} );
+
+				}// if ( registeredComponents.add( component ) ).
+			}// synchronized ( this.pluginComponentMap ).
+		}// if ( pComponent == null ) ... else ...
 	}
 
 	@Override
