@@ -204,7 +204,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 
 		PluginApiVersion apiVersionOfLogFileViewer = new PluginApiVersion( );
 		// 4. Now register the plugins. 
-		LOG( ).info( "4. Now register the plugins (" + pluginClasses.size( ) + ")" );
+		LOG( ).info( "4. Now register the plugins (" + pluginClasses.size( ) + "), api of plugin-api of LogFileViewer=" + apiVersionOfLogFileViewer );
 		for ( Map.Entry<File, Class<? extends Plugin>> entry : pluginClasses.entrySet( ) )
 		{
 			try
@@ -215,13 +215,17 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 				if ( !apiVersionOfLogFileViewer.isCompatible( pluginApiOfPlugin ) )
 				{
 					LOG( ).warning( "\tPlugin '" + pluginClass.getSimpleName( ) + "' will be ignored. API-missmatch:  ApiOfLogFileViewer='" + apiVersionOfLogFileViewer + "' apiOfPlugin='" + pluginApiOfPlugin + "'" );
-				}
+				}// if ( !apiVersionOfLogFileViewer.isCompatible( pluginApiOfPlugin ) )
 				else
 				{
 					Plugin plugin = pluginClass.newInstance( );
+					boolean pluginEnabled = prefs.isPluginEnabled( plugin.getPluginName( ) );
+					plugin.setEnabled( pluginEnabled );
+
 					this.registerPlugin( plugin );
-					LOG( ).info( "\tPlugin '" + plugin.getName( ) + "' sucessfully registered [plugin api: " + pluginApiOfPlugin + "]" );
-				}
+					LOG( ).info( "\tPlugin '" + plugin.getPluginName( ) + "' sucessfully registered [plugin api: " + pluginApiOfPlugin + "], the plugin is " + ( plugin.isEnabled( ) ? "enabled" : "disabled" ) );
+
+				}// if ( !apiVersionOfLogFileViewer.isCompatible( pluginApiOfPlugin ) ) ... else ...
 			}
 			catch ( InstantiationException | IllegalAccessException e )
 			{
@@ -287,7 +291,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 				long memAfterFree = plugin.getMemory( );
 				if ( ( memBeforeFree != 0 ) && ( memBeforeFree <= memAfterFree ) )
 				{
-					LOG( ).warning( "Plugin '" + plugin.getName( ) + "' failed to free memory (remaining: " + ( memAfterFree / 1024f / 1024f ) + "MB)" );
+					LOG( ).warning( "Plugin '" + plugin.getPluginName( ) + "' failed to free memory (remaining: " + ( memAfterFree / 1024f / 1024f ) + "MB)" );
 				}// if ( ( memBeforeFree != 0 ) && ( memBeforeFree <= memAfterFree ) ).
 			}// for ( Entry<String, Plugin> entry : this.plugins.entrySet( ) ).
 		}// synchronized ( this.plugins ) .
@@ -320,10 +324,10 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 
 		for ( Map.Entry<String, Plugin> entry : this.plugins.entrySet( ) )
 		{
-			if ( !entry.getValue( ).isAttachedToGUI( ) )
+			if ( !entry.getValue( ).isAttachedToGUI( ) && entry.getValue( ).isEnabled( ) )
 			{
 				result.add( entry.getValue( ) );
-			}// if ( !entry.getValue( ).isAttachedToGUI( ) )
+			}// if ( !entry.getValue( ).isAttachedToGUI( ) && entry.getValue( ).isEnabled( ) )
 		}// for ( Map.Entry<String, Plugin> entry : this.plugins.entrySet( ) )
 
 		return result;
@@ -345,5 +349,10 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	public String getNameOfMemoryWatchable( )
 	{
 		return NAME;
+	}
+
+	public PluginManagerPrefs getPrefs( )
+	{
+		return prefs;
 	}
 }

@@ -20,12 +20,12 @@ import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import com.jgoodies.forms.layout.CellConstraints;
-import com.jgoodies.forms.layout.FormLayout;
-
 import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.plugin.Plugin;
 import thobe.widgets.editor.Editor;
+
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.FormLayout;
 
 /**
  * @author Thomas Obenaus
@@ -61,8 +61,8 @@ public class Dlg_PluginManager extends Editor
 		int row = 2;
 		for ( Map.Entry<String, Plugin> entry : plugins.entrySet( ) )
 		{
-			this.add( new PluginPanel( entry.getValue( ) ), cc_main.xy( 2, row ) );
-			row+=2;
+			this.add( new PluginPanel( entry.getValue( ), this.manager.getPrefs( ) ), cc_main.xy( 2, row ) );
+			row += 2;
 		}
 
 	}
