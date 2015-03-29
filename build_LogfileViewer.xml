@@ -7,7 +7,10 @@
 		<echo message="Initial setup" />
 
 		<!-- set version here -->
-		<property name="LFV.Program-Version" value="1.3.0" />
+		<property name="LFV.Program-Version.Major" value="1" />
+		<property name="LFV.Program-Version.Minor" value="4" />
+		<property name="LFV.Program-Version.Bugfix" value="0" />
+		<property name="LFV.Program-Version" value="${LFV.Program-Version.Major}.${LFV.Program-Version.Minor}.${LFV.Program-Version.Bugfix}" />		
 		<!-- set main-class here or uncomment line if u build a library -->
 		<property name="LFV.Main-Class" value="thobe.logfileviewer.kernel.MainClass" />
 		<!-- set licence here -->
@@ -55,6 +58,23 @@
 		<zip destfile="${LFV.sourceZip}" basedir="${LFV.sourceTemp}" />
 		<delete dir="${LFV.sourceTemp}" />
 	</target>
+	
+	<!-- [setVersion] sets the version in all version-files -->
+	<target name="setVersion" depends="clean">		    
+		<replaceregexp 	file="${LFV.eclipse.src.dir}/thobe/logfileviewer/LogFileViewerInfo.java"
+				     	match='private\s*static\s*final\s*int\s*MAJOR_VERSION\s*=\s*[0-9]*\s*;'
+					    replace='private static final int MAJOR_VERSION = ${LFV.Program-Version.Major};'/>
+		
+		<replaceregexp 	file="${LFV.eclipse.src.dir}/thobe/logfileviewer/LogFileViewerInfo.java"
+				     	match='private\s*static\s*final\s*int\s*MINOR_VERSION\s*=\s*[0-9]*\s*;'
+					    replace='private static final int MINOR_VERSION = ${LFV.Program-Version.Minor};'/>
+		
+		<replaceregexp 	file="${LFV.eclipse.src.dir}/thobe/logfileviewer/LogFileViewerInfo.java"
+				     	match='private\s*static\s*final\s*int\s*BUGFIX_VERSION\s*=\s*[0-9]*\s*;'
+					    replace='private static final int BUGFIX_VERSION = ${LFV.Program-Version.Bugfix};'/>
+				
+		<javac srcdir="${LFV.eclipse.src.dir}" destdir="${LFV.eclipse.build.dir}"/>
+	</target>
 
 	<!-- [clean] delete temp folder "jar" -->
 	<target name="clean" depends="init">
@@ -75,7 +95,7 @@
 
 
 	<!-- [create-jar] create jar file -->
-	<target name="create-jar" depends="clean,print-props-1,print-props-2">
+	<target name="create-jar" depends="clean,print-props-1,print-props-2,setVersion">
 		<echo message="Copy files from build-directory /${LFV.eclipse.build.dir} to /${LFV.jar.dir}." />
 		<!-- copy files from build dir -->
 		<copy toDir="${LFV.jar.dir}/">
