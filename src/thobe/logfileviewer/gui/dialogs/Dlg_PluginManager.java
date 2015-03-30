@@ -35,7 +35,7 @@ import com.jgoodies.forms.layout.FormLayout;
 @SuppressWarnings ( "serial")
 public class Dlg_PluginManager extends Editor
 {
-	private static Dimension	minSize	= new Dimension( 400, 300 );
+	private static Dimension	minSize	= new Dimension( 610, 500 );
 	private PluginManager		manager;
 
 	public Dlg_PluginManager( Window owner, PluginManager manager )
