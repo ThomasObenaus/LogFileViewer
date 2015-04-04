@@ -28,6 +28,7 @@ import thobe.logfileviewer.kernel.plugin.PluginManagerException;
 import thobe.logfileviewer.kernel.preferences.LogFileViewerPreferences;
 import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
+import thobe.logfileviewer.kernel.util.CmdLineArguments;
 import thobe.logfileviewer.kernel.util.StatsPrinter;
 import thobe.logfileviewer.plugin.Plugin;
 import thobe.logfileviewer.plugin.api.IPluginPreferences;
@@ -97,7 +98,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 	 */
 	private LogFileViewerConfiguration		configuration;
 
-	public LogFileViewerApp( )
+	public LogFileViewerApp( CmdLineArguments parsedArgs )
 	{
 		super( "LogFileViewerApp" );
 		this.log = Logger.getLogger( "thobe.logfileviewer.kernel.LogFileViewerApp" );
@@ -113,8 +114,13 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		PreferenceManager.createPrefs( preferences );
 		LOG( ).info( "Create/Load preferences...done" );
 
-		// load configuration
+		// load configuration		
 		File configFile = new File( LogFileViewerConfiguration.getDefaultConfigFileName( ) );
+		String confFileFromCmdLine = parsedArgs.getConfigurationFileName( );
+		if ( confFileFromCmdLine != null )
+		{
+			configFile = new File( confFileFromCmdLine );
+		}// if ( confFileFromCmdLine != null )
 		LOG( ).info( "Load configuration from '" + configFile.getAbsolutePath( ) + "'..." );
 		this.configuration = new LogFileViewerConfiguration( configFile );
 		LOG( ).info( "Load configuration from '" + configFile.getAbsolutePath( ) + "'...done." );

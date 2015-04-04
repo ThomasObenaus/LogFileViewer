@@ -14,7 +14,10 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 
+import thobe.logfileviewer.LogFileViewerInfo;
 import thobe.logfileviewer.gui.MainFrame;
+import thobe.logfileviewer.kernel.util.CmdLineArguments;
+import thobe.logfileviewer.kernel.util.LogFileViewerCmdParser;
 import thobe.tools.log.Logging;
 import thobe.tools.log.LoggingException;
 
@@ -41,7 +44,12 @@ public class MainClass
 		// set the look and feel
 		setLookAndFeel( );
 
-		LogFileViewerApp app = new LogFileViewerApp( );
+		// parse the command-line arguments
+		CmdLineArguments parsedArgs = LogFileViewerCmdParser.parseCommandLine( args, LogFileViewerInfo.getAppName( ) );
+
+		// instantiate the app
+		LogFileViewerApp app = new LogFileViewerApp( parsedArgs );
+
 		// add the running application to its visual representation
 		MainFrame mainFrame = new MainFrame( app );
 
