@@ -17,20 +17,32 @@ package thobe.logfileviewer.kernel.util;
  */
 public class CmdLineArguments
 {
-	private String	configurationFileName;
+	private String	configurationFilename;
+	private String	loggingConfifurationFilename;
 
 	public CmdLineArguments( )
 	{
-		this.configurationFileName = null;
+		this.configurationFilename = null;
+		this.loggingConfifurationFilename = null;
 	}
 
-	public void setConfigurationFileName( String configurationFileName )
+	public String getLoggingConfigurationFilename( )
 	{
-		this.configurationFileName = configurationFileName;
+		return loggingConfifurationFilename;
 	}
 
-	public String getConfigurationFileName( )
+	public void setLoggingConfigurationFilename( String loggingConfifurationFilename )
 	{
-		return configurationFileName;
+		this.loggingConfifurationFilename = loggingConfifurationFilename;
+	}
+
+	public void setConfigurationFilename( String configurationFilename )
+	{
+		this.configurationFilename = configurationFilename;
+	}
+
+	public String getConfigurationFilename( )
+	{
+		return configurationFilename;
 	}
 }

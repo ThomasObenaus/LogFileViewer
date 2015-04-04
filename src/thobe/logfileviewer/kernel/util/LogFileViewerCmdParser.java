@@ -29,22 +29,29 @@ public class LogFileViewerCmdParser
 	public static CmdLineArguments parseCommandLine( String args[], String appName )
 	{
 		final String OPT_CONF_FILE = "cf";
+		final String OPT_LOGGING_CONF_FILE = "lf";
 
 		// create Options object
 		Options options = new Options( );
 
 		@SuppressWarnings ( "static-access")
-		Option optConfFilename = OptionBuilder.withArgName( "name of cofiguration file" ).hasArg( ).withLongOpt( "cfg-file" ).withDescription( "Name of the configuration file." ).create( OPT_CONF_FILE );
+		Option optConfFilename = OptionBuilder.withArgName( "name of configuration file" ).hasArg( ).withLongOpt( "cfg-file" ).withDescription( "Name of the configuration file." ).create( OPT_CONF_FILE );
+		
+		@SuppressWarnings ( "static-access")
+		Option optLoggingConfFilename = OptionBuilder.withArgName( "name of logging-conf file" ).hasArg( ).withLongOpt( "log-cfg-file" ).withDescription( "Name of the logging configuration file." ).create( OPT_LOGGING_CONF_FILE );
 
 		options.addOption( optConfFilename );
+		options.addOption( optLoggingConfFilename );
 
 		String confFilename = null;
+		String loggingConfFilename = null;
 		try
 		{
 			CommandLineParser parser = new GnuParser( );
 			CommandLine cmd = parser.parse( options, args );
 
 			confFilename = cmd.getOptionValue( OPT_CONF_FILE );
+			loggingConfFilename = cmd.getOptionValue( OPT_LOGGING_CONF_FILE );
 		}
 		catch ( ParseException e )
 		{
@@ -54,7 +61,8 @@ public class LogFileViewerCmdParser
 		}
 
 		CmdLineArguments parsedArgs = new CmdLineArguments( );
-		parsedArgs.setConfigurationFileName( confFilename );
+		parsedArgs.setConfigurationFilename( confFilename );
+		parsedArgs.setLoggingConfigurationFilename( loggingConfFilename );
 		return parsedArgs;
 	}
 

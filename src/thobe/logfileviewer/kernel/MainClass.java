@@ -31,7 +31,15 @@ public class MainClass
 {
 	public static void main( String[] args )
 	{
-		final String loggingIni = "logging.ini";
+		// parse the command-line arguments
+		CmdLineArguments parsedArgs = LogFileViewerCmdParser.parseCommandLine( args, LogFileViewerInfo.getAppName( ) );
+
+		String loggingIni = "logging.ini";
+		if ( parsedArgs.getLoggingConfigurationFilename( ) != null )
+		{
+			loggingIni = parsedArgs.getLoggingConfigurationFilename( );
+		}
+
 		try
 		{
 			Logging.init( loggingIni );
@@ -43,9 +51,6 @@ public class MainClass
 
 		// set the look and feel
 		setLookAndFeel( );
-
-		// parse the command-line arguments
-		CmdLineArguments parsedArgs = LogFileViewerCmdParser.parseCommandLine( args, LogFileViewerInfo.getAppName( ) );
 
 		// instantiate the app
 		LogFileViewerApp app = new LogFileViewerApp( parsedArgs );

@@ -116,7 +116,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 
 		// load configuration		
 		File configFile = new File( LogFileViewerConfiguration.getDefaultConfigFileName( ) );
-		String confFileFromCmdLine = parsedArgs.getConfigurationFileName( );
+		String confFileFromCmdLine = parsedArgs.getConfigurationFilename( );
 		if ( confFileFromCmdLine != null )
 		{
 			configFile = new File( confFileFromCmdLine );
