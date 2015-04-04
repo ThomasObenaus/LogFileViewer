@@ -131,8 +131,10 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		LOG( ).info( "Create the pluginmanager...done" );
 
 		LOG( ).info( "Create background tasks..." );
-		// create background task, that prints out some statistics
-		this.statsPrinter = new StatsPrinter( this.pluginManager, this.logStream );
+		if ( this.configuration.isStatsPrinterEnabled( ) )
+		{ // create background task, that prints out some statistics
+			this.statsPrinter = new StatsPrinter( this.pluginManager, this.logStream, this.configuration.getStatsPrinterUpdateInterval( ) );
+		}
 
 		// create background task, that opens and keeps connections alive
 		this.logStreamConnector = new LogStreamConnector( this.logStream );
@@ -195,7 +197,10 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		this.logStream.start( );
 
 		// starting background task, that prints out some statistics
-		this.statsPrinter.start( );
+		if ( this.statsPrinter != null )
+		{
+			this.statsPrinter.start( );
+		}
 
 		// starting background task, that opens and keeps connections alive
 		this.logStreamConnector.start( );

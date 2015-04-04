@@ -71,7 +71,7 @@ public class PluginPanel extends JPanel
 		this.setBorder( BorderFactory.createLineBorder( Color.DARK_GRAY ) );
 
 		// header
-		FormLayout fla_header = new FormLayout( "1dlu,25dlu,3dlu,fill:default:grow,3dlu,right:100dlu,3dlu,45dlu,3dlu,20dlu,1dlu", "1dlu,default,1dlu" );
+		FormLayout fla_header = new FormLayout( "1dlu,25dlu,3dlu,fill:default:grow,3dlu,150dlu,3dlu,45dlu,3dlu,20dlu,1dlu", "1dlu,default,1dlu" );
 		CellConstraints cc_header = new CellConstraints( );
 		JPanel pa_header = new JPanel( fla_header );
 		this.add( pa_header, BorderLayout.NORTH );

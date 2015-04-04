@@ -65,15 +65,16 @@ public class StatsPrinter extends Thread
 	 * Ctor
 	 * @param mngr - {@link PluginManager} to be monitored
 	 * @param logStream - {@link LogStream} - to be monitored
+	 * @param updateInterval - the update-interval in ms
 	 */
-	public StatsPrinter( PluginManager mngr, LogStream logStream )
+	public StatsPrinter( PluginManager mngr, LogStream logStream, int updateInterval )
 	{
 		super( NAME );
 		this.log = Logger.getLogger( NAME );
 		this.mngr = mngr;
 		this.logStream = logStream;
 		this.quitRequested = new AtomicBoolean( false );
-		this.intervalTime = new AtomicInteger( 10000 );
+		this.intervalTime = new AtomicInteger( updateInterval );
 		this.enabled = new AtomicBoolean( true );
 	}
 
