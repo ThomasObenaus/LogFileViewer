@@ -151,10 +151,10 @@ public class PluginPanel extends JPanel
 
 		final String pluginApiVersion = ( this.plugin.getPluginApiVersion( ) != null ) ? this.plugin.getPluginApiVersion( ).toString( ) : "N/A";
 		final String pluginVersion = ( this.plugin.getVersion( ) != null ) ? this.plugin.getVersion( ) : "N/A";
-		final String author = "Thomas Obenaus";
-		final String email = "Thomas Obenaus";
-		final String website = "https://github.com/ThomasObenaus/LogFileViewer";
-		final String license = "Copyright (C) 2014, Thomas Obenaus. All rights reserved. Licensed under the New BSD License (3-clause lic) See attached license-file.";
+		final String author = ( this.plugin.getPluginAuthor( ) != null ) ? this.plugin.getPluginAuthor( ) : "N/A";
+		final String email = ( this.plugin.getPluginAuthorEMailAddress( ) != null ) ? this.plugin.getPluginAuthorEMailAddress( ) : "N/A";
+		final String website = ( this.plugin.getPluginWebsite( ) != null ) ? this.plugin.getPluginWebsite( ) : "N/A";
+		final String license = ( this.plugin.getPluginLicense( ) != null ) ? this.plugin.getPluginLicense( ) : "N/A";
 		final String pluginDescription = ( this.plugin.getPluginDescription( ) != null ) ? this.plugin.getPluginDescription( ) : "No description available";
 
 		StringBuffer buf = new StringBuffer( );
