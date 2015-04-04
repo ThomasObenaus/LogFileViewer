@@ -28,6 +28,7 @@ import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
 import thobe.logfileviewer.kernel.util.StatsPrinter;
 import thobe.logfileviewer.plugin.Plugin;
+import thobe.logfileviewer.plugin.api.IPluginPreferences;
 import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
 import thobe.tools.preferences.PreferenceManager;
 import thobe.tools.preferences.PrefsException;
@@ -236,6 +237,12 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 			if ( plugin.isEnabled( ) )
 			{
 				LOG( ).info( "\t- Start: '" + plugin.getPluginName( ) + "'" );
+				IPluginPreferences pluginPrefs = plugin.getPluginPreferences( );
+				if ( pluginPrefs != null )
+				{
+					this.preferences.loadPluginPreferences( pluginPrefs, plugin.getName( ) );
+					LOG( ).info( "\t- Preferences: of '" + plugin.getPluginName( ) + "' loaded." );
+				}
 				plugin.start( );
 			}// if ( plugin.isEnabled( ) )
 			else
@@ -382,6 +389,14 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 			{
 				LOG( ).info( "\t- Stop: '" + plugin.getPluginName( ) + "'" );
 				long elapsedTimeForPlugin = System.currentTimeMillis( );
+
+				IPluginPreferences pluginPrefs = plugin.getPluginPreferences( );
+				if ( pluginPrefs != null )
+				{
+					this.preferences.savePluginPreferences( pluginPrefs, plugin.getName( ) );
+					LOG( ).info( "\t- Preferences: of '" + plugin.getPluginName( ) + "' saved." );
+				}
+
 				plugin.quit( );
 				plugin.onStopped( );
 				try

@@ -14,6 +14,7 @@ import java.util.prefs.Preferences;
 
 import thobe.logfileviewer.LogFileViewerInfo;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
+import thobe.logfileviewer.plugin.api.IPluginPreferences;
 import thobe.tools.preferences.PreferenceObject;
 
 /**
@@ -23,6 +24,8 @@ import thobe.tools.preferences.PreferenceObject;
  */
 public class LogFileViewerPreferences extends PreferenceObject
 {
+	private static final String	NODE_PLUGIN_ROOT	= "Plugins";
+
 	/**
 	 * Preferences considering the source (of the log-stream, e.g. IP or file).
 	 */
@@ -63,6 +66,30 @@ public class LogFileViewerPreferences extends PreferenceObject
 	public PluginManagerPrefs getPluginManagerPreferences( )
 	{
 		return pluginManagerPreferences;
+	}
+
+	public void loadPluginPreferences( IPluginPreferences pluginPrefs, String pluginName )
+	{
+		if ( pluginPrefs != null )
+		{
+			Preferences root = Preferences.userRoot( );
+			Preferences appRoot = root.node( this.getApplicationName( ) );
+			Preferences pluginsRoot = appRoot.node( NODE_PLUGIN_ROOT );
+			Preferences pluginRoot = pluginsRoot.node( pluginName.replaceAll( "\\.", "-") );
+			pluginPrefs.load( pluginRoot );
+		}// if ( pluginPrefs != null )
+	}
+
+	public void savePluginPreferences( IPluginPreferences pluginPrefs, String pluginName )
+	{
+		if ( pluginPrefs != null )
+		{
+			Preferences root = Preferences.userRoot( );
+			Preferences appRoot = root.node( this.getApplicationName( ) );
+			Preferences pluginsRoot = appRoot.node( NODE_PLUGIN_ROOT );
+			Preferences pluginRoot = pluginsRoot.node( pluginName.replaceAll( "\\.", "-") );
+			pluginPrefs.save( pluginRoot );
+		}// if ( pluginPrefs != null )
 	}
 
 }
