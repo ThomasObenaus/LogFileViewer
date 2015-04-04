@@ -20,6 +20,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JToggleButton;
 
 import thobe.logfileviewer.kernel.preferences.PluginManagerPrefs;
@@ -37,6 +38,10 @@ import com.jgoodies.forms.layout.FormLayout;
 @SuppressWarnings ( "serial")
 public class PluginPanel extends JPanel
 {
+	private static final int	MB_DIVIDER	= 1024 * 1024;
+	private static final int	KB_DIVIDER	= 1024;
+	private static final float	UNIT_EPS	= 0.01f;
+
 	private Plugin				plugin;
 
 	private JToggleButton		tb_enablePlugin;
@@ -47,6 +52,8 @@ public class PluginPanel extends JPanel
 	private JLabel				l_body;
 
 	private PluginManagerPrefs	pluginManagerPreferences;
+
+	private JProgressBar		pb_memory;
 
 	public PluginPanel( Plugin plugin, PluginManagerPrefs pluginManagerPreferences )
 	{
@@ -64,13 +71,13 @@ public class PluginPanel extends JPanel
 		this.setBorder( BorderFactory.createLineBorder( Color.DARK_GRAY ) );
 
 		// header
-		FormLayout fla_header = new FormLayout( "1dlu,20dlu,3dlu,fill:default:grow,3dlu,default,3dlu,20dlu,1dlu", "1dlu,default,1dlu" );
+		FormLayout fla_header = new FormLayout( "1dlu,25dlu,3dlu,fill:default:grow,3dlu,right:100dlu,3dlu,45dlu,3dlu,20dlu,1dlu", "1dlu,default,1dlu" );
 		CellConstraints cc_header = new CellConstraints( );
 		JPanel pa_header = new JPanel( fla_header );
 		this.add( pa_header, BorderLayout.NORTH );
 		pa_header.setBackground( Color.LIGHT_GRAY );
 
-		this.tb_expand = new JToggleButton( "-", true );
+		this.tb_expand = new JToggleButton( "+", false );
 		pa_header.add( this.tb_expand, cc_header.xy( 2, 2 ) );
 		this.tb_expand.addActionListener( new ActionListener( )
 		{
@@ -85,8 +92,14 @@ public class PluginPanel extends JPanel
 		pa_header.add( l_name, cc_header.xy( 4, 2 ) );
 		l_name.setOpaque( false );
 
+		this.pb_memory = new JProgressBar( 0, 100 );
+		pa_header.add( this.pb_memory, cc_header.xy( 6, 2 ) );
+		this.pb_memory.setValue( 0 );
+		this.pb_memory.setStringPainted( true );
+		this.pb_memory.setToolTipText( "Memory-consumption of this plugin" );
+
 		this.tb_enablePlugin = new JToggleButton( "Disable", true );
-		pa_header.add( this.tb_enablePlugin, cc_header.xy( 6, 2 ) );
+		pa_header.add( this.tb_enablePlugin, cc_header.xy( 8, 2 ) );
 		this.tb_enablePlugin.setToolTipText( "Disable plugin '" + pluginName + "'" );
 		this.tb_enablePlugin.setSelected( this.plugin.isEnabled( ) );
 		this.tb_enablePlugin.addActionListener( new ActionListener( )
@@ -100,7 +113,7 @@ public class PluginPanel extends JPanel
 		} );
 
 		this.bu_settings = new JButton( "." );
-		pa_header.add( this.bu_settings, cc_header.xy( 8, 2 ) );
+		pa_header.add( this.bu_settings, cc_header.xy( 10, 2 ) );
 
 		// body		
 		FormLayout fla_body = new FormLayout( "2dlu,fill:default:grow,2dlu", "2dlu,default,2dlu" );
@@ -113,6 +126,7 @@ public class PluginPanel extends JPanel
 
 		buildBody( );
 		this.setEnabled( this.plugin.isEnabled( ) );
+		this.expand( false );
 	}
 
 	private void expand( boolean expand )
@@ -174,6 +188,33 @@ public class PluginPanel extends JPanel
 		tb_enablePlugin.setText( ( enabled ? "Disable" : "Enable" ) );
 		this.tb_enablePlugin.setToolTipText( ( enabled ? "Disable" : "Enable" ) + " plugin '" + pluginName + "'" );
 		this.pluginManagerPreferences.setPluginEnabled( this.plugin.getPluginName( ), enabled );
+	}
+
+	public void updateMemoryConsumption( long completeMemory )
+	{
+		long pluginMemory = this.plugin.getMemory( );
+
+		int perc = Math.round( ( pluginMemory / ( float ) completeMemory ) * 100.0f );
+		this.pb_memory.setValue( perc );
+
+		String unitPlugin = "MB";
+		float pMemInMB = pluginMemory / ( float ) MB_DIVIDER;
+		if ( pMemInMB < UNIT_EPS )
+		{
+			unitPlugin = "KB";
+			pMemInMB = pluginMemory / ( float ) KB_DIVIDER;
+		}
+
+		String unitComplete = "MB";
+		float cMemInMB = completeMemory / ( float ) MB_DIVIDER;
+		if ( cMemInMB < UNIT_EPS )
+		{
+			unitComplete = "KB";
+			cMemInMB = completeMemory / ( float ) KB_DIVIDER;
+		}
+
+		String txt = String.format( "%.2f %s / %.2f %s", pMemInMB, unitPlugin, cMemInMB, unitComplete );
+		this.pb_memory.setString( txt );
 	}
 
 }

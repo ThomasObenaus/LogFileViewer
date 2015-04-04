@@ -15,7 +15,11 @@ import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -35,14 +39,21 @@ import com.jgoodies.forms.layout.FormLayout;
 @SuppressWarnings ( "serial")
 public class Dlg_PluginManager extends Editor
 {
-	private static Dimension	minSize	= new Dimension( 610, 500 );
+	private static Dimension	minSize	= new Dimension( 710, 500 );
 	private PluginManager		manager;
+	private List<PluginPanel>	pluginPanels;
+	private Timer				memUpdateTimer;
 
 	public Dlg_PluginManager( Window owner, PluginManager manager )
 	{
-		super( owner, "Pluginmanager", ModalityType.APPLICATION_MODAL );
+		super( owner, "Pluginmanager", ModalityType.MODELESS );
 		this.manager = manager;
+		this.pluginPanels = new ArrayList<PluginPanel>( );
+
 		this.buildGUI( );
+
+		this.memUpdateTimer = new Timer( "Dlg_PluginManager.MemoryUpdateTimer" );
+		this.memUpdateTimer.schedule( new MemoryUpdater( ), 500, 2000 );
 	}
 
 	private void buildGUI( )
@@ -61,7 +72,9 @@ public class Dlg_PluginManager extends Editor
 		int row = 2;
 		for ( Map.Entry<String, Plugin> entry : plugins.entrySet( ) )
 		{
-			this.add( new PluginPanel( entry.getValue( ), this.manager.getPrefs( ) ), cc_main.xy( 2, row ) );
+			PluginPanel pluginPanel = new PluginPanel( entry.getValue( ), this.manager.getPrefs( ) );
+			this.pluginPanels.add( pluginPanel );
+			this.add( pluginPanel, cc_main.xy( 2, row ) );
 			row += 2;
 		}
 
@@ -89,6 +102,23 @@ public class Dlg_PluginManager extends Editor
 		} );
 
 		return pa_buttons;
+	}
+
+	private class MemoryUpdater extends TimerTask
+	{
+
+		@Override
+		public void run( )
+		{
+			long freeMemory = Runtime.getRuntime( ).freeMemory( );
+			long totalMemory = Runtime.getRuntime( ).totalMemory( );
+			long usedMemory = totalMemory - freeMemory;
+
+			for ( PluginPanel p : pluginPanels )
+			{
+				p.updateMemoryConsumption( usedMemory );
+			}
+		}
 	}
 
 }
