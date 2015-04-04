@@ -194,6 +194,11 @@ public class PluginPanel extends JPanel
 	{
 		long pluginMemory = this.plugin.getMemory( );
 
+		if ( pluginMemory > completeMemory )
+		{
+			pluginMemory = completeMemory;
+		}
+
 		int perc = Math.round( ( pluginMemory / ( float ) completeMemory ) * 100.0f );
 		this.pb_memory.setValue( perc );
 
