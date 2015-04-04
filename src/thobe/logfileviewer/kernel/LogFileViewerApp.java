@@ -10,6 +10,7 @@
 
 package thobe.logfileviewer.kernel;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.memory.MemoryWatchDog;
 import thobe.logfileviewer.kernel.plugin.PluginManager;
+import thobe.logfileviewer.kernel.plugin.PluginManagerException;
 import thobe.logfileviewer.kernel.preferences.LogFileViewerPreferences;
 import thobe.logfileviewer.kernel.source.connector.LogStreamConnector;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
@@ -90,6 +92,11 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 	 */
 	private LogFileViewerPreferences		preferences;
 
+	/**
+	 * Configuration for the LogFileViewer.
+	 */
+	private LogFileViewerConfiguration		configuration;
+
 	public LogFileViewerApp( )
 	{
 		super( "LogFileViewerApp" );
@@ -106,9 +113,15 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		PreferenceManager.createPrefs( preferences );
 		LOG( ).info( "Create/Load preferences...done" );
 
+		// load configuration
+		File configFile = new File( "logfileviewer.conf" );
+		LOG( ).info( "Load configuration from '" + configFile.getAbsolutePath( ) + "'..." );
+		this.configuration = new LogFileViewerConfiguration( configFile );
+		LOG( ).info( "Load configuration from '" + configFile.getAbsolutePath( ) + "'...done." );
+
 		// create the plugin-manager		
 		LOG( ).info( "Create the pluginmanager..." );
-		this.pluginManager = new PluginManager( this.preferences.getPluginManagerPreferences( ) );
+		this.pluginManager = new PluginManager( this.preferences.getPluginManagerPreferences( ), this.configuration.getPluginDirectory( ) );
 		LOG( ).info( "Create the pluginmanager...done" );
 
 		LOG( ).info( "Create background tasks..." );
@@ -121,6 +134,11 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// create background task, that watches and clears memory
 		this.memoryWatchDog = new MemoryWatchDog( );
 		LOG( ).info( "Create background tasks...done" );
+	}
+
+	public LogFileViewerConfiguration getConfiguration( )
+	{
+		return configuration;
 	}
 
 	public PluginManager getPluginManager( )
@@ -182,8 +200,15 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		this.memoryWatchDog.start( );
 		LOG( ).info( "Starting background tasks...done" );
 
-		// look for new plugins
-		pluginManager.findAndRegisterPlugins( );
+		try
+		{
+			// look for new plugins
+			pluginManager.findAndRegisterPlugins( );
+		}
+		catch ( PluginManagerException e )
+		{
+			LOG( ).severe( "Unable to load plugins: " + e.getLocalizedMessage( ) );
+		}
 
 		// start
 		onStart( );

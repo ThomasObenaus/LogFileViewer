@@ -34,6 +34,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
+import thobe.logfileviewer.kernel.LogFileViewerConfiguration;
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.preferences.PluginManagerPrefs;
 import thobe.logfileviewer.plugin.Plugin;
@@ -53,12 +54,13 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 
 	private Map<String, Plugin>	plugins;
 	private Logger				log;
-
 	private PluginManagerPrefs	prefs;
+	private File				pluginDirectory;
 
-	public PluginManager( PluginManagerPrefs prefs )
+	public PluginManager( PluginManagerPrefs prefs, File pluginDirectory )
 	{
 		this.prefs = prefs;
+		this.pluginDirectory = pluginDirectory;
 		this.log = Logger.getLogger( NAME );
 		this.plugins = new HashMap<>( );
 	}
@@ -80,10 +82,41 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		return versionFile;
 	}
 
-	@SuppressWarnings ( "unchecked")
-	public void findAndRegisterPlugins( )
+	private void checkPluginDirectory( ) throws PluginManagerException
 	{
-		File[] plugins = prefs.getPluginDir( ).listFiles( new FilenameFilter( )
+		final File def = LogFileViewerConfiguration.getDefaultPluginDir( );
+		if ( this.pluginDirectory == null )
+		{
+			LOG( ).warning( "No plugin-directory set, trying the default one ('" + def.getAbsolutePath( ) + "')." );
+			this.pluginDirectory = def;
+		}
+		else if ( !this.pluginDirectory.exists( ) )
+		{
+			LOG( ).warning( "Plugin-directory '" + this.pluginDirectory.getAbsolutePath( ) + "' does not exist, trying the default one ('" + def.getAbsolutePath( ) + "')." );
+			this.pluginDirectory = def;
+		}
+		else if ( !this.pluginDirectory.canRead( ) )
+		{
+			LOG( ).warning( "Plugin-directory '" + this.pluginDirectory.getAbsolutePath( ) + "' is not readable, trying the default one ('" + def.getAbsolutePath( ) + "')." );
+			this.pluginDirectory = def;
+		}
+
+		if ( ( this.pluginDirectory == null ) || ( !this.pluginDirectory.canRead( ) ) || ( !this.pluginDirectory.exists( ) ) )
+		{
+			String msg = "Unable to use given plugin-directory (" + ( ( this.pluginDirectory != null ) ? "'" + this.pluginDirectory.getAbsolutePath( ) + "'" : "Not set, its null" ) + ") since it is not readable or does not exsit.";
+			LOG( ).severe( msg );
+			throw new PluginManagerException( msg );
+		}// if ( ( this.pluginDirectory == null ) || ( !this.pluginDirectory.canRead( ) ) || ( !this.pluginDirectory.exists( ) ) )
+
+	}
+
+	@SuppressWarnings ( "unchecked")
+	public void findAndRegisterPlugins( ) throws PluginManagerException
+	{
+		// determine/ find plugin-directory, throws an exception if it can't be found
+		this.checkPluginDirectory( );
+
+		File[] plugins = this.pluginDirectory.listFiles( new FilenameFilter( )
 		{
 
 			@Override
