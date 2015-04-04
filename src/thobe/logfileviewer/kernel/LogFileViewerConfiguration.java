@@ -23,10 +23,11 @@ import java.util.logging.Logger;
  */
 public class LogFileViewerConfiguration
 {
-	private static final String	L_NAME			= "thobe.logfileviewer.kernel.LogFileViewerConfiguration";
+	private static final String	L_NAME					= "thobe.logfileviewer.kernel.LogFileViewerConfiguration";
+	private static final String	DEF_CONFIG_FILE_NAME	= "logfileviewer.conf";
 
-	private static final String	KEY_PLUGIN_DIR	= "plugin-directory";
-	private static final String	DEF_PLUGIN_DIR	= "plugins";
+	private static final String	KEY_PLUGIN_DIR			= "plugin-directory";
+	private static final String	DEF_PLUGIN_DIR			= "plugins";
 
 	private Logger				log;
 	private File				pluginDirectory;
@@ -71,5 +72,10 @@ public class LogFileViewerConfiguration
 	public static File getDefaultPluginDir( )
 	{
 		return new File( DEF_PLUGIN_DIR );
+	}
+
+	public static String getDefaultConfigFileName( )
+	{
+		return DEF_CONFIG_FILE_NAME;
 	}
 }

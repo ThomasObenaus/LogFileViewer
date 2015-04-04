@@ -114,7 +114,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		LOG( ).info( "Create/Load preferences...done" );
 
 		// load configuration
-		File configFile = new File( "logfileviewer.conf" );
+		File configFile = new File( LogFileViewerConfiguration.getDefaultConfigFileName( ) );
 		LOG( ).info( "Load configuration from '" + configFile.getAbsolutePath( ) + "'..." );
 		this.configuration = new LogFileViewerConfiguration( configFile );
 		LOG( ).info( "Load configuration from '" + configFile.getAbsolutePath( ) + "'...done." );
