@@ -86,6 +86,16 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		return versionFile;
 	}
 
+	public String getPluginDirectory( )
+	{
+		return ( pluginDirectory != null ? this.pluginDirectory.getAbsolutePath( ) : "N/A" );
+	}
+
+	public PluginApiVersion getPluginApiVersion( )
+	{
+		return new PluginApiVersion( );
+	}
+
 	private void checkPluginDirectory( ) throws PluginManagerException
 	{
 		final File def = LogFileViewerConfiguration.getDefaultPluginDir( );

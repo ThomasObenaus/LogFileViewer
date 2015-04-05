@@ -22,6 +22,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import thobe.logfileviewer.kernel.plugin.PluginManager;
@@ -58,9 +59,10 @@ public class Dlg_PluginManager extends Editor
 
 	private void buildGUI( )
 	{
+		String rowSpec = "3dlu,default,3dlu,default,7dlu";
 		Map<String, Plugin> plugins = this.manager.getPlugins( );
 		Map<String, Plugin> invalidPlugins = this.manager.getIncompatiblePlugins( );
-		String rowSpec = "3dlu";
+
 		for ( int i = 0; i < plugins.size( ); ++i )
 		{
 			rowSpec += ",pref,3dlu";
@@ -75,7 +77,17 @@ public class Dlg_PluginManager extends Editor
 		CellConstraints cc_main = new CellConstraints( );
 
 		this.setLayout( fla_main );
-		int row = 2;
+
+		// plugin-folder
+		JLabel l_pluginFolder = new JLabel( "Plugins where loaded from: " + this.manager.getPluginDirectory( ) );
+		this.add( l_pluginFolder, cc_main.xy( 2, 2 ) );
+
+		// api-version
+		JLabel l_apiVersion = new JLabel( "The LogFileViewer uses the PluginApi version " + this.manager.getPluginApiVersion( ) );
+		this.add( l_apiVersion, cc_main.xy( 2, 4 ) );
+
+		// PluginPanels
+		int row = 6;
 		for ( Map.Entry<String, Plugin> entry : plugins.entrySet( ) )
 		{
 			PluginPanel pluginPanel = new PluginPanel( entry.getValue( ), this.manager.getPrefs( ), true );
