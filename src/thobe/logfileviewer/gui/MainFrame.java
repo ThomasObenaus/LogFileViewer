@@ -22,6 +22,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
 
 import thobe.logfileviewer.LogFileViewerInfo;
+import thobe.logfileviewer.gui.actions.Act_About;
 import thobe.logfileviewer.gui.actions.Act_Close;
 import thobe.logfileviewer.gui.actions.Act_Exit;
 import thobe.logfileviewer.gui.actions.Act_OpenConnection;
@@ -102,6 +103,12 @@ public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILog
 		JMenuItem mi_pluginManager = new JMenuItem( ActionRegistry.get( ).getAction( Act_PluginManager.KEY ) );
 		mu_extra.add( mi_pluginManager );
 
+		JMenu mu_help = new JMenu( "Help" );
+		mbar.add( mu_help );
+
+		JMenuItem mi_about = new JMenuItem( ActionRegistry.get( ).getAction( Act_About.KEY ) );
+		mu_help.add( mi_about );
+
 	}
 
 	private void registerActions( )
@@ -111,8 +118,8 @@ public class MainFrame extends JFrame implements ILogFileViewerAppListener, ILog
 		ActionRegistry.get( ).registerAction( new Act_OpenConnection( this ) );
 		ActionRegistry.get( ).registerAction( new Act_Close( this ) );
 		ActionRegistry.get( ).registerAction( new Act_PluginManager( this, app.getPluginManager( ) ) );
+		ActionRegistry.get( ).registerAction( new Act_About( this ) );
 		ActionRegistry.get( ).getAction( Act_Close.KEY ).setEnabled( false );
-
 	}
 
 	private void buildGUI( )
