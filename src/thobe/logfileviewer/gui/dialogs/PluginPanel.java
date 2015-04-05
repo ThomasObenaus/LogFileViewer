@@ -54,11 +54,13 @@ public class PluginPanel extends JPanel
 	private PluginManagerPrefs	pluginManagerPreferences;
 
 	private JProgressBar		pb_memory;
+	private boolean				isCompatible;
 
-	public PluginPanel( Plugin plugin, PluginManagerPrefs pluginManagerPreferences )
+	public PluginPanel( Plugin plugin, PluginManagerPrefs pluginManagerPreferences, boolean isCompatible )
 	{
 		this.plugin = plugin;
 		this.pluginManagerPreferences = pluginManagerPreferences;
+		this.isCompatible = isCompatible;
 
 		this.buildGUI( );
 	}
@@ -112,8 +114,10 @@ public class PluginPanel extends JPanel
 			}
 		} );
 
+
 		this.bu_settings = new JButton( "." );
 		pa_header.add( this.bu_settings, cc_header.xy( 10, 2 ) );
+		this.bu_settings.setEnabled( this.isCompatible );
 
 		// body		
 		FormLayout fla_body = new FormLayout( "2dlu,fill:default:grow,2dlu", "2dlu,default,2dlu" );
@@ -127,6 +131,13 @@ public class PluginPanel extends JPanel
 		buildBody( );
 		this.setEnabled( this.plugin.isEnabled( ) );
 		this.expand( false );
+		
+		if ( !this.isCompatible )
+		{
+			this.tb_enablePlugin.setEnabled( false );
+			pa_header.setBackground( new Color( 160, 35, 20 ) );
+			l_name.setForeground( Color.LIGHT_GRAY );
+		}
 	}
 
 	private void expand( boolean expand )
@@ -142,6 +153,7 @@ public class PluginPanel extends JPanel
 		final FontMetrics fontMetrics = this.getFontMetrics( this.getFont( ) );
 		final int maxWidth = 700;
 
+		final String colorInvalid = "#a22211";
 		final String SPACE = "&nbsp ";
 		final String colorDesc = "#222222";
 		final int txtSizeDesc = 4;
@@ -159,6 +171,13 @@ public class PluginPanel extends JPanel
 
 		StringBuffer buf = new StringBuffer( );
 		buf.append( "<html><body>" );
+
+		if ( !this.isCompatible )
+		{
+			buf.append( "<p><b>" );
+			buf.append( "<i><font color=\"" + colorInvalid + "\" size=\"" + txtSizeDesc + "\">This Plugin is not compatible.</font>" );
+			buf.append( "</p></b><br>" );
+		}
 
 		buf.append( "<p>" );
 		buf.append( "<i><font color=\"" + colorDesc + "\" size=\"" + txtSizeDesc + "\">" + Utilities.resizeStringToMaxWidthHTML( fontMetrics, pluginDescription, maxWidth, true ) + "</font>" );

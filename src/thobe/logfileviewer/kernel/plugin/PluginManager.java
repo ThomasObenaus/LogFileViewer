@@ -18,6 +18,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,6 +55,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	private static final String	NAME	= "thobe.logfileviewer.kernel.PluginManager";
 
 	private Map<String, Plugin>	plugins;
+	private Map<String, Plugin>	incompatiblePlugins;
 	private Logger				log;
 	private PluginManagerPrefs	prefs;
 	private File				pluginDirectory;
@@ -63,6 +66,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		this.pluginDirectory = pluginDirectory;
 		this.log = Logger.getLogger( NAME );
 		this.plugins = new HashMap<>( );
+		this.incompatiblePlugins = new HashMap<String, Plugin>( );
 	}
 
 	private File createTmpVersionFile( InputStream in, String className ) throws IOException
@@ -244,19 +248,32 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 			{
 				File versionFile = entry.getKey( );
 				Class<? extends Plugin> pluginClass = entry.getValue( );
-				PluginApiVersion pluginApiOfPlugin = new PluginApiVersion( versionFile );
-				if ( !apiVersionOfLogFileViewer.isCompatible( pluginApiOfPlugin ) )
+				PluginApiVersion apiVersionOfPlugin = new PluginApiVersion( versionFile );
+
+				Plugin plugin = pluginClass.newInstance( );
+				try
 				{
-					LOG( ).warning( "\tPlugin '" + pluginClass.getSimpleName( ) + "' will be ignored. API-missmatch:  ApiOfLogFileViewer='" + apiVersionOfLogFileViewer + "' apiOfPlugin='" + pluginApiOfPlugin + "'" );
+					Method setApiVersion = Plugin.class.getDeclaredMethod( "setApiVersion", PluginApiVersion.class );
+					setApiVersion.setAccessible( true );
+					setApiVersion.invoke( plugin, apiVersionOfPlugin );
+				}
+				catch ( NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e )
+				{
+					LOG( ).severe( "Unable to set api-version to plugin: " + e.getLocalizedMessage( ) );
+				}
+
+				if ( !apiVersionOfLogFileViewer.isCompatible( apiVersionOfPlugin ) )
+				{
+					this.incompatiblePlugins.put( plugin.getPluginName( ), plugin );
+					LOG( ).warning( "\tPlugin '" + pluginClass.getSimpleName( ) + "' will be ignored. API-missmatch:  ApiOfLogFileViewer='" + apiVersionOfLogFileViewer + "' apiOfPlugin='" + apiVersionOfPlugin + "'" );
 				}// if ( !apiVersionOfLogFileViewer.isCompatible( pluginApiOfPlugin ) )
 				else
 				{
-					Plugin plugin = pluginClass.newInstance( );
 					boolean pluginEnabled = prefs.isPluginEnabled( plugin.getPluginName( ) );
 					plugin.setEnabled( pluginEnabled );
 
 					this.registerPlugin( plugin );
-					LOG( ).info( "\tPlugin '" + plugin.getPluginName( ) + "' sucessfully registered [plugin api: " + pluginApiOfPlugin + "], the plugin is " + ( plugin.isEnabled( ) ? "enabled" : "disabled" ) );
+					LOG( ).info( "\tPlugin '" + plugin.getPluginName( ) + "' sucessfully registered [plugin api: " + apiVersionOfPlugin + ", plugin-api of LogFileViewer: " + apiVersionOfLogFileViewer + "], the plugin is " + ( plugin.isEnabled( ) ? "enabled" : "disabled" ) );
 
 				}// if ( !apiVersionOfLogFileViewer.isCompatible( pluginApiOfPlugin ) ) ... else ...
 			}
@@ -297,6 +314,11 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	public Map<String, Plugin> getPlugins( )
 	{
 		return plugins;
+	}
+
+	public Map<String, Plugin> getIncompatiblePlugins( )
+	{
+		return incompatiblePlugins;
 	}
 
 	@Override

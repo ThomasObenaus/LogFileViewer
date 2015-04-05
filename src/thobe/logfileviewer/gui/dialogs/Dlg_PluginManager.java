@@ -59,8 +59,14 @@ public class Dlg_PluginManager extends Editor
 	private void buildGUI( )
 	{
 		Map<String, Plugin> plugins = this.manager.getPlugins( );
+		Map<String, Plugin> invalidPlugins = this.manager.getIncompatiblePlugins( );
 		String rowSpec = "3dlu";
 		for ( int i = 0; i < plugins.size( ); ++i )
+		{
+			rowSpec += ",pref,3dlu";
+		}
+
+		for ( int i = 0; i < invalidPlugins.size( ); ++i )
 		{
 			rowSpec += ",pref,3dlu";
 		}
@@ -72,7 +78,16 @@ public class Dlg_PluginManager extends Editor
 		int row = 2;
 		for ( Map.Entry<String, Plugin> entry : plugins.entrySet( ) )
 		{
-			PluginPanel pluginPanel = new PluginPanel( entry.getValue( ), this.manager.getPrefs( ) );
+			PluginPanel pluginPanel = new PluginPanel( entry.getValue( ), this.manager.getPrefs( ), true );
+			this.pluginPanels.add( pluginPanel );
+			this.add( pluginPanel, cc_main.xy( 2, row ) );
+			row += 2;
+		}
+
+		// add invalid plugins (for information)
+		for ( Map.Entry<String, Plugin> entry : invalidPlugins.entrySet( ) )
+		{
+			PluginPanel pluginPanel = new PluginPanel( entry.getValue( ), this.manager.getPrefs( ), false );
 			this.pluginPanels.add( pluginPanel );
 			this.add( pluginPanel, cc_main.xy( 2, row ) );
 			row += 2;
