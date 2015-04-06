@@ -130,6 +130,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		// determine/ find plugin-directory, throws an exception if it can't be found
 		this.checkPluginDirectory( );
 
+		LOG( ).info( "0. Looking for plugins in '" + this.pluginDirectory.getAbsolutePath( ) + "'" );
 		File[] plugins = this.pluginDirectory.listFiles( new FilenameFilter( )
 		{
 
@@ -150,7 +151,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		List<JarFile> jarFiles = new ArrayList<JarFile>( );
 
 		// 1. Now build the ULR array for loading the jars to class-path
-		LOG( ).info( "1. Now build the ULR array for loading the jars to class-path." );
+		LOG( ).info( "1. Now build the ULR array for loading the jars to class-path (" + plugins.length + ")" );
 		URL[] pluginUrls = new URL[plugins.length];
 		for ( int i = 0; i < plugins.length; ++i )
 		{

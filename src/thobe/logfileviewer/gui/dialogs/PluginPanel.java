@@ -23,8 +23,11 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JToggleButton;
 
+import thobe.logfileviewer.gui.icons.LFV_IconLib;
+import thobe.logfileviewer.gui.icons.LFV_IconType;
 import thobe.logfileviewer.kernel.preferences.PluginManagerPrefs;
 import thobe.logfileviewer.plugin.Plugin;
+import thobe.widgets.icons.IconSize;
 import thobe.widgets.utils.Utilities;
 
 import com.jgoodies.forms.layout.CellConstraints;
@@ -73,13 +76,13 @@ public class PluginPanel extends JPanel
 		this.setBorder( BorderFactory.createLineBorder( Color.DARK_GRAY ) );
 
 		// header
-		FormLayout fla_header = new FormLayout( "1dlu,25dlu,3dlu,fill:default:grow,3dlu,150dlu,3dlu,45dlu,3dlu,20dlu,1dlu", "1dlu,default,1dlu" );
+		FormLayout fla_header = new FormLayout( "1dlu,16dlu,3dlu,fill:default:grow,3dlu,150dlu,3dlu,45dlu,3dlu,20dlu,1dlu", "1dlu,default,1dlu" );
 		CellConstraints cc_header = new CellConstraints( );
 		JPanel pa_header = new JPanel( fla_header );
 		this.add( pa_header, BorderLayout.NORTH );
 		pa_header.setBackground( Color.LIGHT_GRAY );
 
-		this.tb_expand = new JToggleButton( "+", false );
+		this.tb_expand = new JToggleButton( LFV_IconLib.get( ).getIcon( LFV_IconType.EXPAND, true, IconSize.S16x16 ), false );
 		pa_header.add( this.tb_expand, cc_header.xy( 2, 2 ) );
 		this.tb_expand.addActionListener( new ActionListener( )
 		{
@@ -114,8 +117,7 @@ public class PluginPanel extends JPanel
 			}
 		} );
 
-
-		this.bu_settings = new JButton( "." );
+		this.bu_settings = new JButton( LFV_IconLib.get( ).getIcon( LFV_IconType.SETTINGS, true, IconSize.S16x16 ) );
 		pa_header.add( this.bu_settings, cc_header.xy( 10, 2 ) );
 		this.bu_settings.setEnabled( this.isCompatible );
 
@@ -131,7 +133,7 @@ public class PluginPanel extends JPanel
 		buildBody( );
 		this.setEnabled( this.plugin.isEnabled( ) );
 		this.expand( false );
-		
+
 		if ( !this.isCompatible )
 		{
 			this.tb_enablePlugin.setEnabled( false );
@@ -143,7 +145,7 @@ public class PluginPanel extends JPanel
 	private void expand( boolean expand )
 	{
 		this.pa_body.setVisible( expand );
-		this.tb_expand.setText( expand ? "-" : "+" );
+		this.tb_expand.setIcon( expand ? LFV_IconLib.get( ).getIcon( LFV_IconType.COLLAPSE, true, IconSize.S16x16 ) : LFV_IconLib.get( ).getIcon( LFV_IconType.EXPAND, true, IconSize.S16x16 ) );
 		this.revalidate( );
 		this.repaint( );
 	}
