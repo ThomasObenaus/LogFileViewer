@@ -19,7 +19,7 @@ import thobe.logfileviewer.kernel.plugin.PluginManager;
 import thobe.logfileviewer.kernel.source.logline.LogLine;
 import thobe.logfileviewer.kernel.source.logline.LogLineDat;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
-import thobe.logfileviewer.plugin.Plugin;
+import thobe.logfileviewer.plugin.api.IPlugin;
 
 /**
  * Simple class that prints statistics to log.
@@ -116,11 +116,11 @@ public class StatsPrinter extends Thread
 				strBuffer.append( "---------------------------------------------\n" );
 				strBuffer.append( "Memory-Consumption: \n" );
 				long completeMemory = 0;
-				for ( Entry<String, Plugin> entry : this.mngr.getPlugins( ).entrySet( ) )
+				for ( Entry<String, IPlugin> entry : this.mngr.getPlugins( ).entrySet( ) )
 				{
-					Plugin plugin = entry.getValue( );
+					IPlugin plugin = entry.getValue( );
 					completeMemory += plugin.getMemory( );
-					strBuffer.append( "--|" + plugin.getName( ) + ": " + ( plugin.getMemory( ) / MB_DIVIDER ) + " MB\n" );
+					strBuffer.append( "--|" + plugin.getPluginName( ) + ": " + ( plugin.getMemory( ) / MB_DIVIDER ) + " MB\n" );
 				}// for ( Entry<String, Plugin> entry : this.mngr.getPlugins( ).entrySet( ) ) .
 
 				// add memory of the LogLineFactory

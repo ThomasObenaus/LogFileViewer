@@ -31,7 +31,9 @@ import thobe.logfileviewer.kernel.source.logstream.LogStream;
 import thobe.logfileviewer.kernel.util.CmdLineArguments;
 import thobe.logfileviewer.kernel.util.StatsPrinter;
 import thobe.logfileviewer.plugin.Plugin;
+import thobe.logfileviewer.plugin.api.IPlugin;
 import thobe.logfileviewer.plugin.api.IPluginPreferences;
+import thobe.logfileviewer.plugin.api.PluginException;
 import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
 import thobe.tools.preferences.PreferenceManager;
 import thobe.tools.preferences.PrefsException;
@@ -267,19 +269,19 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 1. start all plugins
 		long elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "1. Start --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				LOG( ).info( "\t- Start: '" + plugin.getPluginName( ) + "'" );
 				IPluginPreferences pluginPrefs = plugin.getPluginPreferences( );
 				if ( pluginPrefs != null )
 				{
-					this.preferences.loadPluginPreferences( pluginPrefs, plugin.getName( ) );
+					this.preferences.loadPluginPreferences( pluginPrefs, plugin.getPluginName( ) );
 					LOG( ).info( "\t- Preferences: of '" + plugin.getPluginName( ) + "' loaded." );
 				}
-				plugin.start( );
+				plugin.startPlugin( );
 			}// if ( plugin.isEnabled( ) )
 			else
 			{
@@ -287,9 +289,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 			}// if ( plugin.isEnabled( ) ) ... else ..
 
 		}// for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) ) .
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				plugin.onStarted( );
@@ -301,9 +303,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 2. register all plugins
 		elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "2. Register --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				LOG( ).info( "\t- Register: '" + plugin.getPluginName( ) + "'" );
@@ -321,9 +323,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 2a. LogStream available
 		long elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "2a. LogStream available --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				plugin.onLogStreamAvailable( this.logStream );
@@ -335,9 +337,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 2b. opening the LogStream
 		elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "2b. LogStream opened --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				plugin.onLogStreamOpened( );
@@ -352,9 +354,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 3a. prepare closing the LogStream
 		long elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "3a. Prepare LogStream closed --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				plugin.onPrepareCloseLogStream( );
@@ -366,9 +368,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 3b. LogStream is leaving scope
 		elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "3b. LogStream is leaving scope --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				plugin.onLogStreamLeavingScope( );
@@ -380,9 +382,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 2c. closing the LogStream
 		elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "3c. LogStream closed --> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.pluginManager.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				plugin.onLogStreamClosed( );
@@ -400,10 +402,10 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 3. unregister all plugins
 		long elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "4. Unregister --> notify all plugins ... " );
-		Map<String, Plugin> tmpPlugins = new HashMap<>( this.pluginManager.getPlugins( ) );
-		for ( Entry<String, Plugin> entry : tmpPlugins.entrySet( ) )
+		Map<String, IPlugin> tmpPlugins = new HashMap<>( this.pluginManager.getPlugins( ) );
+		for ( Entry<String, IPlugin> entry : tmpPlugins.entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				LOG( ).info( "\t- Unregister: '" + plugin.getPluginName( ) + "'" );
@@ -418,9 +420,9 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 		// 4. stop all plugins
 		elapsedTime = System.currentTimeMillis( );
 		LOG( ).info( "5. Stopped--> notify all plugins ... " );
-		for ( Entry<String, Plugin> entry : tmpPlugins.entrySet( ) )
+		for ( Entry<String, IPlugin> entry : tmpPlugins.entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			if ( plugin.isEnabled( ) )
 			{
 				LOG( ).info( "\t- Stop: '" + plugin.getPluginName( ) + "'" );
@@ -429,7 +431,7 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 				IPluginPreferences pluginPrefs = plugin.getPluginPreferences( );
 				if ( pluginPrefs != null )
 				{
-					this.preferences.savePluginPreferences( pluginPrefs, plugin.getName( ) );
+					this.preferences.savePluginPreferences( pluginPrefs, plugin.getPluginName( ) );
 					LOG( ).info( "\t- Preferences: of '" + plugin.getPluginName( ) + "' saved." );
 				}
 
@@ -437,11 +439,11 @@ public class LogFileViewerApp extends Thread implements ILogStreamStateListener
 				plugin.onStopped( );
 				try
 				{
-					plugin.join( );
+					plugin.waitForPluginStop( );
 				}
-				catch ( InterruptedException e )
+				catch ( PluginException e )
 				{
-					e.printStackTrace( );
+					LOG( ).throwing( this.getClass( ).getName( ), "onStop", e );
 				}
 
 				elapsedTimeForPlugin = System.currentTimeMillis( ) - elapsedTimeForPlugin;

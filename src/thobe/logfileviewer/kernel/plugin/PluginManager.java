@@ -18,12 +18,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -42,7 +40,9 @@ import thobe.logfileviewer.kernel.preferences.PluginManagerPrefs;
 import thobe.logfileviewer.plugin.Plugin;
 import thobe.logfileviewer.plugin.PluginApiVersion;
 import thobe.logfileviewer.plugin.api.IConsole;
+import thobe.logfileviewer.plugin.api.IPlugin;
 import thobe.logfileviewer.plugin.api.IPluginAccess;
+import thobe.logfileviewer.plugin.api.IPluginApiVersion;
 import thobe.logfileviewer.plugin.api.IPluginUI;
 
 /**
@@ -52,13 +52,13 @@ import thobe.logfileviewer.plugin.api.IPluginUI;
  */
 public class PluginManager implements IPluginAccess, IMemoryWatchable
 {
-	private static final String	NAME	= "thobe.logfileviewer.kernel.PluginManager";
+	private static final String		NAME	= "thobe.logfileviewer.kernel.PluginManager";
 
-	private Map<String, Plugin>	plugins;
-	private Map<String, Plugin>	incompatiblePlugins;
-	private Logger				log;
-	private PluginManagerPrefs	prefs;
-	private File				pluginDirectory;
+	private Map<String, IPlugin>	plugins;
+	private Map<String, IPlugin>	incompatiblePlugins;
+	private Logger					log;
+	private PluginManagerPrefs		prefs;
+	private File					pluginDirectory;
 
 	public PluginManager( PluginManagerPrefs prefs, File pluginDirectory )
 	{
@@ -66,7 +66,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		this.pluginDirectory = pluginDirectory;
 		this.log = Logger.getLogger( NAME );
 		this.plugins = new HashMap<>( );
-		this.incompatiblePlugins = new HashMap<String, Plugin>( );
+		this.incompatiblePlugins = new HashMap<>( );
 	}
 
 	private File createTmpVersionFile( InputStream in, String className ) throws IOException
@@ -171,18 +171,25 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 			}
 		}// for ( int i = 0; i < plugins.length; ++i )
 
-		// 2. Now load the jars to class-path
-		LOG( ).info( "2. Now load the jars to class-path." );
-		URLClassLoader classLoader = new URLClassLoader( pluginUrls );
-
-		// 3. Now find the plugins. 
-		Map<File, Class<? extends Plugin>> pluginClasses = new HashMap<File, Class<? extends Plugin>>( );
-		LOG( ).info( "3. Now find the plugins." );
+		// 2. Now find the plugins. 
+		ClassLoader appClassLoader = PluginManager.class.getClassLoader( );
+		Set<Class<? extends IPlugin>> pluginClasses = new HashSet<Class<? extends IPlugin>>( );
+		LOG( ).info( "2. Now find the plugins." );
 		for ( JarFile jarFile : jarFiles )
 		{
+			PluginClassLoader pluginClassLoader = null;
+			try
+			{
+				pluginClassLoader = new PluginClassLoader( appClassLoader, jarFile );
+			}
+			catch ( IOException | URISyntaxException e1 )
+			{
+				LOG( ).severe( "Unable to load classes from jar-file '" + jarFile.getName( ) + "' (the corresponding plugin won't be loaded)." );
+				continue;
+			}
+
 			Enumeration<JarEntry> entries = jarFile.entries( );
-			Class<? extends Plugin> pluginClass = null;
-			String versionFileStr = null;
+			Class<? extends IPlugin> pluginClass = null;
 
 			while ( entries.hasMoreElements( ) )
 			{
@@ -196,10 +203,10 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 
 					try
 					{
-						Class<?> classToLoad = classLoader.loadClass( plainClassName );
+						Class<?> classToLoad = pluginClassLoader.loadClass( plainClassName );
 
 						// check if it is a plugin
-						final boolean bImplementsIPlugin = Plugin.class.isAssignableFrom( classToLoad );
+						final boolean bImplementsIPlugin = IPlugin.class.isAssignableFrom( classToLoad );
 						final boolean bIsAbstract = Modifier.isAbstract( classToLoad.getModifiers( ) );
 						final boolean bIsInterface = classToLoad.isInterface( );
 						if ( bImplementsIPlugin && !bIsAbstract && !bIsInterface )
@@ -218,60 +225,30 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 					}
 
 				}// if ( extIndex > 0 )
-
-				if ( name.endsWith( "thobe.logfileviewer.plugin.api.version" ) )
-				{
-					versionFileStr = name;
-					LOG( ).info( "\tVersion file for plugin found: '" + versionFileStr + "'" );
-				}
-
 			}// while ( entries.hasMoreElements( ) )
 
 			// extract the version file and write it into a temp-folder
-			if ( pluginClass != null && versionFileStr != null )
+			if ( pluginClass != null )
 			{
-				try
-				{
-					InputStream is = jarFile.getInputStream( jarFile.getEntry( versionFileStr ) );
-					File versionFile = this.createTmpVersionFile( is, pluginClass.getSimpleName( ) );
-
-					pluginClasses.put( versionFile, pluginClass );
-					LOG( ).info( "\tPlugin seems to be valid '" + pluginClass.getName( ) + "', versioFile='" + versionFileStr + "'" );
-				}
-				catch ( IOException e )
-				{
-					LOG( ).severe( "\tUnable to read version-file: " + e.getLocalizedMessage( ) );
-				}
+				pluginClasses.add( pluginClass );
+				LOG( ).info( "\tPlugin seems to be valid '" + pluginClass.getName( ) + "'." );
 			}// if ( pluginClass != null && versionFileStr != null )
 			else
 			{
-				LOG( ).warning( "\tPlugin '" + pluginClass + "' ignored versionFile='" + versionFileStr + "'" );
+				LOG( ).warning( "\tPlugin '" + pluginClass + "' ignored." );
 			}
 
 		}// for ( JarFile jarFile : jarFiles )
 
-		PluginApiVersion apiVersionOfLogFileViewer = new PluginApiVersion( );
-		// 4. Now register the plugins. 
-		LOG( ).info( "4. Now register the plugins (" + pluginClasses.size( ) + "), api of plugin-api of LogFileViewer=" + apiVersionOfLogFileViewer );
-		for ( Map.Entry<File, Class<? extends Plugin>> entry : pluginClasses.entrySet( ) )
+		IPluginApiVersion apiVersionOfLogFileViewer = new PluginApiVersion( );
+		// 3. Now register the plugins. 
+		LOG( ).info( "3. Now register the plugins (" + pluginClasses.size( ) + "), api of plugin-api of LogFileViewer=" + apiVersionOfLogFileViewer );
+		for ( Class<? extends IPlugin> pluginClass : pluginClasses )
 		{
 			try
 			{
-				File versionFile = entry.getKey( );
-				Class<? extends Plugin> pluginClass = entry.getValue( );
-				PluginApiVersion apiVersionOfPlugin = new PluginApiVersion( versionFile );
-
-				Plugin plugin = pluginClass.newInstance( );
-				try
-				{
-					Method setApiVersion = Plugin.class.getDeclaredMethod( "setApiVersion", PluginApiVersion.class );
-					setApiVersion.setAccessible( true );
-					setApiVersion.invoke( plugin, apiVersionOfPlugin );
-				}
-				catch ( NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e )
-				{
-					LOG( ).severe( "Unable to set api-version to plugin: " + e.getLocalizedMessage( ) );
-				}
+				IPlugin plugin = pluginClass.newInstance( );
+				IPluginApiVersion apiVersionOfPlugin = plugin.getPluginApiVersion( );
 
 				if ( !apiVersionOfLogFileViewer.isCompatible( apiVersionOfPlugin ) )
 				{
@@ -292,27 +269,19 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 			{
 				LOG( ).severe( "\tError creating plugin: " + e.getLocalizedMessage( ) );
 			}
+			catch ( NoClassDefFoundError e )
+			{
+				LOG( ).severe( "\tError creating plugin (NoClassDefFoundError): " + e.getLocalizedMessage( ) );
+			}
 		}// for ( Class<? extends Plugin> pluginClass : pluginClasses )
-
-		// now finally close the loader 
-		LOG( ).info( "5. Finally close the loader " );
-		try
-		{
-			classLoader.close( );
-		}
-		catch ( IOException e )
-		{
-			LOG( ).severe( "Error closing classLoder: " + e.getLocalizedMessage( ) );
-		}
-
 	}
 
-	public void registerPlugin( Plugin plugin )
+	public void registerPlugin( IPlugin plugin )
 	{
 		this.plugins.put( plugin.getPluginName( ), plugin );
 	}
 
-	public void unregisterPlugin( Plugin plugin )
+	public void unregisterPlugin( IPlugin plugin )
 	{
 		this.plugins.remove( plugin );
 	}
@@ -322,18 +291,18 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		this.plugins.clear( );
 	}
 
-	public Map<String, Plugin> getPlugins( )
+	public Map<String, IPlugin> getPlugins( )
 	{
 		return plugins;
 	}
 
-	public Map<String, Plugin> getIncompatiblePlugins( )
+	public Map<String, IPlugin> getIncompatiblePlugins( )
 	{
 		return incompatiblePlugins;
 	}
 
 	@Override
-	public Plugin getPlugin( String pluginName )
+	public IPlugin getPlugin( String pluginName )
 	{
 		return this.plugins.get( pluginName );
 	}
@@ -348,9 +317,9 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	{
 		synchronized ( this.plugins )
 		{
-			for ( Entry<String, Plugin> entry : this.plugins.entrySet( ) )
+			for ( Entry<String, IPlugin> entry : this.plugins.entrySet( ) )
 			{
-				Plugin plugin = entry.getValue( );
+				IPlugin plugin = entry.getValue( );
 				long memBeforeFree = plugin.getMemory( );
 				entry.getValue( ).freeMemory( );
 
@@ -373,7 +342,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	{
 		IConsole console = null;
 
-		for ( Map.Entry<String, Plugin> entry : this.plugins.entrySet( ) )
+		for ( Map.Entry<String, IPlugin> entry : this.plugins.entrySet( ) )
 		{
 			if ( entry.getValue( ) instanceof IConsole )
 			{
@@ -388,11 +357,12 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	{
 		Set<IPluginUI> result = new HashSet<>( );
 
-		for ( Map.Entry<String, Plugin> entry : this.plugins.entrySet( ) )
+		for ( Map.Entry<String, IPlugin> entry : this.plugins.entrySet( ) )
 		{
-			if ( !entry.getValue( ).isAttachedToGUI( ) && entry.getValue( ).isEnabled( ) )
+			IPluginUI uiEntry = ( IPluginUI ) entry.getValue( );
+			if ( !uiEntry.isAttachedToGUI( ) && entry.getValue( ).isEnabled( ) )
 			{
-				result.add( entry.getValue( ) );
+				result.add( uiEntry );
 			}// if ( !entry.getValue( ).isAttachedToGUI( ) && entry.getValue( ).isEnabled( ) )
 		}// for ( Map.Entry<String, Plugin> entry : this.plugins.entrySet( ) )
 
@@ -403,9 +373,9 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 	public long getMemory( )
 	{
 		long completeMemory = 0;
-		for ( Entry<String, Plugin> entry : this.getPlugins( ).entrySet( ) )
+		for ( Entry<String, IPlugin> entry : this.getPlugins( ).entrySet( ) )
 		{
-			Plugin plugin = entry.getValue( );
+			IPlugin plugin = entry.getValue( );
 			completeMemory += plugin.getMemory( );
 		}// for ( Entry<String, Plugin> entry : this.getPlugins( ).entrySet( ) ) .
 		return completeMemory;

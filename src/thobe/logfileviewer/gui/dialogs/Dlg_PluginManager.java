@@ -26,7 +26,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import thobe.logfileviewer.kernel.plugin.PluginManager;
-import thobe.logfileviewer.plugin.Plugin;
+import thobe.logfileviewer.plugin.api.IPlugin;
 import thobe.widgets.editor.Editor;
 
 import com.jgoodies.forms.layout.CellConstraints;
@@ -60,8 +60,8 @@ public class Dlg_PluginManager extends Editor
 	private void buildGUI( )
 	{
 		String rowSpec = "3dlu,default,3dlu,default,7dlu";
-		Map<String, Plugin> plugins = this.manager.getPlugins( );
-		Map<String, Plugin> invalidPlugins = this.manager.getIncompatiblePlugins( );
+		Map<String, IPlugin> plugins = this.manager.getPlugins( );
+		Map<String, IPlugin> invalidPlugins = this.manager.getIncompatiblePlugins( );
 
 		for ( int i = 0; i < plugins.size( ); ++i )
 		{
@@ -88,7 +88,7 @@ public class Dlg_PluginManager extends Editor
 
 		// PluginPanels
 		int row = 6;
-		for ( Map.Entry<String, Plugin> entry : plugins.entrySet( ) )
+		for ( Map.Entry<String, IPlugin> entry : plugins.entrySet( ) )
 		{
 			PluginPanel pluginPanel = new PluginPanel( entry.getValue( ), this.manager.getPrefs( ), true );
 			this.pluginPanels.add( pluginPanel );
@@ -97,7 +97,7 @@ public class Dlg_PluginManager extends Editor
 		}
 
 		// add invalid plugins (for information)
-		for ( Map.Entry<String, Plugin> entry : invalidPlugins.entrySet( ) )
+		for ( Map.Entry<String, IPlugin> entry : invalidPlugins.entrySet( ) )
 		{
 			PluginPanel pluginPanel = new PluginPanel( entry.getValue( ), this.manager.getPrefs( ), false );
 			this.pluginPanels.add( pluginPanel );

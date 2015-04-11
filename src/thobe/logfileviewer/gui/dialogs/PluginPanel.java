@@ -26,7 +26,7 @@ import javax.swing.JToggleButton;
 import thobe.logfileviewer.gui.icons.LFV_IconLib;
 import thobe.logfileviewer.gui.icons.LFV_IconType;
 import thobe.logfileviewer.kernel.preferences.PluginManagerPrefs;
-import thobe.logfileviewer.plugin.Plugin;
+import thobe.logfileviewer.plugin.api.IPlugin;
 import thobe.widgets.icons.IconSize;
 import thobe.widgets.utils.Utilities;
 
@@ -45,7 +45,7 @@ public class PluginPanel extends JPanel
 	private static final int	KB_DIVIDER	= 1024;
 	private static final float	UNIT_EPS	= 0.01f;
 
-	private Plugin				plugin;
+	private IPlugin				plugin;
 
 	private JToggleButton		tb_enablePlugin;
 	private JToggleButton		tb_expand;
@@ -59,7 +59,7 @@ public class PluginPanel extends JPanel
 	private JProgressBar		pb_memory;
 	private boolean				isCompatible;
 
-	public PluginPanel( Plugin plugin, PluginManagerPrefs pluginManagerPreferences, boolean isCompatible )
+	public PluginPanel( IPlugin plugin, PluginManagerPrefs pluginManagerPreferences, boolean isCompatible )
 	{
 		this.plugin = plugin;
 		this.pluginManagerPreferences = pluginManagerPreferences;
@@ -164,7 +164,7 @@ public class PluginPanel extends JPanel
 		final int txtSizeInfo = 3;
 
 		final String pluginApiVersion = ( this.plugin.getPluginApiVersion( ) != null ) ? this.plugin.getPluginApiVersion( ).toString( ) : "N/A";
-		final String pluginVersion = ( this.plugin.getVersion( ) != null ) ? this.plugin.getVersion( ) : "N/A";
+		final String pluginVersion = ( this.plugin.getPluginVersion( ) != null ) ? this.plugin.getPluginVersion( ) : "N/A";
 		final String author = ( this.plugin.getPluginAuthor( ) != null ) ? this.plugin.getPluginAuthor( ) : "N/A";
 		final String email = ( this.plugin.getPluginAuthorEMailAddress( ) != null ) ? this.plugin.getPluginAuthorEMailAddress( ) : "N/A";
 		final String website = ( this.plugin.getPluginWebsite( ) != null ) ? this.plugin.getPluginWebsite( ) : "N/A";
