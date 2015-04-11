@@ -15,7 +15,7 @@ import java.awt.event.ActionEvent;
 import thobe.logfileviewer.LogFileViewerInfo;
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.gui.dialogs.Dlg_About;
-import thobe.logfileviewer.plugin.api.PluginApiVersion;
+import thobe.logfileviewer.plugin.PluginApiVersion;
 import thobe.widgets.action.AbstrAction;
 
 /**

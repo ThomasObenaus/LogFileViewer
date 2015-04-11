@@ -40,10 +40,10 @@ import thobe.logfileviewer.kernel.LogFileViewerConfiguration;
 import thobe.logfileviewer.kernel.memory.IMemoryWatchable;
 import thobe.logfileviewer.kernel.preferences.PluginManagerPrefs;
 import thobe.logfileviewer.plugin.Plugin;
+import thobe.logfileviewer.plugin.PluginApiVersion;
 import thobe.logfileviewer.plugin.api.IConsole;
 import thobe.logfileviewer.plugin.api.IPluginAccess;
 import thobe.logfileviewer.plugin.api.IPluginUI;
-import thobe.logfileviewer.plugin.api.PluginApiVersion;
 
 /**
  * @author Thomas Obenaus
