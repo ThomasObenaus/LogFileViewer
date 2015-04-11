@@ -10,8 +10,13 @@
 
 package thobe.playground.classLoader;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
@@ -30,8 +35,13 @@ public class MainClass
 	{
 		ZipFile plugin = new ZipFile( "/home/winnietom/work/projects/LogfileViewer/eclipse-ws/Plugins/thobe.logfileviewer.plugins.console.jar" );
 
+		List<File> dirs = new ArrayList<File>( );
+		dirs.add( new File( "/home/winnietom/work/projects/LogfileViewer/eclipse-ws/Plugins/bin" ) );
+		dirs.add( new File( "/home/winnietom/work/projects/LogfileViewer/eclipse-ws/Plugins/lib_classes" ) );
+
 		ClassLoader appClassLoader = IPlugin.class.getClassLoader( );
-		PluginClassLoader specClassLoader = new MyPluginClassLoader( appClassLoader, plugin );
+		PluginClassLoader specClassLoader = new MyPluginClassLoader( appClassLoader, dirs );
+		//				PluginClassLoader specClassLoader = new MyPluginClassLoader( appClassLoader, plugin );
 
 		System.out.println( "AppClassLoader: " + appClassLoader );
 		System.out.println( "SpecialClassLoader: " + specClassLoader );
@@ -51,6 +61,11 @@ public class MainClass
 
 	private final static class MyPluginClassLoader extends PluginClassLoader
 	{
+
+		public MyPluginClassLoader( ClassLoader parent, List<File> dir ) throws ZipException, IOException, URISyntaxException
+		{
+			super( parent, dir );
+		}
 
 		public MyPluginClassLoader( ClassLoader parent, ZipFile jarFile ) throws ZipException, IOException, URISyntaxException
 		{

@@ -11,6 +11,8 @@
 package thobe.playground.classLoader;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -18,7 +20,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -55,6 +60,25 @@ public abstract class PluginClassLoader extends ClassLoader
 	public PluginClassLoader( ClassLoader parent, ZipFile jarFile ) throws ZipException, IOException, URISyntaxException
 	{
 		this( parent, jarFile, null );
+	}
+
+	private static void listFiles( final File file, Set<File> files, final boolean recurse )
+	{
+		File[] list = file.listFiles( );
+
+		// no files found --> return
+		if ( list == null )
+			return;
+
+		for ( File subFile : list )
+		{
+			files.add( subFile );
+			if ( recurse && ( subFile.isDirectory( ) ) )
+			{
+				// recurse into directory
+				listFiles( subFile, files, recurse );
+			}
+		}
 	}
 
 	public PluginClassLoader( ClassLoader parent, ZipFile jarFile, Logger log ) throws ZipException, IOException, URISyntaxException
@@ -102,6 +126,76 @@ public abstract class PluginClassLoader extends ClassLoader
 
 			}// if ( entry != null )
 		}// while ( zipEntries.hasMoreElements( ) )
+	}
+
+	public PluginClassLoader( ClassLoader parent, List<File> directories ) throws ZipException, IOException, URISyntaxException
+	{
+		this( parent, directories, null );
+	}
+
+	public PluginClassLoader( ClassLoader parent, List<File> directories, Logger log ) throws ZipException, IOException, URISyntaxException
+	{
+		super( parent );
+		this.debugLoggingEnabled = ( ( this.log != null ) && ( this.log.isLoggable( Level.FINEST ) ) );
+		this.entries = new HashMap<String, InputStream>( );
+		this.resources = new HashMap<String, URL>( );
+
+		for ( File directory : directories )
+		{
+			if ( directory == null )
+			{
+				throw new IOException( "The given directory is null." );
+			}
+			if ( !directory.isDirectory( ) )
+			{
+				throw new IOException( "The given file is no directory." );
+			}
+
+			// create the url-prefix for this directory		
+			String urlPrefixToSubtract = directory.getAbsolutePath( );
+			if ( !urlPrefixToSubtract.endsWith( File.separator ) )
+			{
+				urlPrefixToSubtract += File.separator;
+			}
+			String urlPrefix = "file:" + urlPrefixToSubtract;
+
+			Set<File> files = new HashSet<File>( );
+			listFiles( directory, files, true );
+
+			// now iterate over all entries and obtain resources and input-streams for loading classes
+			for ( File entry : files )
+			{
+				if ( entry != null )
+				{
+					String nameOfEntry = entry.getAbsolutePath( ).replaceAll( urlPrefixToSubtract, "" );
+					String resourceName = nameOfEntry + File.separator;
+					URL uriOfResource = new URI( urlPrefix + resourceName ).toURL( );
+
+					// store the resource
+					this.resources.put( resourceName, uriOfResource );
+
+					// logging
+					if ( this.debugLoggingEnabled )
+					{
+						this.log.finest( "Res: '" + uriOfResource + "' available under '" + nameOfEntry + "'" );
+					}
+
+					// convert the given resource-name into a class-name if possible 
+					// non class-entries will be ignored
+					String name = resourceNameToClassName( nameOfEntry );
+					if ( name != null )
+					{
+						this.entries.put( name, new FileInputStream( entry ) );
+						// logging
+						if ( this.debugLoggingEnabled )
+						{
+							this.log.finest( "Class: '" + name + ".class'" );
+						}
+					}// if ( name != null )
+
+				}// if ( entry != null )
+			}// for ( File entry : files )
+		}
 	}
 
 	/**
