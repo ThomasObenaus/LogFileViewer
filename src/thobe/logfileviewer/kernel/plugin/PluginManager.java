@@ -249,7 +249,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 			}
 			catch ( NoClassDefFoundError e )
 			{
-				LOG( ).severe( "\tError creating plugin (NoClassDefFoundError): " + e.getLocalizedMessage( ) );
+				LOG( ).severe( "\tError creating plugin '" + pluginClass + "' (NoClassDefFoundError): " + e.getLocalizedMessage( ) );
 			}
 		}// for ( Class<? extends Plugin> pluginClass : pluginClasses )
 	}
