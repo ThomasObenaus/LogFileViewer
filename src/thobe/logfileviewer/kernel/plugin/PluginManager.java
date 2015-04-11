@@ -10,14 +10,9 @@
 
 package thobe.logfileviewer.kernel.plugin;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -67,23 +62,6 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 		this.log = Logger.getLogger( NAME );
 		this.plugins = new HashMap<>( );
 		this.incompatiblePlugins = new HashMap<>( );
-	}
-
-	private File createTmpVersionFile( InputStream in, String className ) throws IOException
-	{
-		File versionFile = File.createTempFile( ".tmp", "_" + className + ".version" );
-		BufferedReader br = new BufferedReader( new InputStreamReader( in ) );
-		BufferedWriter bw = new BufferedWriter( new FileWriter( versionFile ) );
-		String line = null;
-		while ( ( line = br.readLine( ) ) != null )
-		{
-			bw.write( line + "\n" );
-		}
-
-		br.close( );
-		bw.close( );
-
-		return versionFile;
 	}
 
 	public String getPluginDirectory( )
