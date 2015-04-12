@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -117,6 +116,8 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 	 * Flag indicating if quitting this Thread is requested externally.
 	 */
 	private AtomicBoolean									quitRequested;
+
+	private static Pattern									ALL_PATTERN			= Pattern.compile( ".*" );
 
 	/**
 	 * Ctor
@@ -338,63 +339,6 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 		}
 	}
 
-	@Override
-	public void onNewLine( String newLine )
-	{
-		final boolean logFine = LOG( ).isLoggable( Level.FINE );
-
-		if ( logFine )
-		{
-			LOG( ).fine( "New line '" + newLine + "' will be send to listeners." );
-		}
-
-		// build the log-line
-		LogLine line = null;
-
-		synchronized ( this.logStreamDataListeners )
-		{
-			for ( Entry<Pattern, Set<ILogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) )
-			{
-				Pattern linePattern = entry.getKey( );
-
-				try
-				{
-					// look if the filter matches the line
-					if ( newLine != null && matches( linePattern, newLine ) )
-					{
-						// only build the line if at least one filter matches
-						if ( line == null )
-						{
-							line = this.buildLogLine( newLine );
-
-							// add the line to the buffer
-							try
-							{
-								this.logLineBuffer.add( line );
-							}
-							catch ( LogLineBufferException e )
-							{
-								LOG( ).severe( "Error adding LogLine to LogStream.buffer: " + e.getLocalizedMessage( ) );
-							}
-						}// if ( line == null ).
-
-						// send the line to all registered listeners
-						for ( ILogStreamDataListener l : entry.getValue( ) )
-						{
-							l.onNewLine( line );
-						}// for ( LogStreamDataListener l : entry.getValue( ) ).
-
-					}// if ( newLine != null && newLine.matches( lineFilter ) ).
-				}// try
-				catch ( PatternSyntaxException e )
-				{
-					LOG( ).warning( "Unable to process line '" + newLine + "' using line-filter '" + linePattern.pattern( ) + "': " + e.getLocalizedMessage( ) );
-				}// catch ( PatternSyntaxException e ).
-			}// for ( Entry<String, Set<LogStreamDataListener>> entry : this.logStreamDataListeners.entrySet( ) ) .
-		}// synchronized ( this.logStreamDataListeners ) .
-
-	}
-
 	private static boolean matches( final Pattern pattern, final String line )
 	{
 		if ( pattern == null || pattern.pattern( ).trim( ).isEmpty( ) )
@@ -512,6 +456,10 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 				for ( Entry<Pattern, LogLineBlockToLogStreamListener> entry : this.logLineBlockToLSDLMap.entrySet( ) )
 				{
 					Pattern linePattern = entry.getKey( );
+					if ( linePattern == null )
+					{
+						linePattern = ALL_PATTERN;
+					}
 
 					try
 					{
@@ -593,7 +541,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 
 	final class LogLineBlockToLogStreamListener implements Map.Entry<List<ILogLine>, Set<ILogStreamDataListener>>
 	{
-		private final List<ILogLine>			key;
+		private final List<ILogLine>		key;
 		private Set<ILogStreamDataListener>	value;
 
 		public LogLineBlockToLogStreamListener( List<ILogLine> key, Set<ILogStreamDataListener> value )

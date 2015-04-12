@@ -80,11 +80,6 @@ public abstract class ExternalLogStreamReader extends Thread
 	private int				maxBlockTime;
 
 	/**
-	 * If true, block-mode instead of line-mode is used.
-	 */
-	private boolean			blockModeEnabled;
-
-	/**
 	 * Number of lines read since opening the source
 	 */
 	private long			numLinesRead;
@@ -109,7 +104,6 @@ public abstract class ExternalLogStreamReader extends Thread
 		this.log = Logger.getLogger( "thobe.logfileviewer.source.ExternalLogStreamReader" );
 		this.maxBlockSize = 100;
 		this.maxBlockTime = 2000;
-		this.blockModeEnabled = true;
 		this.numLinesRead = 0;
 		this.timeStampOfOpeningSource = 0;
 	}
@@ -118,7 +112,8 @@ public abstract class ExternalLogStreamReader extends Thread
 	 * Returns the next line that is available (was read from the log source). On accessing this method the line will be consumed, that
 	 * means further calls to this method will result in different results (the next line).
 	 * @return - the next line as {@link String}
-	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link ExternalLogStreamReader#hasNextLine()} to check if
+	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link ExternalLogStreamReader#hasNextLine()} to check
+	 *             if
 	 *             more
 	 *             lines are available.
 	 */
@@ -138,7 +133,8 @@ public abstract class ExternalLogStreamReader extends Thread
 	 * Returns the next lines that are available (was read from the log source). On accessing this method all lines will be consumed, that
 	 * means further calls to this method will result in different results (the next lines).
 	 * @return - the next lines as list of {@link String}'s
-	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link ExternalLogStreamReader#hasNextLine()} to check if more
+	 * @throws LogStreamException - Thrown if no more lines are available. Please use {@link ExternalLogStreamReader#hasNextLine()} to check
+	 *             if more
 	 *             lines are available.
 	 */
 	public List<String> nextLines( ) throws LogStreamException
@@ -165,7 +161,8 @@ public abstract class ExternalLogStreamReader extends Thread
 	}
 
 	/**
-	 * Setting this flag to false the {@link ExternalLogStreamReader} continues reading even if the end of file was reached, assuming more lines
+	 * Setting this flag to false the {@link ExternalLogStreamReader} continues reading even if the end of file was reached, assuming more
+	 * lines
 	 * will be added to the file soon (like tail -f <file>). Setting this flag to true the {@link ExternalLogStreamReader} will terminate
 	 * immediately if the end of the file is reached.
 	 * @param stopOnReachingEOF
@@ -195,32 +192,16 @@ public abstract class ExternalLogStreamReader extends Thread
 				boolean somethingAdded = false;
 
 				// BLOCK-MODE
-				if ( this.isBlockModeEnabled( ) )
+				// delegate the reading to the specific source-implementation
+				List<String> block = readBlockImpl( 200, this.maxBlockTime, 10, this.maxBlockSize );
+				if ( !block.isEmpty( ) )
 				{
-					// delegate the reading to the specific source-implementation
-					List<String> block = readBlockImpl( 200, this.maxBlockTime, 10, this.maxBlockSize );
-					if ( !block.isEmpty( ) )
-					{
-						somethingAdded = true;
+					somethingAdded = true;
 
-						// add the lines to the buffer
-						this.lineBuffer.addAll( block );
-						this.numLinesRead += block.size( );
-					}// if ( !block.isEmpty( ) ) .
-				}// if ( this.isBlockModeEnabled( ) ) .				
-				else
-				{
-					// LINE-MODE
-					// delegate the reading to the specific source-implementation
-					String newLine = readLineImpl( this.maxBlockTime );
-					if ( newLine != null )
-					{
-						somethingAdded = true;
-						// add the line to the buffer
-						this.lineBuffer.add( newLine );
-						this.numLinesRead++;
-					}// if ( newLine != null ) .
-				}
+					// add the lines to the buffer
+					this.lineBuffer.addAll( block );
+					this.numLinesRead += block.size( );
+				}// if ( !block.isEmpty( ) ) .
 
 				// set EOF if nothing was read/added
 				if ( !somethingAdded )
@@ -415,15 +396,5 @@ public abstract class ExternalLogStreamReader extends Thread
 	public void setMaxBlockTime( int maxBlockTime )
 	{
 		this.maxBlockTime = maxBlockTime;
-	}
-
-	public boolean isBlockModeEnabled( )
-	{
-		return blockModeEnabled;
-	}
-
-	public void setBlockModeEnabled( boolean blockModeEnabled )
-	{
-		this.blockModeEnabled = blockModeEnabled;
 	}
 }

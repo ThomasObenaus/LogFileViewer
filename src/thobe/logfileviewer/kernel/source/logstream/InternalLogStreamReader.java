@@ -147,23 +147,11 @@ public class InternalLogStreamReader extends Thread
 				{
 					try
 					{
-						if ( this.traceSource.isBlockModeEnabled( ) )
+						List<String> nextBlock = this.traceSource.nextLines( );
+						if ( !nextBlock.isEmpty( ) )
 						{
-							List<String> nextBlock = this.traceSource.nextLines( );
-							if ( !nextBlock.isEmpty( ) )
-							{
-								this.fireNewBlock( nextBlock );
-							}// if ( !nextBlock.isEmpty( ) ) .
-						}// if ( this.traceSource.isBlockModeEnabled( ) ) .
-						else
-						{
-							String nextLine = this.traceSource.nextLine( );
-							// skip empty lines
-							if ( nextLine != null && !nextLine.trim( ).isEmpty( ) )
-							{
-								this.fireNewLine( nextLine );
-							}// if(nextLine != null && !nextLine.trim( ).isEmpty( )) .
-						}// if ( this.traceSource.isBlockModeEnabled( ) ) ... else ...
+							this.fireNewBlock( nextBlock );
+						}// if ( !nextBlock.isEmpty( ) ) .
 					}
 					catch ( LogStreamException e )
 					{
@@ -224,24 +212,6 @@ public class InternalLogStreamReader extends Thread
 	protected Logger LOG( )
 	{
 		return this.log;
-	}
-
-	private void fireNewLine( String newLine )
-	{
-		synchronized ( listeners )
-		{
-			for ( IInternalLogStreamReaderListener l : this.listeners )
-			{
-				long elapsedTime = System.currentTimeMillis( );
-				l.onNewLine( newLine );
-				elapsedTime = System.currentTimeMillis( ) - elapsedTime;
-
-				if ( elapsedTime > 100 )
-				{
-					LOG( ).warning( "Listener '" + l.getLogStreamListenerName( ) + "' needs " + ( elapsedTime / 1000.0f ) + "s to process the new-line event." );
-				}// if ( elapsedTime > 100 ).
-			}// for ( LogStreamContentPublisherListener l : this.listeners ).
-		}// synchronized ( listeners ).
 	}
 
 	private void fireNewBlock( List<String> newBlock )
