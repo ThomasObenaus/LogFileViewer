@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -41,6 +40,7 @@ import thobe.logfileviewer.plugin.source.logstream.ILogStreamAccess;
 import thobe.logfileviewer.plugin.source.logstream.ILogStreamDataListener;
 import thobe.logfileviewer.plugin.source.logstream.ILogStreamRequester;
 import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
+import thobe.logfileviewer.plugin.util.PatternMatch;
 
 /**
  * The resource representing the log-file (access to the log-file). The contents of the logfile can be obtained through the
@@ -185,7 +185,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 						List<ILogLine> filteredLines = new ArrayList<ILogLine>( );
 						for ( ILogLine l : logLines )
 						{
-							if ( matches( pat, l.getData( ) ) )
+							if ( PatternMatch.matches( pat, l ) )
 							{
 								filteredLines.add( l );
 							}
@@ -339,24 +339,6 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 		}
 	}
 
-	private static boolean matches( final Pattern pattern, final String line )
-	{
-		if ( pattern == null || pattern.pattern( ).trim( ).isEmpty( ) )
-			return false;
-
-		boolean result = false;
-
-		try
-		{
-			Matcher m = pattern.matcher( line );
-			result = m.matches( );
-		}
-		catch ( PatternSyntaxException e )
-		{}
-
-		return result;
-	}
-
 	private LogLine buildLogLine( String newLine )
 	{
 		LogLine logLine = ( LogLine ) this.logLineFactory.buildLogLine( newLine );
@@ -464,7 +446,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 					try
 					{
 						// look if the filter matches the line
-						if ( newLine != null && matches( linePattern, newLine ) )
+						if ( newLine != null && PatternMatch.matches( linePattern, newLine ) )
 						{
 							// only build the line if at least one filter matches
 							if ( logLine == null )
