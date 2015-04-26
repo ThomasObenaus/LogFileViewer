@@ -7,11 +7,6 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/widgets_doc.zip!/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="libs/tools.jar" sourcepath="libs/tools_src.zip">
-		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/tools_doc.zip!/"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="libs/commons-cli-1.2/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="libs/jgoodies-forms-1.8.0/jgoodies-forms-1.8.0.jar" sourcepath="libs/jgoodies-forms-1.8.0/jgoodies-forms-1.8.0-sources.jar">
 		<attributes>
@@ -36,6 +31,11 @@
 	<classpathentry kind="lib" path="libs/thobe.logfileviewer.plugin.api.jar" sourcepath="libs/thobe.logfileviewer.plugin.api_src.zip">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/thobe.logfileviewer.plugin.api_doc.zip!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="libs/tools.jar" sourcepath="libs/tools_src.zip">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/LogFileViewer/libs/tools_doc.zip!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="bin"/>

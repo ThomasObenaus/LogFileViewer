@@ -162,7 +162,7 @@ public class PluginManager implements IPluginAccess, IMemoryWatchable
 			}
 			catch ( IOException | URISyntaxException e1 )
 			{
-				LOG( ).severe( "Unable to load classes from jar-file '" + jarFile.getName( ) + "' (the corresponding plugin won't be loaded)." );
+				LOG( ).severe( "Unable to load classes from jar-file '" + jarFile.getName( ) + "' (the corresponding plugin won't be loaded): " + e1.getLocalizedMessage( ) );
 				continue;
 			}
 
