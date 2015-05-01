@@ -1,3 +1,3 @@
 echo "Starting LogFileViewer"
-java -jar LogFileViewer.jar
+start javaw -jar LogFileViewer.jar
 

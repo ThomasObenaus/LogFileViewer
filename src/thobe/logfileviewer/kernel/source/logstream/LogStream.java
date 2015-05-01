@@ -125,6 +125,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 	public LogStream( )
 	{
 		super( NAME );
+
 		this.logLineBlockToLSDLMap = new HashMap<>( );
 		this.logStreamStateListeners = new ArrayList<>( );
 		this.logStreamDataListeners = new HashMap<>( );
