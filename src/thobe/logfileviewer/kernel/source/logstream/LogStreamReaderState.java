@@ -15,7 +15,7 @@ package thobe.logfileviewer.kernel.source.logstream;
  * @source LogStreamState.java
  * @date May 31, 2014
  */
-public enum LogStreamState
+public enum LogStreamReaderState
 {
 	OPEN,CLOSED,EOF_REACHED;
 }

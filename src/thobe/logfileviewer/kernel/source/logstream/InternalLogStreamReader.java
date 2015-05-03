@@ -52,7 +52,7 @@ public class InternalLogStreamReader extends Thread
 	/**
 	 * Current state of the logstream
 	 */
-	private LogStreamState							stateOfLogStream;
+	private LogStreamReaderState					stateOfLogStream;
 
 	/**
 	 * The time to sleep between two lines that where read from the source (in ms).
@@ -66,7 +66,7 @@ public class InternalLogStreamReader extends Thread
 		this.log = Logger.getLogger( "thobe.logfileviewer.source.InternalLogStreamReader" );
 		this.sleepTime = new AtomicInteger( 100 );
 		this.listeners = new ArrayList<>( );
-		this.stateOfLogStream = LogStreamState.CLOSED;
+		this.stateOfLogStream = LogStreamReaderState.CLOSED;
 	}
 
 	/**
@@ -112,6 +112,7 @@ public class InternalLogStreamReader extends Thread
 	@Override
 	public void run( )
 	{
+
 		LOG( ).info( "Started " + this.getClass( ).getSimpleName( ) );
 
 		while ( !this.quitRequested.get( ) )
@@ -119,31 +120,17 @@ public class InternalLogStreamReader extends Thread
 			synchronized ( this )
 			{
 				// check state of stream
-				LogStreamState state = LogStreamState.CLOSED;
-
-				// #### OPENED #####
-				if ( this.traceSource != null && this.traceSource.isOpen( ) )
+				LogStreamReaderState state = LogStreamReaderState.CLOSED;
+				if ( this.traceSource != null )
 				{
-					state = LogStreamState.OPEN;
-				}// if ( this.traceSource != null || this.traceSource.isOpen( ) ) .
-
-				// #### EOF REACHED #####
-				if ( this.traceSource != null && this.traceSource.isEOFReached( ) )
-				{
-					state = LogStreamState.EOF_REACHED;
-				}// if ( this.traceSource != null || this.traceSource.isEOFReached( ) ) .
-
-				// #### CLOSED #####
-				if ( this.traceSource == null || !this.traceSource.isOpen( ) )
-				{
-					state = LogStreamState.CLOSED;
-				}// if ( this.traceSource == null || !this.traceSource.isOpen( ) ).
+					state = this.traceSource.getCurrentState( );
+				}
 
 				// publish event if necessary
 				this.publishState( state );
 
 				// process new line 
-				if ( state == LogStreamState.OPEN && traceSource.hasNextLine( ) )
+				if ( state == LogStreamReaderState.OPEN && traceSource.hasNextLine( ) )
 				{
 					try
 					{
@@ -174,7 +161,7 @@ public class InternalLogStreamReader extends Thread
 		LOG( ).info( "" + this.getClass( ).getSimpleName( ) + " stopped." );
 	}
 
-	private synchronized void publishState( LogStreamState state )
+	private synchronized void publishState( LogStreamReaderState state )
 	{
 		if ( state != this.stateOfLogStream )
 		{

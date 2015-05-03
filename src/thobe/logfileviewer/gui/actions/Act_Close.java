@@ -50,6 +50,7 @@ public class Act_Close extends AbstrAction implements ILogStreamStateListener
 		{
 			LogFileViewerApp app = this.mainframe.getApp( );
 			LogStream logStream = app.getLogStream( );
+			app.getLogStreamConnector( ).setEnableAutomaticReconnect( false );
 			logStream.close( );
 		}
 		catch ( LogStreamException e )

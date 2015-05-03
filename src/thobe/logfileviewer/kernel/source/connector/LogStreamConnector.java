@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
+import thobe.logfileviewer.kernel.source.extreader.FileLogStreamReader;
 import thobe.logfileviewer.kernel.source.extreader.IpLogStreamReader;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
 import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
@@ -44,11 +45,13 @@ public class LogStreamConnector extends Thread implements ILogStreamStateListene
 
 	private LSConnectorEvent		lastConnectionEvent;
 	private LogStream				logStream;
+	private AtomicBoolean			automaticReconnect;
 
 	public LogStreamConnector( LogStream logStream )
 	{
 		super( "LogStreamConnector" );
 		this.logStream = logStream;
+		this.automaticReconnect = new AtomicBoolean( false );
 		this.logStream.addLogStreamStateListener( this );
 		this.quitRequested = new AtomicBoolean( false );
 		this.eventSemaphore = new Semaphore( 1, true );
@@ -99,6 +102,11 @@ public class LogStreamConnector extends Thread implements ILogStreamStateListene
 		LOG( ).info( "Stopped." );
 	}
 
+	public void setEnableAutomaticReconnect( boolean enable )
+	{
+		this.automaticReconnect.set( enable );
+	}
+
 	private void processEvents( )
 	{
 		LSConnectorEvent evt = null;
@@ -135,10 +143,13 @@ public class LogStreamConnector extends Thread implements ILogStreamStateListene
 			{
 				LSCEvt_ConnectToIP connectToIpEvt = ( LSCEvt_ConnectToIP ) connectToEvt;
 				this.logStream.open( new IpLogStreamReader( connectToIpEvt.getHost( ), connectToIpEvt.getPort( ) ) );
+				this.automaticReconnect.set( true );
 			}// if ( connectToEvt instanceof LSCEvt_ConnectToIP )
 			else if ( connectToEvt instanceof LSCEvt_ConnectoToFile )
 			{
-				// TODO: open file
+				LSCEvt_ConnectoToFile connectToFileEvt = ( LSCEvt_ConnectoToFile ) connectToEvt;
+				this.logStream.open( new FileLogStreamReader( connectToFileEvt.getFile( ) ) );
+				this.automaticReconnect.set( false );
 			}// else if ( connectToEvt instanceof LSCEvt_ConnectoToFile )
 			else
 			{
@@ -177,7 +188,10 @@ public class LogStreamConnector extends Thread implements ILogStreamStateListene
 	@Override
 	public void onEOFReached( )
 	{
-		this.tryReconnect( );
+		if ( this.automaticReconnect.get( ) )
+		{
+			this.tryReconnect( );
+		}
 	}
 
 	@Override
@@ -187,7 +201,10 @@ public class LogStreamConnector extends Thread implements ILogStreamStateListene
 	@Override
 	public void onClosed( )
 	{
-		this.tryReconnect( );
+		if ( this.automaticReconnect.get( ) )
+		{
+			this.tryReconnect( );
+		}
 	}
 
 	protected Logger LOG( )

@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.source.err.LogStreamException;
 import thobe.logfileviewer.kernel.source.err.LogStreamTimeoutException;
+import thobe.logfileviewer.kernel.source.logstream.LogStreamReaderState;
 
 /**
  * Abstract class representing a source that reads and offers contents of a log (file or over ip).
@@ -37,57 +38,62 @@ public abstract class ExternalLogStreamReader extends Thread
 	/**
 	 * deque containing the contents of the log line by line.
 	 */
-	private Deque<String>	lineBuffer;
+	private Deque<String>			lineBuffer;
 
 	/**
 	 * true if the termination/ quit of reading the source/log, was requested.
 	 */
-	private AtomicBoolean	quitRequested;
+	private AtomicBoolean			quitRequested;
 
 	/**
 	 * true if the corresponding source is open --> reading from this source was started.
 	 */
-	private AtomicBoolean	opened;
+	private AtomicBoolean			sourceOpened;
 
 	/**
 	 * The time to sleep between two lines that where read from the source (in ms).
 	 */
-	private AtomicInteger	sleepTime;
+	private AtomicInteger			sleepTime;
 
 	/**
-	 * True if the end of file was reached.
+	 * True if the end of source was reached.
 	 */
-	private AtomicBoolean	EOFReached;
+	private AtomicBoolean			sourceEOFReached;
 
 	/**
 	 * If true the Thread terminates on reaching eof, otherwise the thread goes on reading.
 	 */
-	private boolean			stopOnReachingEOF;
+	private boolean					stopOnReachingEOF;
 
 	/**
 	 * The internal logger
 	 */
-	private Logger			log;
+	private Logger					log;
 
 	/**
 	 * Size of one block (in case block-mode is used)
 	 */
-	private int				maxBlockSize;
+	private int						maxBlockSize;
 
 	/**
 	 * Max time (in ms) one read should block.
 	 */
-	private int				maxBlockTime;
+	private int						maxBlockTime;
 
 	/**
 	 * Number of lines read since opening the source
 	 */
-	private long			numLinesRead;
+	private long					numLinesRead;
 
 	/**
 	 * The time at which the source was opened.
 	 */
-	private long			timeStampOfOpeningSource;
+	private long					timeStampOfOpeningSource;
+
+	/**
+	 * State of this {@link ExternalLogStreamReader}.
+	 */
+	private LogStreamReaderState	currentState;
 
 	/**
 	 * Ctor
@@ -95,17 +101,34 @@ public abstract class ExternalLogStreamReader extends Thread
 	public ExternalLogStreamReader( String name )
 	{
 		super( name );
+		this.log = Logger.getLogger( "thobe.logfileviewer.source.ExternalLogStreamReader" );
+		this.updateState( LogStreamReaderState.CLOSED );
 		this.lineBuffer = new ConcurrentLinkedDeque<>( );
 		this.quitRequested = new AtomicBoolean( false );
-		this.opened = new AtomicBoolean( false );
-		this.EOFReached = new AtomicBoolean( false );
+		this.sourceOpened = new AtomicBoolean( false );
+		this.sourceEOFReached = new AtomicBoolean( false );
 		this.sleepTime = new AtomicInteger( 0 );
 		this.stopOnReachingEOF = true;
-		this.log = Logger.getLogger( "thobe.logfileviewer.source.ExternalLogStreamReader" );
 		this.maxBlockSize = 100;
 		this.maxBlockTime = 2000;
 		this.numLinesRead = 0;
 		this.timeStampOfOpeningSource = 0;
+	}
+
+	private void updateState( LogStreamReaderState state )
+	{
+		String msg = "Upd state: " + this.currentState + "->" + state;
+		this.currentState = state;
+		LOG( ).info( msg );
+	}
+
+	/**
+	 * Returns the state of this {@link ExternalLogStreamReader}.
+	 * @return
+	 */
+	public LogStreamReaderState getCurrentState( )
+	{
+		return currentState;
 	}
 
 	/**
@@ -125,6 +148,12 @@ public abstract class ExternalLogStreamReader extends Thread
 			if ( !this.hasNextLine( ) )
 				throw new LogStreamException( "The queue is empty" );
 			result = this.lineBuffer.pop( );
+
+			// set state to EOF if the source has reached eof and if the complete line-buffer was consumed.
+			if ( this.isSourceEOFReached( ) && this.lineBuffer.isEmpty( ) )
+			{
+				this.updateState( LogStreamReaderState.EOF_REACHED );
+			}// if ( this.isSourceEOFReached( ) && this.lineBuffer.isEmpty( ) )
 		}// synchronized ( this.lineBuffer ) .
 		return result;
 	}
@@ -147,6 +176,12 @@ public abstract class ExternalLogStreamReader extends Thread
 
 			block = new ArrayList<>( this.lineBuffer );
 			this.lineBuffer.clear( );
+
+			// set state to EOF if the source has reached eof and if the complete line-buffer was consumed.
+			if ( this.isSourceEOFReached( ) )
+			{
+				this.updateState( LogStreamReaderState.EOF_REACHED );
+			}// if ( this.isSourceEOFReached( ) )
 		}// synchronized ( this.lineBuffer ) .		
 		return block;
 	}
@@ -157,7 +192,12 @@ public abstract class ExternalLogStreamReader extends Thread
 	 */
 	public boolean hasNextLine( )
 	{
-		return !this.lineBuffer.isEmpty( );
+		boolean empty = false;
+		synchronized ( lineBuffer )
+		{
+			empty = this.lineBuffer.isEmpty( );
+		}
+		return !empty;
 	}
 
 	/**
@@ -178,10 +218,10 @@ public abstract class ExternalLogStreamReader extends Thread
 		LOG( ).info( "Thread: " + this.getClass( ).getSimpleName( ) + " started." );
 
 		// Main-loop, will only terminate if close was called or if eof-was reached
-		while ( !this.quitRequested.get( ) && ( !this.EOFReached.get( ) || !this.stopOnReachingEOF ) )
+		while ( !this.quitRequested.get( ) && ( !this.sourceEOFReached.get( ) || !this.stopOnReachingEOF ) )
 		{
 			// directly interrupt reading from the source if the source is not open
-			if ( !isOpen( ) )
+			if ( !isSourceOpen( ) )
 			{
 				LOG( ).info( this.getClass( ).getSimpleName( ) + " interrupted: Source is not open." );
 				break;
@@ -194,20 +234,25 @@ public abstract class ExternalLogStreamReader extends Thread
 				// BLOCK-MODE
 				// delegate the reading to the specific source-implementation
 				List<String> block = readBlockImpl( 200, this.maxBlockTime, 10, this.maxBlockSize );
-				if ( !block.isEmpty( ) )
-				{
-					somethingAdded = true;
 
-					// add the lines to the buffer
-					this.lineBuffer.addAll( block );
-					this.numLinesRead += block.size( );
-				}// if ( !block.isEmpty( ) ) .
+				synchronized ( this.lineBuffer )
+				{
+					if ( !block.isEmpty( ) )
+					{
+						somethingAdded = true;
+
+						// add the lines to the buffer
+						this.lineBuffer.addAll( block );
+						this.numLinesRead += block.size( );
+						//					System.out.println("ELSR NB: " + block.size( ) + "(" + this.numLinesRead + ")");
+					}// if ( !block.isEmpty( ) ) .
+				}// synchronized ( this.lineBuffer )
 
 				// set EOF if nothing was read/added
 				if ( !somethingAdded )
 				{
 					// end of file reached
-					this.EOFReached.set( true );
+					this.sourceEOFReached.set( true );
 					LOG( ).info( "End of file reached" );
 				}// if ( newLine != null ) ... else ...
 			}
@@ -215,17 +260,17 @@ public abstract class ExternalLogStreamReader extends Thread
 			{
 				// The call to readLineImpl() timed out --> EOF
 				LOG( ).warning( this.getClass( ).getSimpleName( ) + " error reading next line: '" + e.getLocalizedMessage( ) + ( this.stopOnReachingEOF ? "'. stop reading." : "'. continue reading" ) );
-				this.EOFReached.set( true );
+				this.sourceEOFReached.set( true );
 			}//catch ( LogStreamTimeoutException e ) .
 			catch ( LogStreamException e )
 			{
 				LOG( ).warning( this.getClass( ).getSimpleName( ) + " error reading next line: '" + e.getLocalizedMessage( ) + "'. stop reading." );
-				this.opened.set( false );
+				this.sourceOpened.set( false );
 				break;
 			}// catch ( LogStreamException e ) .
 
 			// sleep only if we don't have already reached the EOF or if we don't want to stop at the end of file
-			if ( !this.EOFReached.get( ) || !this.stopOnReachingEOF )
+			if ( !this.sourceEOFReached.get( ) || !this.stopOnReachingEOF )
 			{
 				try
 				{
@@ -240,9 +285,9 @@ public abstract class ExternalLogStreamReader extends Thread
 		}// while ( !this.quitRequested.get( ) && ( !this.EOFReached.get( ) || !this.stopOnReachingEOF ) ).
 
 		// close the LogStreamReader in case of EOF reading should be stopped  
-		if ( this.EOFReached.get( ) && this.stopOnReachingEOF )
+		if ( this.sourceEOFReached.get( ) && this.stopOnReachingEOF )
 		{
-			this.opened.set( false );
+			this.sourceOpened.set( false );
 		}
 		LOG( ).info( "Thread: " + this.getClass( ).getSimpleName( ) + " stopped." );
 	}
@@ -268,9 +313,9 @@ public abstract class ExternalLogStreamReader extends Thread
 		return ( this.numLinesRead / ( elapsed / 1000.0d ) );
 	}
 
-	public boolean isEOFReached( )
+	private boolean isSourceEOFReached( )
 	{
-		return EOFReached.get( );
+		return sourceEOFReached.get( );
 	}
 
 	public void close( ) throws LogStreamException
@@ -278,13 +323,13 @@ public abstract class ExternalLogStreamReader extends Thread
 		// set request to terminate the main-loop
 		this.quitRequested.set( true );
 
-		if ( this.opened.get( ) )
+		if ( this.sourceOpened.get( ) )
 		{
 			try
 			{
 				// call the source-specific close-method
 				this.closeImpl( );
-				this.opened.set( false );
+				this.sourceOpened.set( false );
 				this.numLinesRead = 0;
 				this.timeStampOfOpeningSource = 0;
 			}
@@ -294,6 +339,7 @@ public abstract class ExternalLogStreamReader extends Thread
 				throw e;
 			}
 		}// if ( this.opened.get( ) ).
+		this.updateState( LogStreamReaderState.CLOSED );
 		LOG( ).info( "TraceSource [" + this.getClass( ).getSimpleName( ) + "] closed." );
 	}
 
@@ -339,7 +385,7 @@ public abstract class ExternalLogStreamReader extends Thread
 	public void open( ) throws LogStreamException
 	{
 		// already open
-		if ( this.opened.get( ) )
+		if ( this.sourceOpened.get( ) )
 		{
 			throw new LogStreamException( "Already open" );
 		}// if ( this.opened.get( ) ) .
@@ -351,13 +397,24 @@ public abstract class ExternalLogStreamReader extends Thread
 
 			// delegate opening to the specific trace-source
 			this.openImpl( 2000 );
-			this.opened.set( true );
+			this.sourceOpened.set( true );
+			this.updateState( LogStreamReaderState.OPEN );
 		}
 		catch ( LogStreamException e )
 		{
+			this.updateState( LogStreamReaderState.CLOSED );
 			LOG( ).severe( "Unable to open: " + e.getLocalizedMessage( ) );
 			throw e;
 		}// catch ( TraceSourceException e ) .
+	}
+
+	/**
+	 * Returns true if the source of the {@link ExternalLogStreamReader} is open, false otherwise.
+	 * @return
+	 */
+	private boolean isSourceOpen( )
+	{
+		return this.sourceOpened.get( );
 	}
 
 	/**
@@ -366,7 +423,7 @@ public abstract class ExternalLogStreamReader extends Thread
 	 */
 	public boolean isOpen( )
 	{
-		return this.opened.get( );
+		return ( this.currentState == LogStreamReaderState.OPEN );
 	}
 
 	/**

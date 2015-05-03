@@ -11,12 +11,16 @@
 package thobe.logfileviewer.gui.actions;
 
 import java.awt.event.ActionEvent;
+import java.io.File;
+
+import javax.swing.JFileChooser;
 
 import thobe.logfileviewer.gui.MainFrame;
 import thobe.logfileviewer.kernel.LogFileViewerApp;
 import thobe.logfileviewer.kernel.source.logstream.LogStream;
 import thobe.logfileviewer.plugin.source.logstream.ILogStreamStateListener;
 import thobe.widgets.action.AbstrAction;
+import thobe.widgets.action.ActionRegistry;
 
 /**
  * @author Thomas Obenaus
@@ -41,9 +45,13 @@ public class Act_OpenFile extends AbstrAction implements ILogStreamStateListener
 	@Override
 	public void actionPerformed( ActionEvent arg0 )
 	{
-		long elapsed = System.currentTimeMillis( );
-		System.gc( );
-		System.out.println( "Time For GC: " + ( ( System.currentTimeMillis( ) - elapsed ) / 1000.0 ) + "s" );
+		JFileChooser fc = new JFileChooser( "/home/winnietom/work/projects/LogfileViewer/eclipse-ws/LogFileViewer" );
+		fc.setFileSelectionMode( JFileChooser.FILES_ONLY );
+		if ( fc.showOpenDialog( this.mainframe ) == JFileChooser.APPROVE_OPTION )
+		{
+			File f = fc.getSelectedFile( );
+			this.mainframe.getApp( ).getLogStreamConnector( ).connectToFile( f );
+		}// if ( fc.showOpenDialog( this.mainframe ) == JFileChooser.APPROVE_OPTION )
 	}
 
 	@Override
@@ -65,13 +73,13 @@ public class Act_OpenFile extends AbstrAction implements ILogStreamStateListener
 	@Override
 	public void onOpened( )
 	{
-		//		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( false );
+		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( false );
 	}
 
 	@Override
 	public void onClosed( )
 	{
-		//		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( true );
+		ActionRegistry.get( ).getAction( Act_OpenFile.KEY ).setEnabled( true );
 	}
 
 }

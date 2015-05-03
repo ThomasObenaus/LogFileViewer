@@ -254,6 +254,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 			if ( entry == null )
 			{
 				entry = new LogLineBlockToLogStreamListener( new ArrayList<ILogLine>( ), new HashSet<ILogStreamDataListener>( ) );
+
 				this.logLineBlockToLSDLMap.put( l.getLineFilter( ), entry );
 			}// if ( entry == null ) .
 			entry.value.add( l );
@@ -320,9 +321,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 	{
 		if ( this.logStreamReader == null )
 			return false;
-		if ( !this.logStreamReader.isOpen( ) )
-			return false;
-		return true;
+		return ( this.logStreamReader.getCurrentState( ) == LogStreamReaderState.OPEN );
 	}
 
 	/**
@@ -498,7 +497,7 @@ public class LogStream extends Thread implements IInternalLogStreamReaderListene
 		}// synchronized ( this.logLineBlockToLSDLMap   ).
 
 		elapsed = System.currentTimeMillis( ) - elapsed;
-		//		System.out.println(elapsed / 1000f + " s");
+//		System.out.println( "Elapsed Time in LogStream.onNewBlock(" + elapsed / 1000f + "s)" );
 	}
 
 	/**
