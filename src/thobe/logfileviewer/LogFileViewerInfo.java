@@ -20,8 +20,8 @@ public class LogFileViewerInfo
 {
 	private static final String	APP_NAME		= "LogFileViewer";
 	private static final int MAJOR_VERSION = 1;
-	private static final int MINOR_VERSION = 5;
-	private static final int BUGFIX_VERSION = 1;
+	private static final int MINOR_VERSION = 6;
+	private static final int BUGFIX_VERSION = 0;
 
 	public static String getAppName( )
 	{
