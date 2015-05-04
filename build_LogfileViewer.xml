@@ -9,7 +9,7 @@
 		<!-- set version here -->
 		<property name="LFV.Program-Version.Major" value="1" />
 		<property name="LFV.Program-Version.Minor" value="6" />
-		<property name="LFV.Program-Version.Bugfix" value="0" />
+		<property name="LFV.Program-Version.Bugfix" value="1" />
 		<property name="LFV.Program-Version" value="${LFV.Program-Version.Major}.${LFV.Program-Version.Minor}.${LFV.Program-Version.Bugfix}" />		
 		<!-- set main-class here or uncomment line if u build a library -->
 		<property name="LFV.Main-Class" value="thobe.logfileviewer.kernel.MainClass" />

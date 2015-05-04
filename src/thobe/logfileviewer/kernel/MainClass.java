@@ -29,6 +29,8 @@ import thobe.tools.log.LoggingException;
  */
 public class MainClass
 {
+	private static String	OS	= System.getProperty( "os.name" ).toLowerCase( );
+
 	public static void main( String[] args )
 	{
 		// parse the command-line arguments
@@ -67,16 +69,19 @@ public class MainClass
 	{
 		String lookAndFeel = UIManager.getSystemLookAndFeelClassName( );
 
-		// try to set nimbus:
-		for ( LookAndFeelInfo info : UIManager.getInstalledLookAndFeels( ) )
+		if ( isUnix( ) )
 		{
-			if ( "Nimbus".equals( info.getName( ) ) )
+			// try to set nimbus:
+			for ( LookAndFeelInfo info : UIManager.getInstalledLookAndFeels( ) )
 			{
-				// Nimbus found
-				lookAndFeel = info.getClassName( );
-				break;
-			}// if ( "Nimbus".equals( info.getName( ) ) ).
-		}// for ( LookAndFeelInfo info : UIManager.getInstalledLookAndFeels( ) ).
+				if ( "Nimbus".equals( info.getName( ) ) )
+				{
+					// Nimbus found
+					lookAndFeel = info.getClassName( );
+					break;
+				}// if ( "Nimbus".equals( info.getName( ) ) ).
+			}// for ( LookAndFeelInfo info : UIManager.getInstalledLookAndFeels( ) ).
+		}// if ( isUnix( ) )
 
 		try
 		{
@@ -96,5 +101,10 @@ public class MainClass
 				System.exit( 1 );
 			}// catch ( ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e1 ).
 		}// catch ( UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e ).
+	}
+
+	public static boolean isUnix( )
+	{
+		return ( OS.indexOf( "nix" ) >= 0 || OS.indexOf( "nux" ) >= 0 || OS.indexOf( "aix" ) > 0 );
 	}
 }
